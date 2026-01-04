@@ -1,4 +1,4 @@
-# MULTI-VENDOR MEDICINE PHARMACY DELIVERY APP
+# Multi-Vendor Medicine Pharmacy Delivery App
 
 ## Team Information
 
