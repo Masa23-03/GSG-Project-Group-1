@@ -3,12 +3,12 @@
 ## Team Information
 
 - **Team Name:** NEXUS
-- **Team Leader:** Masa Sabobeh
+- **Team Leader:** [Masa Sabobeh](https://github.com/Masa23-03)
 - **Team Members:**
-  - Lubna Jaradat
-  - Masa Sabobeh
-  - Nesreen Alzamli
-  - Shahd Abu Sharif
+  - [Lubna Jaradat](https://github.com/Lubna-Jaradat)
+  - [Masa Sabobeh](https://github.com/Masa23-03)
+  - [Nesreen Alzamli](https://github.com/nesreenazamli)
+  - [Shahd Abu Sharif](https://github.com/shahd-abu-sharif)
 
 ## Project Description
 
