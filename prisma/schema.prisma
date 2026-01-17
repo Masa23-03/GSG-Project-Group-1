@@ -35,6 +35,12 @@ enum MedicineStatus {
   REJECTED
 }
 
+enum PrescriptionStatus {
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
 enum OrderStatus {
   PENDING
   PARTIALLY_ACCEPTED
