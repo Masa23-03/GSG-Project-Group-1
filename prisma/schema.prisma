@@ -46,6 +46,11 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum DeliveryType {
+  STANDARD
+  EXPRESS
+}
+
 model User {
   id              BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
   email           String     @unique @db.VarChar(255)
