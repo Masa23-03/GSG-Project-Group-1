@@ -331,3 +331,7 @@ model Order {
   @@index([createdAt], map: "idx_orders_created_at")
   @@map("orders")
 }
+
+model Payment {
+  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+}
