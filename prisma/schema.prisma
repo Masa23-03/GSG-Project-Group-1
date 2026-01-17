@@ -406,6 +406,7 @@ model PharmacyOrder {
   pharmacy           Pharmacy            @relation(fields: [pharmacyId], references: [id])
   delivery           Delivery?           @relation(fields: [deliveryId], references: [id])
   pharmacyOrderItems PharmacyOrderItem[]
+  prescriptions      Prescription[]
 
   @@unique([orderId, pharmacyId], map: "uq_pharmacy_orders_order_pharmacy")
   @@index([orderId], map: "idx_pharmacy_orders_order")
@@ -434,4 +435,21 @@ model PharmacyOrderItem {
   @@index([pharmacyOrderId], map: "idx_pharmacy_order_items_order")
   @@index([inventoryItemId], map: "idx_pharmacy_order_items_inventory")
   @@map("pharmacy_order_items")
+}
+
+model Prescription {
+  id                  BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  pharmacyOrderId     BigInt             @map("pharmacy_order_id") @db.UnsignedBigInt
+  status              PrescriptionStatus @default(UNDER_REVIEW)
+  reuploadReason      String?            @map("reupload_reason") @db.Text
+  reuploadRequestedAt DateTime?          @map("reupload_requested_at") @db.Timestamp()
+  createdAt           DateTime           @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
+
+  //! Relations
+  pharmacyOrder PharmacyOrder @relation(fields: [pharmacyOrderId], references: [id])
+
+  @@index([pharmacyOrderId], map: "idx_prescriptions_pharmacy_order")
+  @@index([status], map: "idx_prescriptions_status")
+  @@map("prescriptions")
 }
