@@ -161,7 +161,7 @@ model Category {
   //! Relations
   medicines Medicine[]
 
-  @@index([name], map: "idx_categories _name")
+  @@index([name], map: "idx_categories_name")
   @@map("categories")
 }
 
