@@ -269,6 +269,7 @@ model Order {
   patientId BigInt  @map("patient_id") @db.UnsignedBigInt
   addressId BigInt? @map("address_id") @db.UnsignedBigInt
 
-  deliveryCity String  @map("delivery_city") @db.VarChar(255)
-  deliveryArea String? @map("delivery_area") @db.VarChar(255)
+  deliveryCity        String  @map("delivery_city") @db.VarChar(255)
+  deliveryArea        String? @map("delivery_area") @db.VarChar(255)
+  deliveryAddressLine String  @map("delivery_address_line") @db.Text
 }
