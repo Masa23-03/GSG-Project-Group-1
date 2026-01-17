@@ -96,6 +96,8 @@ model Driver {
   currentArea        String?            @map("current_area") @db.VarChar(255)
   availabilityStatus AvailabilityStatus @default(OFFLINE) @map("availability_status")
   verificationStatus VerificationStatus @default(UNDER_REVIEW) @map("verification_status")
+  createdAt          DateTime           @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
   user  User  @relation("Driver", fields: [userId], references: [id])
