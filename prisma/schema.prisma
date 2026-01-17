@@ -68,8 +68,8 @@ model Pharmacy {
   coverImageUrl      String?            @map("cover_image_url") @db.VarChar(255)
   verificationStatus VerificationStatus @default(UNDER_REVIEW) @map("verification_status")
   verifiedAt         DateTime?          @map("verified_at") @db.Timestamp()
-  workOpenTime       DateTime?          @map("work_open_time") @db.DateTime()
-  workCloseTime      DateTime?          @map("work_close_time") @db.DateTime()
+  workOpenTime       DateTime?          @map("work_open_time") @db.Time()
+  workCloseTime      DateTime?          @map("work_close_time") @db.Time()
   avgPrepTimeMinutes Int                @default(10) @map("avg_prep_time_minutes") @db.TinyInt
   createdAt          DateTime           @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
