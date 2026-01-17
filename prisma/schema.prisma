@@ -188,8 +188,6 @@ model Category {
   @@map("categories")
 }
 
-//   feat: add inventory_items in Prisma schema
-
 model Medicine {
   id                   BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
   categoryId           BigInt          @map("category_id") @db.UnsignedBigInt
@@ -267,5 +265,6 @@ model InventoryItem {
 }
 
 model Order {
-  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  id        BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  patientId BigInt @map("patient_id") @db.UnsignedBigInt
 }
