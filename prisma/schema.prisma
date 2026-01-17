@@ -114,11 +114,11 @@ model Delivery {
   id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
 }
 
-//   feat: add index to PatientAddress model in Prisma schema
+//   feat: remove unique from userId in PatientAddress model in Prisma schema
 
 model PatientAddress {
   id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  userId       BigInt   @unique @db.UnsignedBigInt
+  userId       BigInt   @db.UnsignedBigInt
   label        String?  @db.VarChar(255)
   area         String?  @db.VarChar(255)
   region       String?  @db.VarChar(255)
