@@ -273,6 +273,13 @@ model Order {
   deliveryArea        String? @map("delivery_area") @db.VarChar(255)
   deliveryAddressLine String  @map("delivery_address_line") @db.Text
 
-  contactName  String @map("contact_name") @db.VarChar(255)
-  contactPhone String @map("contact_phone") @db.VarChar(255)
+  contactName            String   @map("contact_name") @db.VarChar(255)
+  contactPhone           String   @map("contact_phone") @db.VarChar(255)
+  subtotalAmount         Decimal  @map("subtotal_amount") @db.Decimal(10, 7)
+  originalSubtotalAmount Decimal? @map("original_subtotal_amount") @db.Decimal(10, 7)
+  discountAmount         Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 7)
+  deliveryFeeAmount      Decimal  @default(0) @map("delivery_fee_amount") @db.Decimal(10, 7)
+  totalAmount            Decimal  @map("total_amount") @db.Decimal(10, 7)
+  originalTotalAmount    Decimal? @map("original_total_amount") @db.Decimal(10, 7)
+  currency               String   @default("ILS") @db.Char(3)
 }
