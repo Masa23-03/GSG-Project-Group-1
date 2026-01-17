@@ -338,5 +338,8 @@ model Order {
 }
 
 model Payment {
-  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  id       BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  orderId  BigInt  @unique @map("order_id") @db.UnsignedBigInt
+  amount   Decimal @db.Decimal(10, 7)
+  currency String  @default("ILS") @db.Char(3)
 }
