@@ -265,6 +265,7 @@ model InventoryItem {
 }
 
 model Order {
-  id        BigInt @id @default(autoincrement()) @db.UnsignedBigInt
-  patientId BigInt @map("patient_id") @db.UnsignedBigInt
+  id        BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  patientId BigInt  @map("patient_id") @db.UnsignedBigInt
+  addressId BigInt? @map("address_id") @db.UnsignedBigInt
 }
