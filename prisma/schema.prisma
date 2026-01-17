@@ -82,9 +82,10 @@ model Pharmacy {
 
   //! Relations
   // owner (1–1)
-  user  User  @relation("PharmacyOwner", fields: [userId], references: [id])
+  user           User            @relation("PharmacyOwner", fields: [userId], references: [id])
   // verifier (admin, 1–many)
-  admin User? @relation("PharmacyVerifier", fields: [verifiedBy], references: [id])
+  admin          User?           @relation("PharmacyVerifier", fields: [verifiedBy], references: [id])
+  inventoryItems InventoryItem[]
 
   @@index([verificationStatus], map: "idx_pharmacies_verified")
   @@index([city], map: "idx_pharmacies_cities")
@@ -117,7 +118,9 @@ model Driver {
 }
 
 model Delivery {
-  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 }
 
 model PatientAddress {
@@ -148,15 +151,19 @@ model CityDeliveryFee {
   standardFeeAmount Decimal  @default(0) @map("standard_fee_amount") @db.Decimal(10, 7)
   expressFeeAmount  Decimal? @map("express_fee_amount") @db.Decimal(10, 7)
   currency          String   @default("ILS") @db.Char(3)
+  createdAt         DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 
   @@map("city_delivery_fees")
 }
 
 model Category {
-  id               BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
-  name             String  @db.VarChar(255)
-  categoryImageUrl String? @db.VarChar(255)
-  description      String? @db.MediumText
+  id               BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name             String   @db.VarChar(255)
+  categoryImageUrl String?  @db.VarChar(255)
+  description      String?  @db.MediumText
+  createdAt        DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
   medicines Medicine[]
@@ -165,31 +172,34 @@ model Category {
   @@map("categories")
 }
 
-//   feat: add MedicineImages in Prisma schema
+//   feat: add inventory_items in Prisma schema
 
 model Medicine {
-  id                   BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
-  categoryId           BigInt           @map("category_id") @db.UnsignedBigInt
-  genericName          String           @map("generic_name") @db.VarChar(255)
-  brandName            String?          @map("brand_name") @db.VarChar(255)
-  manufacturer         String?          @db.VarChar(255)
-  dosageForm           String?          @map("dosage_form") @db.VarChar(255)
-  strengthValue        Decimal?         @map("strength_value") @db.Decimal(10, 7)
-  strengthUnit         String?          @map("strength_unit") @db.VarChar(255)
-  packSize             Int?             @map("pack_size") @db.Int
-  packUnit             String?          @map("pack_unit") @db.VarChar(255)
-  requiresPrescription Boolean          @default(false) @map("requires_prescription")
-  activeIngredients    String?          @map("active_ingredients") @db.LongText
-  dosageInstructions   String?          @map("dosage_instructions") @db.LongText
-  storageInstructions  String?          @map("storage_instructions") @db.LongText
-  warnings             String?          @db.LongText
-  description          String           @db.LongText
-  status               MedicineStatus   @default(PENDING)
-  isActive             Boolean          @default(true) @map("is_active")
-  maxPrice             Decimal?         @map("max_price") @db.Decimal(10, 8)
+  id                   BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  categoryId           BigInt          @map("category_id") @db.UnsignedBigInt
+  genericName          String          @map("generic_name") @db.VarChar(255)
+  brandName            String?         @map("brand_name") @db.VarChar(255)
+  manufacturer         String?         @db.VarChar(255)
+  dosageForm           String?         @map("dosage_form") @db.VarChar(255)
+  strengthValue        Decimal?        @map("strength_value") @db.Decimal(10, 7)
+  strengthUnit         String?         @map("strength_unit") @db.VarChar(255)
+  packSize             Int?            @map("pack_size") @db.Int
+  packUnit             String?         @map("pack_unit") @db.VarChar(255)
+  requiresPrescription Boolean         @default(false) @map("requires_prescription")
+  activeIngredients    String?         @map("active_ingredients") @db.LongText
+  dosageInstructions   String?         @map("dosage_instructions") @db.LongText
+  storageInstructions  String?         @map("storage_instructions") @db.LongText
+  warnings             String?         @db.LongText
+  description          String          @db.LongText
+  status               MedicineStatus  @default(PENDING)
+  isActive             Boolean         @default(true) @map("is_active")
+  maxPrice             Decimal?        @map("max_price") @db.Decimal(10, 8)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.DateTime(0)
   //! Relations
-  category             Category         @relation(fields: [categoryId], references: [id])
-  medicineImages       MedicineImages[]
+  category             Category        @relation(fields: [categoryId], references: [id])
+  medicineImages       MedicineImage[]
+  inventoryItems       InventoryItem[]
 
   @@index([categoryId, isActive, status], map: "idx_medicines_category_active_status")
   @@index([genericName], map: "idx_medicines_generic_name")
@@ -197,11 +207,13 @@ model Medicine {
   @@map("medicines")
 }
 
-model MedicineImages {
-  id         BigInt @id @default(autoincrement()) @db.UnsignedBigInt
-  medicineId BigInt @map("medicine_id") @db.UnsignedBigInt
-  url        String @db.VarChar(255)
-  sortOrder  Int    @map("sort_order") @db.TinyInt
+model MedicineImage {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  medicineId BigInt   @map("medicine_id") @db.UnsignedBigInt
+  url        String   @db.VarChar(255)
+  sortOrder  Int      @map("sort_order") @db.TinyInt
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
   medicine Medicine @relation(fields: [medicineId], references: [id])
@@ -209,4 +221,31 @@ model MedicineImages {
   @@unique([medicineId, sortOrder], map: "uq_medicine_images_medicine_sort")
   @@index([medicineId], map: "idx_medicine_images_medicine_id")
   @@map("medicine_images")
+}
+
+model InventoryItem {
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  pharmacyId    BigInt    @map("pharmacy_id") @db.UnsignedBigInt
+  medicineId    BigInt    @map("medicine_id") @db.UnsignedBigInt
+  createdAt     DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.DateTime(0)
+  stockQuantity Int       @default(0) @map("stock_quantity") @db.Int
+  minStock      Int       @default(0) @map("min_stock") @db.Int
+  sellPrice     Decimal   @map("sell_price") @db.Decimal(10, 8)
+  costPrice     Decimal?  @map("cost_price") @db.Decimal(10, 8)
+  batchNumber   String?   @map("batch_number") @db.VarChar(255)
+  expiryDate    DateTime? @map("expiry_date") @db.Date
+  isAvailable   Boolean   @default(true) @map("is_available")
+  notes         String?   @db.LongText
+  shelfLocation String?   @map("shelf_location") @db.VarChar(255)
+  isDeleted     Boolean   @default(false) @map("is_deleted")
+  //! Relations
+  medicine      Medicine  @relation(fields: [medicineId], references: [id])
+  pharmacy      Pharmacy  @relation(fields: [pharmacyId], references: [id])
+
+  @@unique([pharmacyId, medicineId], map: "uq_inventory_pharmacy_medicine")
+  @@index([pharmacyId], map: "idx_inventory_pharmacy")
+  @@index([medicineId], map: "idx_inventory_medicine")
+  @@index([pharmacyId, expiryDate], map: "idx_inventory_pharmacy_expiry")
+  @@map("inventory_items")
 }
