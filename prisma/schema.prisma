@@ -70,6 +70,7 @@ model User {
   driver             Driver?          @relation("DriverOwner")
   verifiedDrivers    Driver[]         @relation("DriverVerifier")
   addresses          PatientAddress[]
+  orders             Order[]
 
   @@index([role], map: "idx_users_role")
   @@index([status], map: "idx_users_status")
@@ -156,6 +157,7 @@ model PatientAddress {
   updatedAt    DateTime @updatedAt @map("updated_at") @db.DateTime(0)
   //! Relations
   user         User     @relation(fields: [userId], references: [id])
+  orders       Order[]
 
   @@index([userId], map: "idx_addresses_user")
   @@map("patient_addresses")
@@ -288,4 +290,14 @@ model Order {
   status             OrderStatus  @default(PENDING)
   deliveryType       DeliveryType @default(STANDARD) @map("delivery_type")
   notes              String?      @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+
+  patient User            @relation(fields: [patientId], references: [id])
+  address PatientAddress? @relation(fields: [addressId], references: [id])
+
+  @@index([patientId, status], map: "idx_orders_patient_status")
+  @@index([createdAt], map: "idx_orders_created_at")
+  @@map("orders")
 }
