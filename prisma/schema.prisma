@@ -76,8 +76,13 @@ model Pharmacy {
 }
 
 model Driver {
-  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  userId     BigInt    @unique @db.UnsignedBigInt
-  verifiedBy BigInt?   @db.UnsignedBigInt
-  verifiedAt DateTime? @map("verified_at") @db.Timestamp()
+  id                 BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  userId             BigInt    @unique @db.UnsignedBigInt
+  verifiedBy         BigInt?   @db.UnsignedBigInt
+  verifiedAt         DateTime? @map("verified_at") @db.Timestamp()
+  vehicleName        String    @map("vehicle_name") @db.VarChar(255)
+  vehiclePlate       String    @map("vehicle_plate") @db.VarChar(255)
+  licenseDocumentUrl String    @map("license_document_url") @db.VarChar(255)
+  currentCity        String    @map("current_city") @db.VarChar(255)
+  currentArea        String?   @map("current_area") @db.VarChar(255)
 }
