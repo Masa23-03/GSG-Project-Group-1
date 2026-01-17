@@ -42,8 +42,11 @@ model User {
   createdAt       DateTime   @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt       DateTime   @updatedAt @map("updated_at") @db.DateTime(0)
 
+  //! Relations
   pharmacy           Pharmacy?  @relation("PharmacyOwner")
   verifiedPharmacies Pharmacy[] @relation("PharmacyVerifier")
+  driver             Driver?
+  drivers            Driver[]
 
   @@index([role], map: "idx_users_role")
   @@index([status], map: "idx_users_status")
@@ -70,6 +73,7 @@ model Pharmacy {
   createdAt          DateTime           @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
+  //! Relations
   // owner (1–1)
   user  User  @relation("PharmacyOwner", fields: [userId], references: [id])
   // verifier (admin, 1–many)
@@ -81,13 +85,24 @@ model Pharmacy {
 }
 
 model Driver {
-  id                 BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  userId             BigInt    @unique @db.UnsignedBigInt
-  verifiedBy         BigInt?   @db.UnsignedBigInt
-  verifiedAt         DateTime? @map("verified_at") @db.Timestamp()
-  vehicleName        String    @map("vehicle_name") @db.VarChar(255)
-  vehiclePlate       String    @map("vehicle_plate") @db.VarChar(255)
-  licenseDocumentUrl String    @map("license_document_url") @db.VarChar(255)
-  currentCity        String    @map("current_city") @db.VarChar(255)
-  currentArea        String?   @map("current_area") @db.VarChar(255)
+  id                 BigInt             @id @default(autoincrement()) @db.UnsignedBigInt
+  userId             BigInt             @unique @db.UnsignedBigInt
+  verifiedBy         BigInt?            @db.UnsignedBigInt
+  verifiedAt         DateTime?          @map("verified_at") @db.Timestamp()
+  vehicleName        String             @map("vehicle_name") @db.VarChar(255)
+  vehiclePlate       String             @unique @map("vehicle_plate") @db.VarChar(255)
+  licenseDocumentUrl String             @map("license_document_url") @db.VarChar(255)
+  currentCity        String             @map("current_city") @db.VarChar(255)
+  currentArea        String?            @map("current_area") @db.VarChar(255)
+  availabilityStatus AvailabilityStatus @default(OFFLINE) @map("availability_status")
+  verificationStatus VerificationStatus @default(UNDER_REVIEW) @map("verification_status")
+
+  //! Relations
+  user  User  @relation("Driver", fields: [userId], references: [id])
+  admin User? @relation("DriverVerifier", fields: [verifiedBy], references: [id])
+
+  @@index([verificationStatus], map: "idx_drivers_verified")
+  @@index([availabilityStatus], map: "idx_drivers_availability")
+  @@index([currentCity], map: "idx_drivers_cities")
+  @@map("drivers")
 }
