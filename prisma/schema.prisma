@@ -287,4 +287,5 @@ model Order {
   originalItemsCount Int?         @map("original_items_count") @db.Int
   status             OrderStatus  @default(PENDING)
   deliveryType       DeliveryType @default(STANDARD) @map("delivery_type")
+  notes              String?      @db.Text
 }
