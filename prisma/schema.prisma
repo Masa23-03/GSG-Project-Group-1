@@ -59,6 +59,11 @@ enum DeliveryStatus {
   DELIVERED
 }
 
+enum DeliveryConfirmationMethod {
+  PHOTO
+  OTP
+}
+
 model User {
   id              BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
   email           String     @unique @db.VarChar(255)
