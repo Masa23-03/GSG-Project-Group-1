@@ -165,33 +165,48 @@ model Category {
   @@map("categories")
 }
 
-//   feat: add Medicine and Category relationship in Prisma schema
+//   feat: add MedicineImages in Prisma schema
 
 model Medicine {
-  id                   BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
-  categoryId           BigInt         @map("category_id") @db.UnsignedBigInt
-  genericName          String         @map("generic_name") @db.VarChar(255)
-  brandName            String?        @map("brand_name") @db.VarChar(255)
-  manufacturer         String?        @db.VarChar(255)
-  dosageForm           String?        @map("dosage_form") @db.VarChar(255)
-  strengthValue        Decimal?       @map("strength_value") @db.Decimal(10, 7)
-  strengthUnit         String?        @map("strength_unit") @db.VarChar(255)
-  packSize             Int?           @map("pack_size") @db.Int
-  packUnit             String?        @map("pack_unit") @db.VarChar(255)
-  requiresPrescription Boolean        @default(false) @map("requires_prescription")
-  activeIngredients    String?        @map("active_ingredients") @db.LongText
-  dosageInstructions   String?        @map("dosage_instructions") @db.LongText
-  storageInstructions  String?        @map("storage_instructions") @db.LongText
-  warnings             String?        @db.LongText
-  description          String         @db.LongText
-  status               MedicineStatus @default(PENDING)
-  isActive             Boolean        @default(true) @map("is_active")
-  maxPrice             Decimal?       @map("max_price") @db.Decimal(10, 8)
+  id                   BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  categoryId           BigInt           @map("category_id") @db.UnsignedBigInt
+  genericName          String           @map("generic_name") @db.VarChar(255)
+  brandName            String?          @map("brand_name") @db.VarChar(255)
+  manufacturer         String?          @db.VarChar(255)
+  dosageForm           String?          @map("dosage_form") @db.VarChar(255)
+  strengthValue        Decimal?         @map("strength_value") @db.Decimal(10, 7)
+  strengthUnit         String?          @map("strength_unit") @db.VarChar(255)
+  packSize             Int?             @map("pack_size") @db.Int
+  packUnit             String?          @map("pack_unit") @db.VarChar(255)
+  requiresPrescription Boolean          @default(false) @map("requires_prescription")
+  activeIngredients    String?          @map("active_ingredients") @db.LongText
+  dosageInstructions   String?          @map("dosage_instructions") @db.LongText
+  storageInstructions  String?          @map("storage_instructions") @db.LongText
+  warnings             String?          @db.LongText
+  description          String           @db.LongText
+  status               MedicineStatus   @default(PENDING)
+  isActive             Boolean          @default(true) @map("is_active")
+  maxPrice             Decimal?         @map("max_price") @db.Decimal(10, 8)
   //! Relations
-  category             Category       @relation(fields: [categoryId], references: [id])
+  category             Category         @relation(fields: [categoryId], references: [id])
+  medicineImages       MedicineImages[]
 
   @@index([categoryId, isActive, status], map: "idx_medicines_category_active_status")
   @@index([genericName], map: "idx_medicines_generic_name")
   @@index([brandName], map: "idx_medicines_brand_name")
   @@map("medicines")
+}
+
+model MedicineImages {
+  id         BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  medicineId BigInt @map("medicine_id") @db.UnsignedBigInt
+  url        String @db.VarChar(255)
+  sortOrder  Int    @map("sort_order") @db.TinyInt
+
+  //! Relations
+  medicine Medicine @relation(fields: [medicineId], references: [id])
+
+  @@unique([medicineId, sortOrder], map: "uq_medicine_images_medicine_sort")
+  @@index([medicineId], map: "idx_medicine_images_medicine_id")
+  @@map("medicine_images")
 }
