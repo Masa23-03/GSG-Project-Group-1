@@ -195,7 +195,7 @@ model Delivery {
   deliveredAt DateTime? @map("delivered_at") @db.DateTime(0)
 
   //! Relations
-  order          Order           @relation(fields: [orderId], references: [id])
+  order          Order           @relation("OrderDelivery", fields: [orderId], references: [id])
   driver         Driver?         @relation(fields: [driverId], references: [id])
   pharmacyOrders PharmacyOrder[]
 
@@ -360,9 +360,10 @@ model Order {
   updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  patient        User            @relation(fields: [patientId], references: [id])
-  address        PatientAddress? @relation(fields: [addressId], references: [id])
-  delivery       Delivery?
+  patient  User            @relation(fields: [patientId], references: [id])
+  address  PatientAddress? @relation(fields: [addressId], references: [id])
+  delivery Delivery?       @relation("OrderDelivery")
+
   payment        Payment?
   pharmacyOrders PharmacyOrder[]
 
