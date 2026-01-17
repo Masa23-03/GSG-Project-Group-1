@@ -45,7 +45,7 @@ model User {
   //! Relations
   pharmacy           Pharmacy?  @relation("PharmacyOwner")
   verifiedPharmacies Pharmacy[] @relation("PharmacyVerifier")
-  driver             Driver?    @relation("Driver")
+  driver             Driver?    @relation("DriverOwner")
   verifiedDrivers    Driver[]   @relation("DriverVerifier")
 
   @@index([role], map: "idx_users_role")
@@ -100,7 +100,7 @@ model Driver {
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  user  User  @relation("Driver", fields: [userId], references: [id])
+  user  User  @relation("DriverOwner", fields: [userId], references: [id])
   admin User? @relation("DriverVerifier", fields: [verifiedBy], references: [id])
 
   @@index([verificationStatus], map: "idx_drivers_verified")
