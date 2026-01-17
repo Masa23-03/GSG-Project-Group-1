@@ -152,12 +152,18 @@ model Category {
   categoryImageUrl String? @db.VarChar(255)
   description      String? @db.MediumText
 
+  //! Relations
+  medicines Medicine[]
+
   @@index([name], map: "idx_categories _name")
   @@map("categories")
 }
 
-//   feat: add Medicine model in Prisma schema
+//   feat: add Medicine and Category relationship in Prisma schema
 
 model Medicine {
-  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  id         BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  categoryId BigInt @map("category_id") @db.UnsignedBigInt
+
+  category Category @relation(fields: [categoryId], references: [id])
 }
