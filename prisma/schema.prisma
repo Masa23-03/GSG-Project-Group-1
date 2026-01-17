@@ -74,3 +74,5 @@ model Pharmacy {
   @@index([city], map: "idx_pharmacies_cities")
   @@map("pharmacies")
 }
+
+model Driver{}
