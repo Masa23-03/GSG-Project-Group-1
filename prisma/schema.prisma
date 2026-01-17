@@ -114,7 +114,7 @@ model Delivery {
   id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
 }
 
-//   feat: add std and express fee amount fields to CityDeliveryFees model in Prisma schema
+//   feat: add currency field to CityDeliveryFees model in Prisma schema
 
 model PatientAddress {
   id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
@@ -143,4 +143,5 @@ model CityDeliveryFees {
   city              String   @unique @db.VarChar(255)
   standardFeeAmount Decimal  @default(0) @map("standard_fee_amount") @db.Decimal(10, 7)
   expressFeeAmount  Decimal? @map("express_fee_amount") @db.Decimal(10, 7)
+  currency          String   @default("ILS") @db.Char(3)
 }
