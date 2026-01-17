@@ -338,9 +338,11 @@ model Order {
   createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 
+  //! Relations
   patient  User            @relation(fields: [patientId], references: [id])
   address  PatientAddress? @relation(fields: [addressId], references: [id])
   delivery Delivery?
+  payment  Payment?
 
   @@index([patientId, status], map: "idx_orders_patient_status")
   @@index([createdAt], map: "idx_orders_created_at")
@@ -348,8 +350,17 @@ model Order {
 }
 
 model Payment {
-  id       BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
-  orderId  BigInt  @unique @map("order_id") @db.UnsignedBigInt
-  amount   Decimal @db.Decimal(10, 7)
-  currency String  @default("ILS") @db.Char(3)
+  id        BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  orderId   BigInt        @unique @map("order_id") @db.UnsignedBigInt
+  amount    Decimal       @db.Decimal(10, 7)
+  currency  String        @default("ILS") @db.Char(3)
+  status    PaymentStatus @default(PENDING)
+  createdAt DateTime      @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.DateTime(0)
+
+  //! Relations
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([status], map: "idx_payments_status")
+  @@map("payments")
 }
