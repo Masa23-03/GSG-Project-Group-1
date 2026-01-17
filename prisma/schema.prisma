@@ -447,9 +447,28 @@ model Prescription {
   updatedAt           DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  pharmacyOrder PharmacyOrder @relation(fields: [pharmacyOrderId], references: [id])
+  pharmacyOrder     PharmacyOrder      @relation(fields: [pharmacyOrderId], references: [id])
+  prescriptionFiles PrescriptionFile[]
 
   @@index([pharmacyOrderId], map: "idx_prescriptions_pharmacy_order")
   @@index([status], map: "idx_prescriptions_status")
   @@map("prescriptions")
+}
+
+model PrescriptionFile {
+  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+
+  prescriptionId BigInt @map("prescription_id") @db.UnsignedBigInt
+  url            String @db.VarChar(255)
+  sortOrder      Int    @map("sort_order") @db.SmallInt
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+
+  //! Relations
+  prescription Prescription @relation(fields: [prescriptionId], references: [id])
+
+  @@index([prescriptionId], map: "idx_prescription_files_prescription")
+  @@index([prescriptionId, sortOrder], map: "idx_prescription_files_order")
+  @@map("prescription_files")
 }
