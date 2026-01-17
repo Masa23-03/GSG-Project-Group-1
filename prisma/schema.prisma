@@ -12,3 +12,26 @@ enum UserRole {
   DRIVER
   ADMIN
 }
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id              BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  email           String     @unique @db.VarChar(255)
+  password        String     @db.VarChar(255)
+  role            UserRole   @default(PATIENT)
+  status          UserStatus @default(ACTIVE)
+  name            String     @db.VarChar(255)
+  phoneNumber     String     @map("phone_number") @db.VarChar(255)
+  dateOfBirth     DateTime?  @db.Date()
+  profileImageUrl String?    @map("profile_image_url") @db.VarChar(255)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.DateTime(0)
+
+  @@index([role], map: "idx_users_role")
+  @@index([status], map: "idx_users_status")
+  @@map("users")
+}
