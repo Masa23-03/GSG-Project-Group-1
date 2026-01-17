@@ -112,3 +112,7 @@ model Driver {
 model Delivery {
   id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
 }
+
+model PatientAddress {
+  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+}
