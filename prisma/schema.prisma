@@ -75,4 +75,6 @@ model Pharmacy {
   @@map("pharmacies")
 }
 
-model Driver{}
+model Driver {
+  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+}
