@@ -35,6 +35,17 @@ enum MedicineStatus {
   REJECTED
 }
 
+enum OrderStatus {
+  PENDING
+  PARTIALLY_ACCEPTED
+  ACCEPTED
+  PROCESSING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  REJECTED
+  CANCELLED
+}
+
 model User {
   id              BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
   email           String     @unique @db.VarChar(255)
