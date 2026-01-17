@@ -76,6 +76,7 @@ model Pharmacy {
 }
 
 model Driver {
-  id     BigInt @id @default(autoincrement()) @db.UnsignedBigInt
-  userId BigInt @unique @db.UnsignedBigInt
+  id         BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  userId     BigInt  @unique @db.UnsignedBigInt
+  verifiedBy BigInt? @db.UnsignedBigInt
 }
