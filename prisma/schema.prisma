@@ -115,8 +115,10 @@ model Delivery {
 }
 
 model PatientAddress {
-  id     BigInt @id @default(autoincrement()) @db.UnsignedBigInt
-  userId BigInt @unique @db.UnsignedBigInt
+  id     BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  userId BigInt  @unique @db.UnsignedBigInt
+  label  String? @db.VarChar(255)
+  area   String? @db.VarChar(255)
 
   //! Relations
   user User @relation(fields: [userId], references: [id])
