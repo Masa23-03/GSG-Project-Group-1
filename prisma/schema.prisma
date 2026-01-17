@@ -199,6 +199,8 @@ model Delivery {
   driver         Driver?         @relation(fields: [driverId], references: [id])
   pharmacyOrders PharmacyOrder[]
 
+  @@index([driverId], map: "idx_deliveries_driver")
+  @@index([status], map: "idx_deliveries_status")
   @@map("deliveries")
 }
 
