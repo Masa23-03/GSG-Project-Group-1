@@ -138,8 +138,9 @@ model Driver {
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  user  User  @relation("DriverOwner", fields: [userId], references: [id])
-  admin User? @relation("DriverVerifier", fields: [verifiedBy], references: [id])
+  user       User       @relation("DriverOwner", fields: [userId], references: [id])
+  admin      User?      @relation("DriverVerifier", fields: [verifiedBy], references: [id])
+  deliveries Delivery[]
 
   @@index([verificationStatus], map: "idx_drivers_verified")
   @@index([availabilityStatus], map: "idx_drivers_availability")
@@ -148,9 +149,24 @@ model Driver {
 }
 
 model Delivery {
-  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+  id                   BigInt                      @id @default(autoincrement()) @db.UnsignedBigInt
+  orderId              BigInt                      @unique @map("order_id") @db.UnsignedBigInt
+  driverId             BigInt?                     @map("driver_id") @db.UnsignedBigInt
+  status               DeliveryStatus              @default(PENDING)
+  confirmationMethod   DeliveryConfirmationMethod? @map("confirmation_method")
+  confirmationPhotoUrl String?                     @map("confirmation_photo_url") @db.VarChar(255)
+  confirmationOtpHash  String?                     @map("confirmation_otp_hash") @db.VarChar(255)
+
+  createdAt   DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.DateTime(0)
+  acceptedAt  DateTime? @map("accepted_at") @db.DateTime(0)
+  deliveredAt DateTime? @map("delivered_at") @db.DateTime(0)
+
+  //! Relations
+  order  Order   @relation(fields: [orderId], references: [id])
+  driver Driver? @relation(fields: [driverId], references: [id])
+
+  @@map("deliveries")
 }
 
 model PatientAddress {
@@ -307,8 +323,9 @@ model Order {
   createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 
-  patient User            @relation(fields: [patientId], references: [id])
-  address PatientAddress? @relation(fields: [addressId], references: [id])
+  patient  User            @relation(fields: [patientId], references: [id])
+  address  PatientAddress? @relation(fields: [addressId], references: [id])
+  delivery Delivery?
 
   @@index([patientId, status], map: "idx_orders_patient_status")
   @@index([createdAt], map: "idx_orders_created_at")
