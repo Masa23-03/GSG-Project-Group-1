@@ -64,6 +64,11 @@ enum DeliveryConfirmationMethod {
   OTP
 }
 
+enum PaymentMethod {
+  COD
+  CREDIT_CARD
+}
+
 model User {
   id              BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
   email           String     @unique @db.VarChar(255)
