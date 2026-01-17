@@ -282,4 +282,7 @@ model Order {
   totalAmount            Decimal  @map("total_amount") @db.Decimal(10, 7)
   originalTotalAmount    Decimal? @map("original_total_amount") @db.Decimal(10, 7)
   currency               String   @default("ILS") @db.Char(3)
+
+  itemsCount         Int  @map("items_count") @db.Int
+  originalItemsCount Int? @map("original_items_count") @db.Int
 }
