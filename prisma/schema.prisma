@@ -110,4 +110,5 @@ model Driver {
 }
 
 model Delivery {
+  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
 }
