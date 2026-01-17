@@ -265,3 +265,7 @@ model InventoryItem {
   @@index([pharmacyId, expiryDate], map: "idx_inventory_pharmacy_expiry")
   @@map("inventory_items")
 }
+
+model Order {
+  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+}
