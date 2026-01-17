@@ -272,4 +272,6 @@ model Order {
   deliveryCity        String  @map("delivery_city") @db.VarChar(255)
   deliveryArea        String? @map("delivery_area") @db.VarChar(255)
   deliveryAddressLine String  @map("delivery_address_line") @db.Text
+
+  contactName String @map("contact_name") @db.VarChar(255)
 }
