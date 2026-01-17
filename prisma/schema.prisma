@@ -51,6 +51,14 @@ enum DeliveryType {
   EXPRESS
 }
 
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  PICKUP_IN_PROGRESS
+  EN_ROUTE
+  DELIVERED
+}
+
 model User {
   id              BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
   email           String     @unique @db.VarChar(255)
