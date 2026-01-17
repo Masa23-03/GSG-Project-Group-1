@@ -62,8 +62,8 @@ model Pharmacy {
   licenseDocumentUrl String?            @map("license_document_url") @db.VarChar(255)
   city               String             @db.VarChar(255)
   address            String             @db.Text
-  latitude           Decimal?           @db.Decimal()
-  longitude          Decimal?           @db.Decimal()
+  latitude           Decimal?           @db.Decimal(10, 8)
+  longitude          Decimal?           @db.Decimal(11, 8)
   coverImageUrl      String?            @map("cover_image_url") @db.VarChar(255)
   verificationStatus VerificationStatus @default(UNDER_REVIEW) @map("verification_status")
   verifiedAt         DateTime?          @map("verified_at") @db.Timestamp()
