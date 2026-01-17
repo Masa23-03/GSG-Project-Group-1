@@ -114,7 +114,7 @@ model Delivery {
   id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
 }
 
-//   feat: add Category model in Prisma schema
+//   feat: add fields to Category model in Prisma schema
 
 model PatientAddress {
   id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
@@ -149,5 +149,11 @@ model CityDeliveryFee {
 }
 
 model Category {
-  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  id               BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  name             String  @db.VarChar(255)
+  categoryImageUrl String? @db.VarChar(255)
+  description      String? @db.MediumText
+
+  @@index([name], map: "idx_categories _name")
+  @@map("categories")
 }
