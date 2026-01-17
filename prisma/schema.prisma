@@ -141,6 +141,7 @@ model Pharmacy {
   // verifier (admin, 1–many)
   admin          User?           @relation("PharmacyVerifier", fields: [verifiedBy], references: [id])
   inventoryItems InventoryItem[]
+  pharmacyOrders PharmacyOrder[]
 
   @@index([verificationStatus], map: "idx_pharmacies_verified")
   @@index([city], map: "idx_pharmacies_cities")
@@ -188,8 +189,9 @@ model Delivery {
   deliveredAt DateTime? @map("delivered_at") @db.DateTime(0)
 
   //! Relations
-  order  Order   @relation(fields: [orderId], references: [id])
-  driver Driver? @relation(fields: [driverId], references: [id])
+  order          Order           @relation(fields: [orderId], references: [id])
+  driver         Driver?         @relation(fields: [driverId], references: [id])
+  pharmacyOrders PharmacyOrder[]
 
   @@map("deliveries")
 }
@@ -349,10 +351,11 @@ model Order {
   updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  patient  User            @relation(fields: [patientId], references: [id])
-  address  PatientAddress? @relation(fields: [addressId], references: [id])
-  delivery Delivery?
-  payment  Payment?
+  patient        User            @relation(fields: [patientId], references: [id])
+  address        PatientAddress? @relation(fields: [addressId], references: [id])
+  delivery       Delivery?
+  payment        Payment?
+  pharmacyOrders PharmacyOrder[]
 
   @@index([patientId, status], map: "idx_orders_patient_status")
   @@index([createdAt], map: "idx_orders_created_at")
@@ -373,4 +376,32 @@ model Payment {
 
   @@index([status], map: "idx_payments_status")
   @@map("payments")
+}
+
+model PharmacyOrder {
+  id                   BigInt              @id @default(autoincrement()) @db.UnsignedBigInt
+  orderId              BigInt              @map("order_id") @db.UnsignedBigInt
+  pharmacyId           BigInt              @map("pharmacy_id") @db.UnsignedBigInt
+  deliveryId           BigInt?             @map("delivery_id") @db.UnsignedBigInt
+  status               PharmacyOrderStatus @default(PENDING)
+  pickupOrder          Int?                @map("pickup_order") @db.SmallInt
+  pickedUpAt           DateTime?           @map("picked_up_at") @db.Timestamp()
+  requiresPrescription Boolean             @map("requires_prescription")
+  subtotalAmount       Decimal             @map("subtotal_amount") @db.Decimal(10, 7)
+  currency             String              @default("ILS") @db.Char(3)
+  acceptedAt           DateTime?           @map("accepted_at") @db.Timestamp()
+  rejectedAt           DateTime?           @map("rejected_at") @db.Timestamp()
+  createdAt            DateTime            @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt            DateTime            @updatedAt @map("updated_at") @db.DateTime(0)
+
+  //! Relations
+  order    Order     @relation(fields: [orderId], references: [id])
+  pharmacy Pharmacy  @relation(fields: [pharmacyId], references: [id])
+  delivery Delivery? @relation(fields: [deliveryId], references: [id])
+
+  @@unique([orderId, pharmacyId], map: "uq_pharmacy_orders_order_pharmacy")
+  @@index([orderId], map: "idx_pharmacy_orders_order")
+  @@index([pharmacyId, status], map: "idx_pharmacy_orders_pharmacy_status")
+  @@index([deliveryId], map: "idx_pharmacy_orders_delivery")
+  @@map("pharmacy_orders")
 }
