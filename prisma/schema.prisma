@@ -45,8 +45,8 @@ model User {
   //! Relations
   pharmacy           Pharmacy?  @relation("PharmacyOwner")
   verifiedPharmacies Pharmacy[] @relation("PharmacyVerifier")
-  driver             Driver?
-  drivers            Driver[]
+  driver             Driver?    @relation("Driver")
+  verifiedDrivers    Driver[]   @relation("DriverVerifier")
 
   @@index([role], map: "idx_users_role")
   @@index([status], map: "idx_users_status")
