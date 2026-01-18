@@ -95,6 +95,12 @@ enum PharmacyOrderStatus {
   COMPLETED
 }
 
+model refreshTokens {
+  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+
+  @@map("refresh_tokens")
+}
+
 model User {
   id              BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
   email           String     @unique @db.VarChar(255)
