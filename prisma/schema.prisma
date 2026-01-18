@@ -146,7 +146,7 @@ model Pharmacy {
   licenseNumber      String             @unique @map("license_number") @db.VarChar(255)
   licenseDocumentUrl String?            @map("license_document_url") @db.VarChar(255)
   city               String             @db.VarChar(255)
-  address            String             @db.Text
+  address            String?            @db.Text
   latitude           Decimal?           @db.Decimal(10, 8)
   longitude          Decimal?           @db.Decimal(11, 8)
   coverImageUrl      String?            @map("cover_image_url") @db.VarChar(255)
@@ -179,10 +179,12 @@ model Driver {
   vehicleName        String             @map("vehicle_name") @db.VarChar(255)
   vehiclePlate       String             @unique @map("vehicle_plate") @db.VarChar(255)
   licenseDocumentUrl String             @map("license_document_url") @db.VarChar(255)
-  currentCity        String             @map("current_city") @db.VarChar(255)
-  currentArea        String?            @map("current_area") @db.VarChar(255)
   availabilityStatus AvailabilityStatus @default(OFFLINE) @map("availability_status")
   verificationStatus VerificationStatus @default(UNDER_REVIEW) @map("verification_status")
+  lastLatitude       Decimal?           @map("last_latitude") @db.Decimal(10, 8)
+  lastLongitude      Decimal?           @map("last_longitude") @db.Decimal(11, 8)
+  licenseNumber      String?            @unique @map("license_number") @db.VarChar(255)
+  lastLocationAt     DateTime?          @map("last_location_at") @db.Timestamp()
   createdAt          DateTime           @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
@@ -193,7 +195,6 @@ model Driver {
 
   @@index([verificationStatus], map: "idx_drivers_verified")
   @@index([availabilityStatus], map: "idx_drivers_availability")
-  @@index([currentCity], map: "idx_drivers_cities")
   @@map("drivers")
 }
 
