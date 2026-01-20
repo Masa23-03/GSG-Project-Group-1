@@ -48,7 +48,7 @@ export type ApiErrorResponse = {
 
 export type UnifiedApiResponse<T> =
     | ApiSuccessResponse<T>
-    | ApiPaginationResponse<T>
+    | ApiPaginationSuccessResponse<T>
     | ApiErrorResponse
 
 
