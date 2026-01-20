@@ -9,7 +9,7 @@ import { Reflector } from '@nestjs/core';
 import { UserRole } from '@prisma/client';
 import { Observable } from 'rxjs';
 import { Roles } from 'src/decorators/roles.decorator';
-
+import { Request } from 'express';
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
