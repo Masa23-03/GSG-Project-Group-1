@@ -1,7 +1,9 @@
+import { UserRole } from '@prisma/client';
+
 declare global {
   namespace Express {
     interface Request {
-        user?: 
+      user?: { id: string; role: UserRole };
     }
   }
   interface BigInt {
