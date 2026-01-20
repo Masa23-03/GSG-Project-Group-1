@@ -91,6 +91,7 @@ enum PharmacyOrderStatus {
   REJECTED
   PREPARING
   READY_FOR_PICKUP
+  //at least one pharmacy status is READY_FOR_PICKUP -> into delivery
   PICKED_UP
   COMPLETED
 }
@@ -116,13 +117,14 @@ model User {
   email           String     @unique @db.VarChar(255)
   password        String     @db.VarChar(255)
   role            UserRole   @default(PATIENT)
-  status          UserStatus @default(ACTIVE)
+  status          UserStatus @default(ACTIVE) //flag
   name            String     @db.VarChar(255)
   phoneNumber     String     @map("phone_number") @db.VarChar(255)
   dateOfBirth     DateTime?  @db.Date()
   profileImageUrl String?    @map("profile_image_url") @db.VarChar(255)
   createdAt       DateTime   @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt       DateTime   @updatedAt @map("updated_at") @db.DateTime(0)
+  //createdBy  :by admin or self
 
   //! Relations
   pharmacy           Pharmacy?        @relation("PharmacyOwner")
@@ -247,10 +249,10 @@ model PatientAddress {
 
 model CityDeliveryFee {
   id                BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  city              String   @unique @db.VarChar(255)
+  city              String   @unique @db.VarChar(255) //city table
   standardFeeAmount Decimal  @default(0) @map("standard_fee_amount") @db.Decimal(10, 7)
   expressFeeAmount  Decimal? @map("express_fee_amount") @db.Decimal(10, 7)
-  currency          String   @default("ILS") @db.Char(3)
+  currency          String   @default("ILS") @db.Char(3) //currency table 
   createdAt         DateTime @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt         DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 
