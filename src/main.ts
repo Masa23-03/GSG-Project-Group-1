@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { env } from './config/env';
@@ -7,7 +9,9 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 async function bootstrap() {
+  console.log('DATABASE_URL=', env['DATABASE_URL']);
   const app = await NestFactory.create(AppModule);
+
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: true,
