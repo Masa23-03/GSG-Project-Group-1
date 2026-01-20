@@ -18,7 +18,7 @@ export type ApiSuccessResponse<T> = {
     data: T 
 }
 
-export type ApiPaginationResponse<T> = {
+export type ApiPaginationSuccessResponse<T> = {
     success: true
     data: T[]
     meta: PaginationResponseType
@@ -48,7 +48,7 @@ export type ApiErrorResponse = {
 
 export type UnifiedApiResponse<T> =
     | ApiSuccessResponse<T>
-    | ApiPaginationResponse<T>
+    | ApiPaginationSuccessResponse<T>
     | ApiErrorResponse
 
 
