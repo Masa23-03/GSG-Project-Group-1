@@ -1,17 +1,16 @@
-import { HttpStatus } from "@nestjs/common"
-
+import { HttpStatus } from '@nestjs/common';
 
 export type PaginationQueryType = {
-    page?: number
-    limit?: number
-}
+  page?: number;
+  limit?: number;
+};
 
 export type PaginationResponseType = {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-}
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
 
 export type ApiSuccessResponse<T> = {
     success: true
@@ -24,27 +23,30 @@ export type ApiPaginationSuccessResponse<T> = {
     meta: PaginationResponseType
 }
 
+export type ApiSuccessPaginationResponse<T> = {
+  success: true;
+  data: T[];
+  meta: PaginationResponseType;
+};
 
 export type PaginationResult<T> = {
-    data : T[]
-    meta : PaginationResponseType
-}
-
+  data: T[];
+  meta: PaginationResponseType;
+};
 
 export type ErrorField = {
-    field: string
-    message: string
-}
-
+  field: string;
+  message: string;
+};
 
 export type ApiErrorResponse = {
-    success: false
-    message: string
-    timestamp: string
-    statusCode: HttpStatus
-    path: string
-    fields?: ErrorField[]
-}
+  success: false;
+  message: string;
+  timestamp: string;
+  statusCode: HttpStatus;
+  path: string;
+  fields?: ErrorField[];
+};
 
 export type UnifiedApiResponse<T> =
     | ApiSuccessResponse<T>
