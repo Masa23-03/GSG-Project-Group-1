@@ -3,10 +3,6 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import * as argon2 from 'argon2';
 
-// DEBUG: Check if variables are loading correctly
-console.log('--- Environment Check ---');
-console.log('DB_USER:', process.env.DB_USER || 'NOT FOUND');
-console.log('DB_HOST:', process.env.DB_HOST || 'NOT FOUND');
 const adapter = new PrismaMariaDb({
       host: process.env.DB_HOST,
       port: Number(process.env.DB_PORT),
