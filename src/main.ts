@@ -3,6 +3,11 @@ import { AppModule } from './app.module';
 import { env } from './config/env';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseInterceptor } from './interceptors/response.interceptor';
+import { UncaughtException } from './filters/global-exception.filter';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
+import { ZodExceptionFilter } from './filters/zod-exception.filter';
+import { PrismaExceptionFilter } from './filters/prisma-exception.filter';
+import { ImageKitException } from './filters/image-kit-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +17,13 @@ async function bootstrap() {
     credentials: true,
   });
   app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalFilters(
+    new UncaughtException(),
+    new HttpExceptionFilter(),
+    new ZodExceptionFilter(),
+    new PrismaExceptionFilter(),
+    new ImageKitException(),
+  );
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Pharmacy Delivery API')
