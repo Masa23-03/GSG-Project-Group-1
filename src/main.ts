@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { env } from './config/env';
@@ -9,8 +11,13 @@ import { ZodExceptionFilter } from './filters/zod-exception.filter';
 import { PrismaExceptionFilter } from './filters/prisma-exception.filter';
 import { ImageKitException } from './filters/image-kit-exception.filter';
 
+BigInt.prototype.toJSON = function () {
+  return this.toString();
+};
 async function bootstrap() {
+  console.log('DATABASE_URL=', env['DATABASE_URL']);
   const app = await NestFactory.create(AppModule);
+
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: true,
