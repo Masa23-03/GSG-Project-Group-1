@@ -31,5 +31,6 @@ export class ZodExceptionFilter implements ExceptionFilter {
       })),
     };
     res.status(status).json(errorResponse);
+    console.error('[UncaughtException]', exception);
   }
 }
