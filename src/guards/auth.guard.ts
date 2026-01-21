@@ -28,18 +28,21 @@ export class AuthGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest<Request>();
     const authHeader = req.headers.authorization;
+    if (!authHeader)
+      throw new UnauthorizedException('Missing Authorization header');
 
-    const jwt = authHeader?.split(' ')[1];
-    if (!jwt) throw new UnauthorizedException();
+    const [type, token] = authHeader.split(' ');
+    if (type !== 'Bearer' || !token)
+      throw new UnauthorizedException('Invalid Auth Header');
 
     try {
-      const payload = this.jwtService.verify<JWT_Payload>(jwt);
+      const payload = this.jwtService.verify<JWT_Payload>(token);
       const user = await this.prisma.user.findUniqueOrThrow({
         where: { id: BigInt(payload.sub) },
       });
       req.user = { id: String(user.id), role: user.role };
-    } catch (error) {
-      throw new UnauthorizedException(error);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired token');
     }
     return true;
   }
