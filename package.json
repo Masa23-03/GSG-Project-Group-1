@@ -21,7 +21,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "seed": "node -r dotenv/config -r ts-node/register src/seeds/seed.ts"
+    "seed": "ts-node src/seeds/seed.ts"
   },
   "dependencies": {
     "@imagekit/nodejs": "^7.2.1",
