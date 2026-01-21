@@ -8,6 +8,7 @@ import { DatabaseModule } from './modules/database/database.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { FileModule } from './modules/file/file.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RolesGuard } from './guards/roles.guard';
     DriverModule,
     PharmacyModule,
     DatabaseModule,
+    FileModule,
   ],
   providers: [
     {
