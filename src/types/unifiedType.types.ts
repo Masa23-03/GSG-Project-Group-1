@@ -13,9 +13,15 @@ export type PaginationResponseType = {
 };
 
 export type ApiSuccessResponse<T> = {
-  success: true;
-  data: T;
-};
+    success: true
+    data: T 
+}
+
+export type ApiPaginationSuccessResponse<T> = {
+    success: true
+    data: T[]
+    meta: PaginationResponseType
+}
 
 export type ApiSuccessPaginationResponse<T> = {
   success: true;
@@ -43,6 +49,8 @@ export type ApiErrorResponse = {
 };
 
 export type UnifiedApiResponse<T> =
-  | ApiSuccessResponse<T>
-  | ApiSuccessPaginationResponse<T>
-  | ApiErrorResponse;
+    | ApiSuccessResponse<T>
+    | ApiPaginationSuccessResponse<T>
+    | ApiErrorResponse
+
+
