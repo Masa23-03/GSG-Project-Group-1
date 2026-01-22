@@ -4,7 +4,7 @@ import ImageKit, { toFile } from '@imagekit/nodejs';
 import { UploadPurpose } from './types/file.types';
 import { UPLOAD_RULES } from './types/file.rules';
 import * as fs from 'node:fs/promises';
-import { UploadFileResponseDto } from './dto/UploadFileResponseDto';
+import * as fsSync from 'node:fs';
 
 @Injectable()
 export class FileService {
@@ -20,9 +20,11 @@ export class FileService {
         `File path missing (diskStorage not configured)`,
       );
     try {
-      const fileBuffer = await fs.readFile(file.path);
+      const stream = fsSync.createReadStream(file.path);
+      const uploadedFile = await toFile(stream);
+
       const res = await this.imageKit.files.upload({
-        file: fileBuffer,
+        file: uploadedFile,
         fileName: file.originalname,
         folder: rule.folder,
         useUniqueFileName: true,
@@ -31,7 +33,7 @@ export class FileService {
         fileId: res.fileId,
         url: res.url,
         purpose: purpose,
-        mimetype: file.mimetype,
+        mimeType: file.mimetype,
         size: file.size,
       };
     } finally {
@@ -39,6 +41,23 @@ export class FileService {
       await fs.unlink(file.path).catch(() => {});
     }
   }
-  validateFile(file: Express.Multer.File, purpose: UploadPurpose) {}
-  deleteFile(fileId) {}
+  validateFile(file: Express.Multer.File, purpose: UploadPurpose) {
+    const rule = UPLOAD_RULES[purpose];
+    if (!rule) throw new BadRequestException('Invalid purpose');
+    if (!rule.allowedMime.includes(file.mimetype)) {
+      throw new BadRequestException(
+        `Invalid file type: ${file.mimetype}. Allowed: ${rule.allowedMime.join(', ')}`,
+      );
+    }
+    if (file.size > rule.maxBytes) {
+      throw new BadRequestException(
+        `File too large. Max ${(rule.maxBytes / (1024 * 1024)).toFixed(0)}MB`,
+      );
+    }
+  }
+  async deleteFile(fileId) {
+    if (!fileId) throw new BadRequestException('fileId is required');
+    await this.imageKit.files.delete(fileId);
+    return { deleted: true };
+  }
 }
