@@ -1,5 +1,6 @@
-export declare type Nullable<T = unknown> = T | null | undefined;
+import { UploadPurpose } from 'src/modules/file/types/file.types';
 
+export declare type Nullable<T = unknown> = T | null | undefined;
 export const nonNullableArray = <T>(arr: Nullable<T>[]): T[] =>
   arr.filter((item) => item !== null && item !== undefined) as T[];
 
