@@ -6,7 +6,7 @@ import { env } from 'src/config/env';
 
 export const IMAGEKIT = Symbol('IMAGEKIT');
 
-export const imageKitProvider = {
+export const ImageKitProvider = {
   provide: IMAGEKIT,
 
   useFactory: () => {
