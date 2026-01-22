@@ -8,6 +8,16 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(16),
+
+  DB_HOST: z.string().min(1),
+
+  DB_PORT: z.coerce.number().int().positive().default(3306),
+
+  DB_USER: z.string().min(1),
+  DB_PASS: z.string().min(6),
+  DB_NAME: z.string().min(1),
+
+  IMAGEKIT_PRIVATE_KEY: z.string().min(16),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
