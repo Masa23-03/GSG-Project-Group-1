@@ -9,6 +9,6 @@ export const pharmacyValidationSchema = baseRegisterSchema.extend({
     licenseDocUrl: urlSchema.optional(),
     city: z.string().trim().min(2).max(255),
     address: z.string().trim().min(2),
-    lat: z.coerce.number().min(-180).max(180).optional(),
+    lat: z.coerce.number().min(-90).max(90).optional(),
     lng: z.coerce.number().min(-180).max(180).optional(),
 }).strict() satisfies ZodType<RegisterPharmacyDTO>;
