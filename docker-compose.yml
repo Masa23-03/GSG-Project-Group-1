@@ -9,6 +9,9 @@ services:
       - .env
     depends_on:
       - mysql_db
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
 
   mysql_db:
     image: mysql:8.0
