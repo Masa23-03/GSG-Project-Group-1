@@ -16,10 +16,9 @@ const EnvSchema = z.object({
   DB_USER: z.string().min(1),
   DB_PASS: z.string().min(6),
   DB_NAME: z.string().min(1),
-
-  IMAGEKIT_PUBLIC_KEY: z.string().startsWith('public_'),
-  IMAGEKIT_PRIVATE_KEY: z.string().startsWith('private_'),
-  IMAGEKIT_URL_ENDPOINT: z.string().url(),
+  CLOUDINARY_CLOUD_NAME: z.string().min(1),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
