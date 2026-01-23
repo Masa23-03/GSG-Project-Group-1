@@ -30,7 +30,7 @@ export class ZodExceptionFilter implements ExceptionFilter {
           env.NODE_ENV === 'development' ? issue.message : 'Invalid value',
       })),
     };
-    res.status(status).json(errorResponse);
     console.error('[UncaughtException]', exception);
+    res.status(status).json(errorResponse);
   }
 }

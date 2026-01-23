@@ -73,7 +73,8 @@ export class PrismaExceptionFilter implements ExceptionFilter {
           errorResponse.message = 'Database request error';
       }
     }
-    return res.status(errorResponse.statusCode).json(errorResponse);
     console.error('[UncaughtException]', exception);
+
+    return res.status(errorResponse.statusCode).json(errorResponse);
   }
 }

@@ -20,8 +20,8 @@ export class UncaughtException implements ExceptionFilter {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       path: req.url,
     };
+    console.error('[UncaughtException]', exception);
 
     return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
-    console.error('[UncaughtException]', exception);
   }
 }

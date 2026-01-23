@@ -22,8 +22,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: status,
       path: request.url,
     };
+    console.error('[UncaughtException]', exception);
 
     response.status(status).json(errorResponse);
-    console.error('[UncaughtException]', exception);
   }
 }
