@@ -4,6 +4,7 @@ import { UPLOAD_RULES } from './types/file.rules';
 import * as fs from 'node:fs/promises';
 import { CLOUDINARY } from './cloudinary.provider';
 import type { v2 as CloudinaryV2 } from 'cloudinary';
+import { HttpExceptionFilter } from 'src/filters/http-exception.filter';
 
 @Injectable()
 export class FileService {
