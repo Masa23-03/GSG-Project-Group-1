@@ -9,7 +9,7 @@ import { UncaughtException } from './filters/global-exception.filter';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { ZodExceptionFilter } from './filters/zod-exception.filter';
 import { PrismaExceptionFilter } from './filters/prisma-exception.filter';
-import { ImageKitException } from './filters/image-kit-exception.filter';
+import { MulterExceptionFilter } from './filters/file-upload.filter';
 
 BigInt.prototype.toJSON = function () {
   return this.toString();
@@ -24,12 +24,13 @@ async function bootstrap() {
     credentials: true,
   });
   app.useGlobalInterceptors(new ResponseInterceptor());
+
   app.useGlobalFilters(
-    new UncaughtException(),
-    new HttpExceptionFilter(),
     new ZodExceptionFilter(),
     new PrismaExceptionFilter(),
-    // new ImageKitException(),
+    new MulterExceptionFilter(),
+    new HttpExceptionFilter(),
+    //new UncaughtException(),
   );
 
   const swaggerConfig = new DocumentBuilder()
