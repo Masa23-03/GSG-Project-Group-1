@@ -1,4 +1,3 @@
-import { APIError } from '@imagekit/nodejs';
 import {
   ArgumentsHost,
   Catch,
