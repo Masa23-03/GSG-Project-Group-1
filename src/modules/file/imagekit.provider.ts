@@ -1,17 +1,14 @@
-// import ImageKit from '@imagekit/nodejs';
-
-import ImageKit from '@imagekit/nodejs';
-import { ConfigService } from '@nestjs/config';
+import ImageKit from 'imagekit';
 import { env } from 'src/config/env';
 
 export const IMAGEKIT = Symbol('IMAGEKIT');
 
 export const ImageKitProvider = {
   provide: IMAGEKIT,
-
-  useFactory: () => {
-    return new ImageKit({
+  useFactory: () =>
+    new ImageKit({
+      publicKey: env.IMAGEKIT_PUBLIC_KEY,
       privateKey: env.IMAGEKIT_PRIVATE_KEY,
-    });
-  },
+      urlEndpoint: env.IMAGEKIT_URL_ENDPOINT,
+    }),
 };

@@ -26,8 +26,7 @@ export class ImageKitException implements ExceptionFilter {
       statusCode: HttpStatus.BAD_REQUEST,
       path: request.url,
     };
-
-    return response.status(status).json(errorResponse);
     console.error('[UncaughtException]', exception);
+    return response.status(status).json(errorResponse);
   }
 }

@@ -17,10 +17,13 @@ import { UploadPurpose } from './types/file.types';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { uploadQuerySchema } from './schema/UploadFileSchema';
 import { UploadFileBodyDto } from './dto/UploadFileDto';
+import { IsPublic } from 'src/decorators/isPublic.decorator';
 
 @Controller('file')
 export class FileController {
   constructor(private readonly fileService: FileService) {}
+  //TODO: REMOVE IsPublic decorator when auth is done
+  @IsPublic()
   @Post('upload')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadFileBodyDto })
@@ -31,6 +34,6 @@ export class FileController {
     query: { purpose: UploadPurpose },
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.fileService.uploadSingle(file, query.purpose);
+    return await this.fileService.uploadSingle(file, query.purpose);
   }
 }

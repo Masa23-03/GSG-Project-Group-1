@@ -1,10 +1,11 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { IMAGEKIT } from './imagekit.provider';
-import ImageKit, { toFile } from '@imagekit/nodejs';
 import { UploadPurpose } from './types/file.types';
 import { UPLOAD_RULES } from './types/file.rules';
 import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
+import { env } from 'src/config/env';
+import ImageKit from 'imagekit';
 
 @Injectable()
 export class FileService {
@@ -20,15 +21,26 @@ export class FileService {
         `File path missing (diskStorage not configured)`,
       );
     try {
-      const stream = fsSync.createReadStream(file.path);
-      const uploadedFile = await toFile(stream);
+      // const stream = fsSync.createReadStream(file.path);
+      // const uploadedFile = await toFile(stream);
 
-      const res = await this.imageKit.files.upload({
-        file: uploadedFile,
+      // const res = await this.imageKit.files.upload({
+      //   file: uploadedFile,
+      //   fileName: file.originalname,
+      //   folder: rule.folder,
+      //   useUniqueFileName: true,
+      // });
+
+      const buf = await fs.readFile(file.path);
+
+      const res = await this.imageKit.upload({
+        file: buf.toString('base64'),
+
         fileName: file.originalname,
         folder: rule.folder,
         useUniqueFileName: true,
       });
+
       return {
         fileId: res.fileId,
         url: res.url,
@@ -36,6 +48,13 @@ export class FileService {
         mimeType: file.mimetype,
         size: file.size,
       };
+    } catch (err: any) {
+      console.log('IMAGEKIT RAW:', err);
+
+      const msg =
+        err?.message || err?.error?.message || err?.help || JSON.stringify(err);
+
+      throw new BadRequestException(`ImageKit upload failed: ${msg}`);
     } finally {
       //delete temp file:
       await fs.unlink(file.path).catch(() => {});
@@ -57,7 +76,7 @@ export class FileService {
   }
   async deleteFile(fileId) {
     if (!fileId) throw new BadRequestException('fileId is required');
-    await this.imageKit.files.delete(fileId);
+    await this.imageKit.deleteFile(fileId);
     return { deleted: true };
   }
 }

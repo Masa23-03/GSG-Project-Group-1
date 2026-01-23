@@ -6,7 +6,6 @@ import { FileController } from './file.controller';
 import multer from 'multer';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-
 const uploadDir = path.resolve(process.cwd(), 'tmp', 'uploads');
 fs.mkdirSync(uploadDir, { recursive: true });
 
