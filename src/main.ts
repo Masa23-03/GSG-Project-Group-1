@@ -10,6 +10,7 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { ZodExceptionFilter } from './filters/zod-exception.filter';
 import { PrismaExceptionFilter } from './filters/prisma-exception.filter';
 import { MulterExceptionFilter } from './filters/file-upload.filter';
+import { LoggingInterceptor } from './interceptors/logging.interceptor';
 
 BigInt.prototype.toJSON = function () {
   return this.toString();
@@ -23,7 +24,10 @@ async function bootstrap() {
     origin: true,
     credentials: true,
   });
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new ResponseInterceptor(),
+  );
 
   app.useGlobalFilters(
     new ZodExceptionFilter(),
