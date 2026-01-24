@@ -149,7 +149,7 @@ model User {
 model Pharmacy {
   id                 Int                @id @default(autoincrement()) @db.UnsignedInt
   userId             Int                @unique @db.UnsignedInt
-  verifiedBy         Int?               @db.UnsignedInt
+  reviewedBy         Int?               @db.UnsignedInt
   pharmacyName       String             @map("pharmacy_name") @db.VarChar(255)
   licenseNumber      String             @unique @map("license_number") @db.VarChar(255)
   licenseDocumentUrl String?            @map("license_document_url") @db.VarChar(255)
@@ -159,7 +159,7 @@ model Pharmacy {
   longitude          Decimal?           @db.Decimal(11, 8)
   coverImageUrl      String?            @map("cover_image_url") @db.VarChar(255)
   verificationStatus VerificationStatus @default(UNDER_REVIEW) @map("verification_status")
-  verifiedAt         DateTime?          @map("verified_at") @db.Timestamp()
+  reviewedAt         DateTime?          @map("verified_at") @db.Timestamp()
   workOpenTime       DateTime?          @map("work_open_time") @db.Time()
   workCloseTime      DateTime?          @map("work_close_time") @db.Time()
   avgPrepTimeMinutes Int                @default(10) @map("avg_prep_time_minutes") @db.TinyInt
@@ -170,7 +170,7 @@ model Pharmacy {
   // owner (1–1)
   user           User            @relation("PharmacyOwner", fields: [userId], references: [id])
   // verifier (admin, 1–many)
-  admin          User?           @relation("PharmacyVerifier", fields: [verifiedBy], references: [id])
+  admin          User?           @relation("PharmacyVerifier", fields: [reviewedBy], references: [id])
   inventoryItems InventoryItem[]
   pharmacyOrders PharmacyOrder[]
   city           City            @relation(fields: [cityId], references: [id])
