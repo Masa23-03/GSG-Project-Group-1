@@ -26,7 +26,7 @@ export class AdminDriverListItemDto {
 }
 export class AdminDriverDetailsDto extends AdminDriverListItemDto {
   @ApiProperty({ required: false })
-  licenseNumber?: string;
+  licenseNumber?: string | null;
   @ApiProperty()
   licenseDocumentUrl!: string;
 }
@@ -34,7 +34,7 @@ export class AdminDriverDetailsDto extends AdminDriverListItemDto {
 //Admin update driver status response
 export class AdminDriverVerificationUpdateResponseDto extends AdminDriverListItemDto {
   @ApiProperty({ required: false, type: String, format: 'date-time' })
-  verifiedAt?: string;
+  reviewedAt?: string | null;
   @ApiProperty({ required: false })
-  verifiedBy?: number;
+  reviewedBy?: number | null;
 }
