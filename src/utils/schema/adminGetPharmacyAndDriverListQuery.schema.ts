@@ -6,10 +6,16 @@ import { PaginationQuerySchema } from './pagination.schema.util';
 //ADMIN: Get pharmacies and drivers schema
 export const adminBaseListQuerySchema = z
   .object({
-    status: z.nativeEnum(VerificationStatus).optional(),
+    verificationStatus: z
+      .nativeEnum(VerificationStatus)
+      .default(VerificationStatus.UNDER_REVIEW),
 
     userStatus: z.nativeEnum(UserStatus).optional(),
 
     q: z.string().trim().min(1).optional(),
   })
   .merge(PaginationQuerySchema);
+
+export const adminBaseUpdateVerificationStatusSchema = z.object({
+  verificationStatus: z.nativeEnum(VerificationStatus),
+});
