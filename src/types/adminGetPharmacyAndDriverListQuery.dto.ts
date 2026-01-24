@@ -5,7 +5,7 @@ import { PaginationQueryType } from './unifiedType.types';
 
 export class AdminBaseListQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ enum: VerificationStatus })
-  status?: VerificationStatus;
+  verificationStatus?: VerificationStatus;
 
   @ApiPropertyOptional({ enum: UserStatus })
   userStatus?: UserStatus;
@@ -16,3 +16,7 @@ export class AdminBaseListQueryDto extends PaginationQueryDto {
 
 //ADMIN: Get drivers  query dto
 export type AdminListQueryDto = AdminBaseListQueryDto;
+export class AdminBaseUpdateVerificationStatusDto {
+  @ApiProperty({ enum: VerificationStatus })
+  verificationStatus!: VerificationStatus;
+}

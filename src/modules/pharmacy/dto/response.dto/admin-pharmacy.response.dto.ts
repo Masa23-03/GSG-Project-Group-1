@@ -29,13 +29,13 @@ export class AdminPharmacyDetailsDto extends AdminPharmacyListItemDto {
   @ApiProperty()
   licenseNumber!: string;
   @ApiProperty({ required: false })
-  licenseDocumentUrl?: string;
+  licenseDocumentUrl?: string | null;
 }
 
 //Admin update pharmacy status response
 export class AdminPharmacyStatusUpdateResponseDto extends AdminPharmacyListItemDto {
-  @ApiProperty({ required: false, type: String, format: 'date-time' })
-  verifiedAt?: string;
-  @ApiProperty({ required: false })
-  verifiedBy?: number;
+  @ApiProperty({ type: String, format: 'date-time' })
+  reviewedAt!: string;
+  @ApiProperty({ nullable: true })
+  reviewedBy!: number | null;
 }
