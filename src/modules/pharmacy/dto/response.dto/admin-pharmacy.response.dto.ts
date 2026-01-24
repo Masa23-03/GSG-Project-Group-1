@@ -2,11 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { VerificationStatus } from '@prisma/client';
 export class LocationDto {
   @ApiProperty({ required: false })
-  address?: string;
+  address?: string | null;
+
   @ApiProperty({ required: false })
-  latitude?: number;
+  latitude?: number | null;
   @ApiProperty({ required: false })
-  longitude?: number;
+  longitude?: number | null;
 }
 
 //Admin: get pharmacies response
