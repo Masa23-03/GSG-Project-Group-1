@@ -1,10 +1,9 @@
 import { Prisma } from '@prisma/client';
-import { adminDriverListQueryDto } from '../dto/driver.dto.';
-import { AdminDriverListQueryDto } from '../dto/query.dto/get-driver-dto';
 import { buildAdminBaseWhere } from 'src/utils/util';
+import { AdminDriverListQueryDtoT } from '../dto/query.dto/get-driver-dto';
 
 export function buildAdminDriverWhere(
-  query: adminDriverListQueryDto,
+  query: AdminDriverListQueryDtoT,
 ): Prisma.DriverWhereInput {
   const { and, q, extractedId } = buildAdminBaseWhere(query);
   const driverAnd: Prisma.DriverWhereInput[] = and as any;
