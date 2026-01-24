@@ -12,3 +12,11 @@ export class AdminBaseListQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ type: 'string' })
   q?: string;
 }
+
+//ADMIN: Get pharmacies  query dto
+export type adminListQueryDto = {
+  status?: VerificationStatus;
+  userStatus?: UserStatus;
+
+  q?: string;
+};
