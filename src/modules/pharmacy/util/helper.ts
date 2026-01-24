@@ -1,18 +1,16 @@
 import { Prisma } from '@prisma/client';
 import { adminPharmacyListQueryDto } from '../dto/pharmacy.dto';
-import { extractId } from 'src/utils/util';
+import { buildAdminBaseWhere, extractId } from 'src/utils/util';
+import { adminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 
 export type CityFilterType = Prisma.PharmacyWhereInput['city'];
 
 export function buildAdminPharmacyWhere(
-  query: adminPharmacyListQueryDto,
+  query: adminListQueryDto,
 ): Prisma.PharmacyWhereInput {
-  const and: Prisma.PharmacyWhereInput[] = [];
-  if (query.status) and.push({ verificationStatus: query.status });
-  if (query.userStatus) and.push({ user: { status: query.userStatus } });
-  if (query.q) {
-    const q = query.q;
-    const extractedId = extractId(q);
+  const { and, q, extractedId } = buildAdminBaseWhere(query);
+
+  if (q) {
     and.push({
       OR: [
         ...(extractedId ? [{ id: extractedId }, { userId: extractedId }] : []),
