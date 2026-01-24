@@ -1,7 +1,11 @@
 import { HttpStatus } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 
 export type objectType = Record<string, unknown>;
-
+export type authedUserType = {
+  id: number;
+  role: UserRole;
+};
 export type PaginationQueryType = {
   page?: number;
   limit?: number;
