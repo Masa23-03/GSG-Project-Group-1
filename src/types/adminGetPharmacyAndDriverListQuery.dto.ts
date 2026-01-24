@@ -13,7 +13,7 @@ export class AdminBaseListQueryDto extends PaginationQueryDto {
   q?: string;
 }
 
-//ADMIN: Get pharmacies  query dto
+//ADMIN: Get drivers  query dto
 export type adminListQueryDto = {
   status?: VerificationStatus;
   userStatus?: UserStatus;
