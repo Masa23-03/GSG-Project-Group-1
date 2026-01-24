@@ -1,12 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePharmacyDto } from './dto/request.dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/request.dto/update-pharmacy.dto';
-import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
-import { AdminPharmacyListItemDto } from './dto/response.dto/admin-pharmacy.response.dto';
-import { AdminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
+import {
+  ApiPaginationSuccessResponse,
+  ApiSuccessResponse,
+} from 'src/types/unifiedType.types';
+import {
+  AdminPharmacyDetailsDto,
+  AdminPharmacyListItemDto,
+  AdminPharmacyStatusUpdateResponseDto,
+} from './dto/response.dto/admin-pharmacy.response.dto';
+import {
+  AdminBaseUpdateVerificationStatusDto,
+  AdminListQueryDto,
+} from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { DatabaseService } from '../database/database.service';
 import { buildAdminPharmacyWhere } from './util/helper';
 import { removeFields } from 'src/utils/object.util';
+import { assertVerificationStatusTransition } from 'src/utils/status.helper';
 
 @Injectable()
 export class PharmacyService {
@@ -41,7 +52,7 @@ export class PharmacyService {
           longitude: true,
         },
       });
-      if (!foundedPharmacies) throw new NotFoundException();
+
       const count = await prisma.pharmacy.count({
         where: whereStatement,
       });
@@ -67,13 +78,84 @@ export class PharmacyService {
       };
     });
   }
+  //Admin view only
+  async findOneAdmin(id: number): Promise<AdminPharmacyDetailsDto> {
+    return this.prismaService.$transaction(async (prisma) => {
+      const pharmacy = await prisma.pharmacy.findFirstOrThrow({
+        where: { id },
+        select: {
+          id: true,
+          pharmacyName: true,
+          latitude: true,
+          longitude: true,
+          address: true,
+          city: { select: { name: true } },
+          verificationStatus: true,
+          licenseDocumentUrl: true,
+          licenseNumber: true,
+          user: {
+            select: {
+              phoneNumber: true,
+              id: true,
+            },
+          },
+        },
+      });
+      const data: AdminPharmacyDetailsDto = {
+        id: pharmacy.id,
+        pharmacyName: pharmacy.pharmacyName,
+        address: pharmacy.address ?? null,
+        latitude: pharmacy.latitude?.toNumber() ?? null,
 
-  findOne(id: number) {
-    return `This action returns a #${id} pharmacy`;
+        longitude: pharmacy.longitude?.toNumber() ?? null,
+        cityName: pharmacy.city.name,
+        verificationStatus: pharmacy.verificationStatus,
+        licenseNumber: pharmacy.licenseNumber,
+        licenseDocumentUrl: pharmacy.licenseDocumentUrl ?? null,
+        phoneNumber: pharmacy.user.phoneNumber,
+      };
+
+      return data;
+    });
   }
 
-  update(id: number, updatePharmacyDto: UpdatePharmacyDto) {
-    return `This action updates a #${id} pharmacy`;
+  async updatePharmacyStatus(
+    id: number,
+    updatePharmacyDto: AdminBaseUpdateVerificationStatusDto,
+    adminId: number,
+  ): Promise<AdminPharmacyStatusUpdateResponseDto> {
+    const foundedPharmacy = await this.prismaService.pharmacy.findUnique({
+      where: { id },
+    });
+    if (!foundedPharmacy) throw new NotFoundException();
+
+    assertVerificationStatusTransition(
+      foundedPharmacy.verificationStatus,
+      updatePharmacyDto.verificationStatus,
+    );
+
+    const pharmacy = await this.prismaService.pharmacy.update({
+      where: { id },
+      data: {
+        verificationStatus: updatePharmacyDto.verificationStatus,
+        reviewedBy: adminId,
+        reviewedAt: new Date(),
+      },
+      include: {
+        user: { select: { phoneNumber: true } },
+        city: { select: { name: true } },
+      },
+    });
+    const data: AdminPharmacyStatusUpdateResponseDto = {
+      id: pharmacy.id,
+      pharmacyName: pharmacy.pharmacyName,
+      reviewedAt: String(pharmacy.reviewedAt),
+      reviewedBy: adminId,
+      phoneNumber: pharmacy.user.phoneNumber,
+      cityName: pharmacy.city.name,
+      verificationStatus: pharmacy.verificationStatus,
+    };
+    return data;
   }
 
   remove(id: number) {
