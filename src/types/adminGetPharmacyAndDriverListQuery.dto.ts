@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto } from './pagination.query';
 import { UserStatus, VerificationStatus } from '@prisma/client';
+import { PaginationQueryType } from './unifiedType.types';
 
 export class AdminBaseListQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ enum: VerificationStatus })
@@ -14,9 +15,4 @@ export class AdminBaseListQueryDto extends PaginationQueryDto {
 }
 
 //ADMIN: Get drivers  query dto
-export type adminListQueryDto = {
-  status?: VerificationStatus;
-  userStatus?: UserStatus;
-
-  q?: string;
-};
+export type AdminListQueryDto = AdminBaseListQueryDto;

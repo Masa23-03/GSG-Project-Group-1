@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { adminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
+import { AdminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 
 export function extractId(q?: string): number | null {
   if (!q) return null;
@@ -9,7 +9,7 @@ export function extractId(q?: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function buildAdminBaseWhere(query: adminListQueryDto) {
+export function buildAdminBaseWhere(query: AdminListQueryDto) {
   const and: Prisma.PharmacyWhereInput[] = [];
   if (query.status) and.push({ verificationStatus: query.status });
   if (query.userStatus) and.push({ user: { status: query.userStatus } });

@@ -1,12 +1,12 @@
 import { Prisma } from '@prisma/client';
 import { adminPharmacyListQueryDto } from '../dto/pharmacy.dto';
 import { buildAdminBaseWhere, extractId } from 'src/utils/util';
-import { adminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
+import { AdminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 
 export type CityFilterType = Prisma.PharmacyWhereInput['city'];
 
 export function buildAdminPharmacyWhere(
-  query: adminListQueryDto,
+  query: AdminListQueryDto,
 ): Prisma.PharmacyWhereInput {
   const { and, q, extractedId } = buildAdminBaseWhere(query);
 
