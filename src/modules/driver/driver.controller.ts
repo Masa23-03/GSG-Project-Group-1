@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { DriverService } from './driver.service';
 import { CreateDriverDto } from './dto/request.dto/create-driver.dto';
@@ -18,10 +19,15 @@ import {
   UserStatus,
   VerificationStatus,
 } from '@prisma/client';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { adminDriverListQuerySchema } from './schema/driver.query.schema';
 import { AdminDriverListQueryDto } from './dto/query.dto/get-driver-dto';
+import { AdminBaseUpdateVerificationStatusDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
+import { adminBaseUpdateVerificationStatusSchema } from 'src/utils/schema/adminGetPharmacyAndDriverListQuery.schema';
+import { AuthController } from '../auth/auth.controller';
+import { AuthedUser } from 'src/decorators/authedUser.decorator';
+import type { authedUserType } from 'src/types/unifiedType.types';
 
 @Controller('driver')
 export class DriverController {
@@ -63,14 +69,35 @@ export class DriverController {
     return await this.driverService.findAllAdmin(query);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.driverService.findOne(+id);
+  @Roles(UserRole.ADMIN)
+  @ApiParam({ name: 'id', type: Number })
+  @Get('admin/:id')
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return await this.driverService.findOneAdmin(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDriverDto: UpdateDriverDto) {
-    return this.driverService.update(+id, updateDriverDto);
+  @Roles(UserRole.ADMIN)
+  @ApiParam({ name: 'id', type: Number })
+  @ApiBody({
+    type: AdminBaseUpdateVerificationStatusDto,
+    examples: {
+      verify: {
+        value: { verificationStatus: VerificationStatus.VERIFIED },
+      },
+      reject: {
+        value: { verificationStatus: VerificationStatus.REJECTED },
+      },
+    },
+  })
+  @Patch('admin/:id/verification')
+  async updateStatusAdmin(
+    @AuthedUser()  admin: authedUserType,
+    @Param('id', ParseIntPipe) id: number,
+    @Body(new ZodValidationPipe(adminBaseUpdateVerificationStatusSchema))
+    updateDriverDto: AdminBaseUpdateVerificationStatusDto,
+  ) {
+    return await this.driverService.updateDriverStatus(id , updateDriverDto , admin.id);
+
   }
 
   @Delete(':id')
