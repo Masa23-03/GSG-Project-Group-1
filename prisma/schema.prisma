@@ -140,6 +140,8 @@ model User {
   addresses          PatientAddress[]
   orders             Order[]
   refreshToken       RefreshToken[]
+  createdMedicines   Medicine[]       @relation("MedicineCreator")
+  reviewedMedicines  Medicine[]       @relation("MedicineReviewer")
 
   @@index([role], map: "idx_users_role")
   @@index([status], map: "idx_users_status")
@@ -168,12 +170,13 @@ model Pharmacy {
 
   //! Relations
   // owner (1–1)
-  user           User            @relation("PharmacyOwner", fields: [userId], references: [id])
+  user               User            @relation("PharmacyOwner", fields: [userId], references: [id])
   // verifier (admin, 1–many)
-  admin          User?           @relation("PharmacyVerifier", fields: [reviewedBy], references: [id])
-  inventoryItems InventoryItem[]
-  pharmacyOrders PharmacyOrder[]
-  city           City            @relation(fields: [cityId], references: [id])
+  admin              User?           @relation("PharmacyVerifier", fields: [reviewedBy], references: [id])
+  inventoryItems     InventoryItem[]
+  pharmacyOrders     PharmacyOrder[]
+  city               City            @relation(fields: [cityId], references: [id])
+  requestedMedicines Medicine[]      @relation("MedicineRequester")
 
   @@index([verificationStatus], map: "idx_pharmacies_verified")
   @@map("pharmacies")
@@ -236,7 +239,7 @@ model PatientAddress {
   label        String?  @db.VarChar(255)
   area         String?  @db.VarChar(255)
   region       String?  @db.VarChar(255)
-  country      String?  @db.VarChar(255)
+  cityId       Int      @db.UnsignedInt
   addressLine1 String   @db.Text
   addressLine2 String?  @db.Text
   latitude     Decimal? @db.Decimal(10, 8)
@@ -248,6 +251,7 @@ model PatientAddress {
   //! Relations
   user         User     @relation(fields: [userId], references: [id])
   orders       Order[]
+  city         City     @relation(fields: [cityId], references: [id])
 
   @@index([userId], map: "idx_addresses_user")
   @@map("patient_addresses")
@@ -271,9 +275,10 @@ model City {
   id   Int    @id @default(autoincrement()) @db.UnsignedInt
   name String @unique
 
-  cityDeliveryFee CityDeliveryFee?
-  pharmacies      Pharmacy[]
-  orders          Order[]
+  cityDeliveryFee  CityDeliveryFee?
+  pharmacies       Pharmacy[]
+  orders           Order[]
+  patientAddresses PatientAddress[]
 }
 
 model Category {
@@ -287,36 +292,48 @@ model Category {
   //! Relations
   medicines Medicine[]
 
+  @@unique([name], map: "uq_categories_name")
   @@index([name], map: "idx_categories_name")
   @@map("categories")
 }
 
 model Medicine {
-  id                   Int             @id @default(autoincrement()) @db.UnsignedInt
-  categoryId           Int             @map("category_id") @db.UnsignedInt
-  genericName          String          @map("generic_name") @db.VarChar(255)
-  brandName            String?         @map("brand_name") @db.VarChar(255)
-  manufacturer         String?         @db.VarChar(255)
-  dosageForm           String?         @map("dosage_form") @db.VarChar(255)
-  strengthValue        Decimal?        @map("strength_value") @db.Decimal(10, 7)
-  strengthUnit         String?         @map("strength_unit") @db.VarChar(255)
-  packSize             Int?            @map("pack_size") @db.Int
-  packUnit             String?         @map("pack_unit") @db.VarChar(255)
-  requiresPrescription Boolean         @default(false) @map("requires_prescription")
-  activeIngredients    String?         @map("active_ingredients") @db.LongText
-  dosageInstructions   String?         @map("dosage_instructions") @db.LongText
-  storageInstructions  String?         @map("storage_instructions") @db.LongText
-  warnings             String?         @db.LongText
-  description          String          @db.LongText
-  status               MedicineStatus  @default(PENDING)
-  isActive             Boolean         @default(true) @map("is_active")
-  maxPrice             Decimal?        @map("max_price") @db.Decimal(10, 8)
-  createdAt            DateTime        @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt            DateTime        @updatedAt @map("updated_at") @db.DateTime(0)
+  id                    Int            @id @default(autoincrement()) @db.UnsignedInt
+  categoryId            Int            @map("category_id") @db.UnsignedInt
+  genericName           String         @map("generic_name") @db.VarChar(255)
+  brandName             String?        @map("brand_name") @db.VarChar(255)
+  manufacturer          String?        @db.VarChar(255)
+  dosageForm            String?        @map("dosage_form") @db.VarChar(255)
+  strengthValue         Decimal?       @map("strength_value") @db.Decimal(10, 7)
+  strengthUnit          String?        @map("strength_unit") @db.VarChar(255)
+  packSize              Int?           @map("pack_size") @db.Int
+  packUnit              String?        @map("pack_unit") @db.VarChar(255)
+  requiresPrescription  Boolean        @default(false) @map("requires_prescription")
+  activeIngredients     String?        @map("active_ingredients") @db.LongText
+  dosageInstructions    String?        @map("dosage_instructions") @db.LongText
+  storageInstructions   String?        @map("storage_instructions") @db.LongText
+  warnings              String?        @db.LongText
+  description           String         @db.LongText
+  status                MedicineStatus @default(PENDING)
+  isActive              Boolean        @default(true) @map("is_active")
+  maxPrice              Decimal?       @map("max_price") @db.Decimal(10, 8)
+  minPrice              Decimal?       @map("min_price") @db.Decimal(10, 8)
+  createdAt             DateTime       @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt             DateTime       @updatedAt @map("updated_at") @db.DateTime(0)
+  reviewedAt            DateTime?      @map("reviewed_at")
+  rejectionReason       String?        @map("rejection_reason") @db.VarChar(255)
+  createdByUserId       Int?           @map("created_by_user_id") @db.UnsignedInt
+  requestedByPharmacyId Int?           @map("requested_by_pharmacy_id") @db.UnsignedInt
+  reviewedBy            Int?           @map("reviewed_by") @db.UnsignedInt
+
   //! Relations
-  category             Category        @relation(fields: [categoryId], references: [id])
-  medicineImages       MedicineImage[]
-  inventoryItems       InventoryItem[]
+  category       Category        @relation(fields: [categoryId], references: [id])
+  medicineImages MedicineImage[]
+  inventoryItems InventoryItem[]
+
+  createdBy           User?     @relation("MedicineCreator", fields: [createdByUserId], references: [id])
+  requestedByPharmacy Pharmacy? @relation("MedicineRequester", fields: [requestedByPharmacyId], references: [id])
+  reviewer            User?     @relation("MedicineReviewer", fields: [reviewedBy], references: [id])
 
   @@index([categoryId, isActive, status], map: "idx_medicines_category_active_status")
   @@index([genericName], map: "idx_medicines_generic_name")
@@ -440,6 +457,9 @@ model PharmacyOrder {
   rejectedAt           DateTime?           @map("rejected_at") @db.Timestamp()
   createdAt            DateTime            @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt            DateTime            @updatedAt @map("updated_at") @db.DateTime(0)
+  rejectionReason      String              @map("rejection_reason") @db.VarChar(255)
+  deliveryFee          Decimal?            @map("delivery_fee") @db.Decimal(10, 2)
+  totalAmount          Decimal             @map("total_amount") @db.Decimal(10, 2)
 
   //! Relations
   order              Order               @relation(fields: [orderId], references: [id])
