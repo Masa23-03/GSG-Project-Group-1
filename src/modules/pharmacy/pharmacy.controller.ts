@@ -93,8 +93,12 @@ export class PharmacyController {
   }
   //TODO:PATCH /me/password  -- optional
   @Patch('/me/password')
-  //TODO: profile endpoint to view pharmacy profile
-  @Get('/me')
+  //profile endpoint to view pharmacy profile
+  @Roles(UserRole.PHARMACY)
+  @Get('me')
+  async getMe(@AuthedUser() pharmacy: authedUserType) {
+    return await this.pharmacyService.findMyProfile(pharmacy.id);
+  }
   //TODO: profile endpoint for update pharmacy profile
   @Patch('/me')
   @Delete(':id')
