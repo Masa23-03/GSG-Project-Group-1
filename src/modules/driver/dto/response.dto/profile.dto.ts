@@ -8,7 +8,9 @@ import {
 //driver profile
 export class DriverMeResponseDto {
   @ApiProperty()
-  id!: number;
+  driverId!: number;
+  @ApiProperty()
+  userId!: number;
   @ApiProperty({ enum: UserRole })
   role!: UserRole;
   @ApiProperty()
