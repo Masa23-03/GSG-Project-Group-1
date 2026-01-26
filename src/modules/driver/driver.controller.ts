@@ -91,15 +91,24 @@ export class DriverController {
   })
   @Patch('admin/:id/verification')
   async updateStatusAdmin(
-    @AuthedUser()  admin: authedUserType,
+    @AuthedUser() admin: authedUserType,
     @Param('id', ParseIntPipe) id: number,
     @Body(new ZodValidationPipe(adminBaseUpdateVerificationStatusSchema))
     updateDriverDto: AdminBaseUpdateVerificationStatusDto,
   ) {
-    return await this.driverService.updateDriverStatus(id , updateDriverDto , admin.id);
-
+    return await this.driverService.updateDriverStatus(
+      id,
+      updateDriverDto,
+      admin.id,
+    );
   }
 
+  //TODO:PATCH /me/password  -- optional
+  @Patch('/me/password')
+  //TODO: profile endpoint to view driver profile
+  @Get('/me')
+  //TODO: profile endpoint for update driver profile
+  @Patch('/me')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.driverService.remove(+id);
