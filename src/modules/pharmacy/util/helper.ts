@@ -24,3 +24,10 @@ export function buildAdminPharmacyWhere(
   }
   return and.length ? { AND: and } : {};
 }
+
+export function toHHmm(value: Date | null): string | null {
+  if (!value) return null;
+  const hour = value.getHours().toString().padStart(2, '0');
+  const minute = value.getMinutes().toString().padStart(2, '0');
+  return `${hour}:${minute}`;
+}
