@@ -91,7 +91,12 @@ export class PharmacyController {
       admin.id,
     );
   }
-
+  //TODO:PATCH /me/password  -- optional
+  @Patch('/me/password')
+  //TODO: profile endpoint to view pharmacy profile
+  @Get('/me')
+  //TODO: profile endpoint for update pharmacy profile
+  @Patch('/me')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.pharmacyService.remove(+id);
