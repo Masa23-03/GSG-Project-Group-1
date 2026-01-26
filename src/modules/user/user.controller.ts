@@ -43,7 +43,6 @@ export class UserController {
 
   //TODO:PATCH /me/password  -- optional
   @Patch('/me/password')
-  //TODO: profile endpoint to view pharmacy profile
   @Roles(UserRole.PATIENT)
   @Get('me')
   async getMe(@AuthedUser() user: authedUserType) {
