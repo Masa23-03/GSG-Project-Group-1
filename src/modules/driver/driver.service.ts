@@ -15,9 +15,11 @@ import {
 import { DatabaseService } from '../database/database.service';
 import { buildAdminDriverWhere } from './util/helper';
 import { removeFields } from 'src/utils/object.util';
-import { AvailabilityStatus, DeliveryStatus } from '@prisma/client';
+import { AvailabilityStatus, DeliveryStatus, Driver } from '@prisma/client';
 import { AdminBaseUpdateVerificationStatusDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { assertVerificationStatusTransition } from 'src/utils/status.helper';
+import { DriverMeResponseDto } from './dto/response.dto/profile.dto';
+import { userBaseSelect } from '../user/util/helper';
 
 @Injectable()
 export class DriverService {
@@ -198,6 +200,38 @@ export class DriverService {
     return `This action removes a #${id} driver`;
   }
 
+  async getMyProfile(userId: number): Promise<DriverMeResponseDto> {
+    const driver = await this.prismaService.driver.findUnique({
+      where: { userId },
+      select: {
+        user: { select: userBaseSelect },
+        vehicleName: true,
+        vehiclePlate: true,
+        id: true,
+        availabilityStatus: true,
+        verificationStatus: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    if (!driver) throw new NotFoundException();
+    const data: DriverMeResponseDto = {
+      driverId: driver.id,
+      userId: driver.user.id,
+      vehicleName: driver.vehicleName,
+      vehiclePlate: driver.vehiclePlate,
+      verificationStatus: driver.verificationStatus,
+      createdAt: driver.createdAt.toISOString(),
+      updatedAt: driver.updatedAt.toISOString(),
+      availabilityStatus: driver.availabilityStatus,
+      email: driver.user.email,
+      name: driver.user.name,
+      phoneNumber: driver.user.phoneNumber,
+      profileImageUrl: driver.user.profileImageUrl,
+      role: driver.user.role,
+    };
+    return data;
+  }
   private calculateBusyStatus(activeDeliveriesCount: number): BusyStatus {
     return activeDeliveriesCount > 0 ? BusyStatus.BUSY : BusyStatus.AVAILABLE;
   }
