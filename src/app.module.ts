@@ -9,6 +9,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { FileModule } from './modules/file/file.module';
+import { PatientAddressModule } from './modules/patient-address/patient-address.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { FileModule } from './modules/file/file.module';
     PharmacyModule,
     DatabaseModule,
     FileModule,
+    PatientAddressModule,
   ],
   providers: [
     {
