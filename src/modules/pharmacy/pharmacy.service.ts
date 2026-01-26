@@ -15,9 +15,15 @@ import {
   AdminListQueryDto,
 } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { DatabaseService } from '../database/database.service';
-import { buildAdminPharmacyWhere } from './util/helper';
+import { buildAdminPharmacyWhere, toHHmm } from './util/helper';
 import { removeFields } from 'src/utils/object.util';
 import { assertVerificationStatusTransition } from 'src/utils/status.helper';
+import {
+  PharmacyMeResponseDto,
+  WorkingHoursDto,
+} from './dto/response.dto/profile.dto';
+import { userBaseSelect } from '../user/util/helper';
+import { close } from 'fs';
 
 @Injectable()
 export class PharmacyService {
@@ -160,5 +166,55 @@ export class PharmacyService {
 
   remove(id: number) {
     return `This action removes a #${id} pharmacy`;
+  }
+  async findMyProfile(userId: number): Promise<PharmacyMeResponseDto> {
+    const pharmacy = await this.prismaService.pharmacy.findUnique({
+      where: { userId },
+      select: {
+        pharmacyName: true,
+        verificationStatus: true,
+        city: { select: { name: true } },
+        updatedAt: true,
+        createdAt: true,
+        coverImageUrl: true,
+        id: true,
+        latitude: true,
+        longitude: true,
+        address: true,
+        user: {
+          select: userBaseSelect,
+        },
+        workCloseTime: true,
+        workOpenTime: true,
+      },
+    });
+    if (!pharmacy) throw new NotFoundException();
+    const openHour = toHHmm(pharmacy.workOpenTime);
+    const closeHour = toHHmm(pharmacy.workCloseTime);
+
+    const workingHours: WorkingHoursDto | null =
+      openHour && closeHour
+        ? { openTime: openHour, closeTime: closeHour }
+        : null;
+
+    const data: PharmacyMeResponseDto = {
+      pharmacyId: pharmacy.id,
+      userId: pharmacy.user.id,
+      email: pharmacy.user.email,
+      phoneNumber: pharmacy.user.phoneNumber,
+      profileImageUrl: pharmacy.user.profileImageUrl,
+      coverImageUrl: pharmacy.coverImageUrl,
+      verificationStatus: pharmacy.verificationStatus,
+      cityName: pharmacy.city.name,
+      createdAt: pharmacy.createdAt.toISOString(),
+      updatedAt: pharmacy.updatedAt.toISOString(),
+      role: pharmacy.user.role,
+      pharmacyName: pharmacy.pharmacyName,
+      address: pharmacy.address ?? null,
+      latitude: pharmacy.latitude?.toNumber() ?? null,
+      longitude: pharmacy.longitude?.toNumber() ?? null,
+      workingHours,
+    };
+    return data;
   }
 }
