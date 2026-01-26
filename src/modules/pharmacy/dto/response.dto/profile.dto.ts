@@ -21,7 +21,9 @@ export class PharmacyMeResponseDto extends LocationDto {
   @ApiProperty()
   pharmacyName!: string;
   @ApiProperty()
-  id!: number;
+  pharmacyId!: number;
+  @ApiProperty()
+  userId!: number;
   @ApiProperty({ enum: UserRole })
   role!: UserRole;
   @ApiProperty()
