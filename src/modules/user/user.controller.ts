@@ -6,10 +6,16 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Roles } from 'src/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
+import { ApiParam } from '@nestjs/swagger';
+import { AuthedUser } from 'src/decorators/authedUser.decorator';
+import type { authedUserType } from 'src/types/unifiedType.types';
 
 @Controller('user')
 export class UserController {
@@ -38,7 +44,11 @@ export class UserController {
   //TODO:PATCH /me/password  -- optional
   @Patch('/me/password')
   //TODO: profile endpoint to view pharmacy profile
-  @Get('/me')
+  @Roles(UserRole.PATIENT)
+  @Get('me')
+  async getMe(@AuthedUser() user: authedUserType) {
+    return await this.userService.findMyProfile(user.id);
+  }
   //TODO: profile endpoint for update pharmacy profile
   @Patch('/me')
   @Delete(':id')
