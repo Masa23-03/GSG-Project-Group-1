@@ -105,8 +105,12 @@ export class DriverController {
 
   //TODO:PATCH /me/password  -- optional
   @Patch('/me/password')
-  //TODO: profile endpoint to view driver profile
-  @Get('/me')
+  //profile endpoint to view driver profile
+  @Roles(UserRole.DRIVER)
+  @Get('me')
+  async getMyProfile(@AuthedUser() driver: authedUserType) {
+    return await this.driverService.getMyProfile(driver.id);
+  }
   //TODO: profile endpoint for update driver profile
   @Patch('/me')
   @Delete(':id')
