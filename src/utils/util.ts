@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { UpdateMyUserBaseDto } from 'src/modules/user/dto/request.dto/profile.dto';
 import { AdminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 
 export function extractId(q?: string): number | null {
@@ -17,4 +18,14 @@ export function buildAdminBaseWhere(query: AdminListQueryDto) {
   const q = query.q?.trim();
   const extractedId = q ? extractId(q) : null;
   return { and, q, extractedId };
+}
+
+export function mapBaseUserForProfileUpdate(payload: UpdateMyUserBaseDto) {
+  const userData: any = {};
+  if (payload.name !== undefined) userData.name = payload.name;
+  if (payload.phoneNumber !== undefined)
+    userData.phoneNumber = payload.phoneNumber;
+  if (payload.profileImageUrl !== undefined)
+    userData.profileImageUrl = payload.profileImageUrl;
+  if (Object.keys(userData).length > 0) return userData;
 }
