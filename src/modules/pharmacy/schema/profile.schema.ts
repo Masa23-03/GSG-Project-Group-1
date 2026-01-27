@@ -30,19 +30,13 @@ export const workingHoursSchema = z
   )
   .strict();
 
-export const pharmacyAddressSchema = z
+export const updatePharmacyProfileSchema = z
   .object({
+    pharmacyName: z.string().trim().min(1).optional(),
+    workingHours: workingHoursSchema.nullable().optional(),
     address: z.string().trim().min(1).nullable().optional(),
     latitude: z.coerce.number().min(-90).max(90).nullable().optional(),
     longitude: z.coerce.number().min(-180).max(180).nullable().optional(),
-  })
-  .strict();
-
-export const updatePharmacyProfileSchema = z
-  .object({
-    pharmacyName: z.string().trim().min(1).nullable().optional(),
-    workingHours: workingHoursSchema.nullable().optional(),
-    address: pharmacyAddressSchema.nullable().optional(),
   })
   .merge(updateBaseUserProfileSchema)
   .strict() satisfies ZodType<UpdateMyPharmacyProfileDtoType>;
