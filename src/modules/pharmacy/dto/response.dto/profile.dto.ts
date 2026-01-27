@@ -46,4 +46,10 @@ export class PharmacyMeResponseDto extends LocationDto {
   //working hours
   @ApiProperty({ required: false, nullable: true, type: WorkingHoursDto })
   workingHours?: WorkingHoursDto | null;
+
+  @ApiProperty({
+    description:
+      'Whether the pharmacy is currently open based on working hours',
+  })
+  isOpen!: boolean;
 }
