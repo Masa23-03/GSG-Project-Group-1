@@ -15,7 +15,11 @@ import {
   AdminListQueryDto,
 } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { DatabaseService } from '../database/database.service';
-import { buildAdminPharmacyWhere, toHHmm } from './util/helper';
+import {
+  buildAdminPharmacyWhere,
+  isPharmacyOpenNow,
+  toHHmm,
+} from './util/helper';
 import { removeFields } from 'src/utils/object.util';
 import { assertVerificationStatusTransition } from 'src/utils/status.helper';
 import {
