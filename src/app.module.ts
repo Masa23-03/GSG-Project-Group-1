@@ -10,6 +10,10 @@ import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { FileModule } from './modules/file/file.module';
 import { PatientAddressModule } from './modules/patient-address/patient-address.module';
+import { OrderModule } from './moduels/order/order.module';
+import { PharmacyOrderModule } from './moduels/pharmacy-order/pharmacy-order.module';
+import { PrescriptionModule } from './moduels/prescription/prescription.module';
+import { PaymentModule } from './moduels/payment/payment.module';
 
 @Module({
   imports: [
@@ -23,6 +27,10 @@ import { PatientAddressModule } from './modules/patient-address/patient-address.
     DatabaseModule,
     FileModule,
     PatientAddressModule,
+    OrderModule,
+    PharmacyOrderModule,
+    PrescriptionModule,
+    PaymentModule,
   ],
   providers: [
     {
