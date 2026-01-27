@@ -1,11 +1,19 @@
 import z, { ZodType } from 'zod';
-import { UpdateMyUserDtoType } from '../dto/request.dto/profile.dto';
 import { urlSchema } from 'src/utils/zod.helper';
-
-export const updateUserProfileSchema = z
+import {
+  UpdateMyPatientDtoType,
+  UpdateMyUserBaseDtoType,
+} from '../dto/request.dto/profile.dto';
+export const updateBaseUserProfileSchema = z
   .object({
     name: z.string().trim().min(1).nullable().optional(),
     phoneNumber: z.string().trim().min(1).nullable().optional(),
+    profileImageUrl: urlSchema.nullable().optional(),
+  })
+  .strict() satisfies ZodType<UpdateMyUserBaseDtoType>;
+
+export const updatePatientProfileSchema = z
+  .object({
     //YYYY-MM-DD
     dateOfBirth: z
       .string()
@@ -14,6 +22,6 @@ export const updateUserProfileSchema = z
       })
       .nullable()
       .optional(),
-    profileImageUrl: urlSchema.nullable().optional(),
   })
-  .strict() satisfies ZodType<UpdateMyUserDtoType>;
+  .merge(updateBaseUserProfileSchema)
+  .strict() satisfies ZodType<UpdateMyPatientDtoType>;
