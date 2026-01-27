@@ -26,6 +26,8 @@ import { adminBaseUpdateVerificationStatusSchema } from 'src/utils/schema/adminG
 import { AuthController } from '../auth/auth.controller';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
+import { UpdateMyDriverDto } from './dto/request.dto/profile.dto';
+import { updateDriverProfileSchema } from './schema/profile.schema';
 
 @Controller('driver')
 export class DriverController {
@@ -109,8 +111,17 @@ export class DriverController {
   async getMyProfile(@AuthedUser() driver: authedUserType) {
     return await this.driverService.getMyProfile(driver.id);
   }
-  //TODO: profile endpoint for update driver profile
-  @Patch('/me')
+  //profile endpoint for update driver profile
+  @Roles(UserRole.DRIVER)
+  @ApiBody({ type: UpdateMyDriverDto })
+  @Patch('me')
+  async updateMe(
+    @AuthedUser() driver: authedUserType,
+    @Body(new ZodValidationPipe(updateDriverProfileSchema))
+    updateDriverDto: UpdateMyDriverDto,
+  ) {
+    return await this.driverService.updateMyProfile(driver.id, updateDriverDto);
+  }
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.driverService.remove(+id);

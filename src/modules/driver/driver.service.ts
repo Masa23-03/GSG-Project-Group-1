@@ -19,6 +19,8 @@ import { AdminBaseUpdateVerificationStatusDto } from 'src/types/adminGetPharmacy
 import { assertVerificationStatusTransition } from 'src/utils/status.helper';
 import { DriverMeResponseDto } from './dto/response.dto/profile.dto';
 import { userBaseSelect } from '../user/util/helper';
+import { UpdateMyDriverDto } from './dto/request.dto/profile.dto';
+import { mapBaseUserForProfileUpdate } from 'src/utils/util';
 
 @Injectable()
 export class DriverService {
@@ -230,6 +232,41 @@ export class DriverService {
       role: driver.user.role,
     };
     return data;
+  }
+  async updateMyProfile(
+    userId: number,
+    payload: UpdateMyDriverDto,
+  ): Promise<DriverMeResponseDto> {
+    const foundedDriver = await this.prismaService.driver.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!foundedDriver) throw new NotFoundException();
+    await this.prismaService.$transaction(async (prisma) => {
+      const userData = mapBaseUserForProfileUpdate(payload);
+      if (userData) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: userData,
+        });
+      }
+      const driverData: any = {};
+      if (payload.vehicleName !== undefined)
+        driverData.vehicleName = payload.vehicleName;
+      if (payload.vehiclePlate !== undefined)
+        driverData.vehiclePlate = payload.vehiclePlate;
+
+      if (Object.keys(driverData).length > 0) {
+        await prisma.driver.update({
+          where: {
+            id: foundedDriver.id,
+          },
+          data: driverData,
+        });
+      }
+    });
+
+    return this.getMyProfile(userId);
   }
   private calculateBusyStatus(activeDeliveriesCount: number): BusyStatus {
     return activeDeliveriesCount > 0 ? BusyStatus.BUSY : BusyStatus.AVAILABLE;
