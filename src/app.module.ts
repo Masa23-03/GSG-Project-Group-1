@@ -14,6 +14,9 @@ import { OrderModule } from './moduels/order/order.module';
 import { PharmacyOrderModule } from './moduels/pharmacy-order/pharmacy-order.module';
 import { PrescriptionModule } from './moduels/prescription/prescription.module';
 import { PaymentModule } from './moduels/payment/payment.module';
+import { InventoryModule } from './moduels/inventory/inventory.module';
+import { CategoryModule } from './moduels/category/category.module';
+import { MedicineModule } from './moduels/medicine/medicine.module';
 
 @Module({
   imports: [
@@ -31,6 +34,9 @@ import { PaymentModule } from './moduels/payment/payment.module';
     PharmacyOrderModule,
     PrescriptionModule,
     PaymentModule,
+    InventoryModule,
+    CategoryModule,
+    MedicineModule,
   ],
   providers: [
     {
