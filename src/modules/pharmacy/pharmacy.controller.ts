@@ -23,6 +23,8 @@ import { AdminPharmacyListQuerySchema } from './schema/pharmacy.schema';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import { adminBaseUpdateVerificationStatusSchema } from 'src/utils/schema/adminGetPharmacyAndDriverListQuery.schema';
 import type { authedUserType } from 'src/types/unifiedType.types';
+import { UpdateMyPharmacyProfileDto } from './dto/request.dto/profile.dto';
+import { updatePharmacyProfileSchema } from './schema/profile.schema';
 
 @Controller('pharmacy')
 export class PharmacyController {
@@ -98,8 +100,21 @@ export class PharmacyController {
   async getMe(@AuthedUser() pharmacy: authedUserType) {
     return await this.pharmacyService.findMyProfile(pharmacy.id);
   }
-  //TODO: profile endpoint for update pharmacy profile
-  @Patch('/me')
+  //profile endpoint for update pharmacy profile
+  @Roles('PHARMACY')
+  @ApiBody({ type: UpdateMyPharmacyProfileDto })
+  @Patch('me')
+  async updateMe(
+    @AuthedUser() pharmacy: authedUserType,
+    @Body(new ZodValidationPipe(updatePharmacyProfileSchema))
+    updatePharmacyDto: UpdateMyPharmacyProfileDto,
+  ) {
+    return await this.pharmacyService.updateMyProfile(
+      pharmacy.id,
+      updatePharmacyDto,
+    );
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.pharmacyService.remove(+id);

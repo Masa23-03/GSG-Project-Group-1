@@ -25,7 +25,8 @@ import {
   WorkingHoursDto,
 } from './dto/response.dto/profile.dto';
 import { userBaseSelect } from '../user/util/helper';
-import { close } from 'fs';
+import { UpdateMyPharmacyProfileDto } from './dto/request.dto/profile.dto';
+import { mapBaseUserForProfileUpdate } from 'src/utils/util';
 
 @Injectable()
 export class PharmacyService {
@@ -218,5 +219,54 @@ export class PharmacyService {
       workingHours,
     };
     return data;
+  }
+
+  async updateMyProfile(
+    userId: number,
+    payload: UpdateMyPharmacyProfileDto,
+  ): Promise<PharmacyMeResponseDto> {
+    const foundedPharmacy = await this.prismaService.pharmacy.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+    if (!foundedPharmacy) throw new NotFoundException();
+    await this.prismaService.$transaction(async (prisma) => {
+      const userData = mapBaseUserForProfileUpdate(payload);
+      if (userData) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: userData,
+        });
+      }
+      const pharmacyData: any = {};
+      if (payload.pharmacyName !== undefined)
+        pharmacyData.pharmacyName = payload.pharmacyName;
+
+      if (payload.address !== undefined) pharmacyData.address = payload.address;
+      if (payload.latitude !== undefined)
+        pharmacyData.latitude = payload.latitude;
+      if (payload.longitude !== undefined)
+        pharmacyData.longitude = payload.longitude;
+      if (payload.workingHours !== undefined) {
+        if (payload.workingHours === null) {
+          pharmacyData.workOpenTime = null;
+          pharmacyData.workCloseTime = null;
+        } else {
+          pharmacyData.workOpenTime = new Date(
+            `1970-01-01T${payload.workingHours.openTime}:00.000Z`,
+          );
+          pharmacyData.workCloseTime = new Date(
+            `1970-01-01T${payload.workingHours.closeTime}:00.000Z`,
+          );
+        }
+      }
+      if (Object.keys(pharmacyData).length > 0) {
+        await prisma.pharmacy.update({
+          where: { id: foundedPharmacy.id },
+          data: pharmacyData,
+        });
+      }
+    });
+    return this.findMyProfile(userId);
   }
 }
