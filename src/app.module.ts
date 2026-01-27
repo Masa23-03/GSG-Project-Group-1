@@ -10,13 +10,13 @@ import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { FileModule } from './modules/file/file.module';
 import { PatientAddressModule } from './modules/patient-address/patient-address.module';
-import { OrderModule } from './moduels/order/order.module';
-import { PharmacyOrderModule } from './moduels/pharmacy-order/pharmacy-order.module';
-import { PrescriptionModule } from './moduels/prescription/prescription.module';
-import { PaymentModule } from './moduels/payment/payment.module';
-import { InventoryModule } from './moduels/inventory/inventory.module';
-import { CategoryModule } from './moduels/category/category.module';
-import { MedicineModule } from './moduels/medicine/medicine.module';
+import { OrderModule } from './modules/order/order.module';
+import { PharmacyOrderModule } from './modules/pharmacy-order/pharmacy-order.module';
+import { PrescriptionModule } from './modules/prescription/prescription.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { CategoryModule } from './modules/category/category.module';
+import { MedicineModule } from './modules/medicine/medicine.module';
 
 @Module({
   imports: [
