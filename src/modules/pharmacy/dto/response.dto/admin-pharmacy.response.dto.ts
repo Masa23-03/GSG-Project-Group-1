@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { VerificationStatus } from '@prisma/client';
-export class LocationDto {
+export class PharmacyLocationDto {
   @ApiProperty({ required: false })
   address?: string | null;
 
@@ -9,9 +9,8 @@ export class LocationDto {
   @ApiProperty({ required: false })
   longitude?: number | null;
 }
-
 //Admin: get pharmacies response
-export class AdminPharmacyListItemDto extends LocationDto {
+export class AdminPharmacyListItemDto extends PharmacyLocationDto {
   @ApiProperty()
   id!: number;
   @ApiProperty()

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { LocationDto } from './admin-pharmacy.response.dto';
+import { PharmacyLocationDto } from './admin-pharmacy.response.dto';
 import { UserRole, VerificationStatus } from '@prisma/client';
 
 //working hours Dto
@@ -15,8 +15,9 @@ export class WorkingHoursDto {
   })
   closeTime!: string;
 }
+
 //pharmacy profile
-export class PharmacyMeResponseDto extends LocationDto {
+export class PharmacyMeResponseDto extends PharmacyLocationDto {
   //pharmacy name
   @ApiProperty()
   pharmacyName!: string;

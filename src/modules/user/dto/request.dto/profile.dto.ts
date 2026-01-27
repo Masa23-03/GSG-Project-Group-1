@@ -1,10 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-
-export class UpdateMyUserDto {
+export class UpdateMyUserBaseDto {
   @ApiProperty({ required: false, nullable: true })
   name?: string | null;
   @ApiProperty({ required: false, nullable: true })
   phoneNumber?: string | null;
+  @ApiProperty({ required: false, nullable: true })
+  profileImageUrl?: string | null;
+}
+export class UpdateMyPatientDto extends UpdateMyUserBaseDto {
   @ApiProperty({
     required: false,
     nullable: true,
@@ -12,8 +15,7 @@ export class UpdateMyUserDto {
     example: '2002-04-26',
   })
   dateOfBirth?: string | null;
-  @ApiProperty({ required: false, nullable: true })
-  profileImageUrl?: string | null;
 }
 
-export type UpdateMyUserDtoType = InstanceType<typeof UpdateMyUserDto>;
+export type UpdateMyPatientDtoType = InstanceType<typeof UpdateMyPatientDto>;
+export type UpdateMyUserBaseDtoType = InstanceType<typeof UpdateMyUserBaseDto>;
