@@ -12,9 +12,12 @@ import { UserService } from './user.service';
 
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
-import { ApiParam } from '@nestjs/swagger';
+import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
+import { ZodValidationPipe } from 'nestjs-zod';
+import { updatePatientProfileSchema } from './schema/profile.schema';
+import { UpdateMyPatientDto } from './dto/request.dto/profile.dto';
 
 @Controller('user')
 export class UserController {
@@ -47,8 +50,19 @@ export class UserController {
   async getMe(@AuthedUser() user: authedUserType) {
     return await this.userService.findMyProfile(user.id);
   }
-  //TODO: profile endpoint for update pharmacy profile
-  @Patch('/me')
+  //profile endpoint for update pharmacy profile
+
+  @Roles(UserRole.PATIENT)
+  @ApiBody({ type: UpdateMyPatientDto })
+  @Patch('me')
+  async updateMe(
+    @AuthedUser() user: authedUserType,
+    @Body(new ZodValidationPipe(updatePatientProfileSchema))
+    updateUserDto: UpdateMyPatientDto,
+  ) {
+    return await this.userService.updateMyProfile(user.id, updateUserDto);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.remove(+id);

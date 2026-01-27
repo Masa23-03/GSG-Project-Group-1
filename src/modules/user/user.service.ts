@@ -3,6 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { UserMeResponseDto } from './dto/response.dto/profile.dto';
 import { mapPatientAddress } from '../patient-address/util/mapper';
+import { UpdateMyPatientDto } from './dto/request.dto/profile.dto';
 
 @Injectable()
 export class UserService {
@@ -82,5 +83,28 @@ export class UserService {
     };
 
     return data;
+  }
+  async updateMyProfile(
+    id: number,
+    payload: UpdateMyPatientDto,
+  ): Promise<UserMeResponseDto> {
+    const foundedUser = await this.prismaService.user.findUnique({
+      where: { id },
+    });
+    if (!foundedUser) throw new NotFoundException();
+    const insertedData: any = { ...payload };
+
+    if (payload.dateOfBirth !== undefined) {
+      insertedData.dateOfBirth = payload.dateOfBirth
+        ? new Date(`${payload.dateOfBirth}T00:00:00.000Z`)
+        : null;
+    }
+
+    await this.prismaService.user.update({
+      where: { id },
+      data: insertedData,
+    });
+
+    return this.findMyProfile(id);
   }
 }
