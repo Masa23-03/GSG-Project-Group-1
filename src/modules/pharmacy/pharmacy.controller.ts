@@ -10,8 +10,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { PharmacyService } from './pharmacy.service';
-import { CreatePharmacyDto } from './dto/request.dto/create-pharmacy.dto';
-import { UpdatePharmacyDto } from './dto/request.dto/update-pharmacy.dto';
+
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole, UserStatus, VerificationStatus } from '@prisma/client';
 import { ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
@@ -30,7 +29,7 @@ export class PharmacyController {
   constructor(private readonly pharmacyService: PharmacyService) {}
 
   @Post()
-  create(@Body() createPharmacyDto: CreatePharmacyDto) {
+  create(@Body() createPharmacyDto) {
     return this.pharmacyService.create(createPharmacyDto);
   }
   @Roles(UserRole.ADMIN)

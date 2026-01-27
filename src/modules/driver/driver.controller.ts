@@ -10,8 +10,6 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { DriverService } from './driver.service';
-import { CreateDriverDto } from './dto/request.dto/create-driver.dto';
-import { UpdateDriverDto } from './dto/request.dto/update-driver.dto';
 import { Roles } from 'src/decorators/roles.decorator';
 import {
   AvailabilityStatus,
@@ -34,7 +32,7 @@ export class DriverController {
   constructor(private readonly driverService: DriverService) {}
 
   @Post()
-  create(@Body() createDriverDto: CreateDriverDto) {
+  create(@Body() createDriverDto) {
     return this.driverService.create(createDriverDto);
   }
 

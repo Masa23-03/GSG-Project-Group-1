@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+
 import { DatabaseService } from '../database/database.service';
 import { UserMeResponseDto } from './dto/response.dto/profile.dto';
 import { mapPatientAddress } from '../patient-address/util/mapper';
@@ -8,7 +7,7 @@ import { mapPatientAddress } from '../patient-address/util/mapper';
 @Injectable()
 export class UserService {
   constructor(private readonly prismaService: DatabaseService) {}
-  create(createUserDto: CreateUserDto) {
+  create(createUserDto) {
     return 'This action adds a new user';
   }
 
@@ -20,7 +19,7 @@ export class UserService {
     return `This action returns a #${id} user`;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
+  update(id: number, updateUserDto) {
     return `This action updates a #${id} user`;
   }
 

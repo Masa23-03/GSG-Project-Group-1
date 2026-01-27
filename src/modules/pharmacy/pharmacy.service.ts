@@ -1,6 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreatePharmacyDto } from './dto/request.dto/create-pharmacy.dto';
-import { UpdatePharmacyDto } from './dto/request.dto/update-pharmacy.dto';
 import {
   ApiPaginationSuccessResponse,
   ApiSuccessResponse,
@@ -32,7 +30,7 @@ import { close } from 'fs';
 @Injectable()
 export class PharmacyService {
   constructor(private readonly prismaService: DatabaseService) {}
-  create(createPharmacyDto: CreatePharmacyDto) {
+  create(createPharmacyDto) {
     return 'This action adds a new pharmacy';
   }
 

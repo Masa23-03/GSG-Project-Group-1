@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateDriverDto } from './dto/request.dto/create-driver.dto';
-import { UpdateDriverDto } from './dto/request.dto/update-driver.dto';
+
 import {
   AdminDriverListQueryDto,
   AdminDriverListQueryDtoT,
@@ -24,7 +23,7 @@ import { userBaseSelect } from '../user/util/helper';
 @Injectable()
 export class DriverService {
   constructor(private readonly prismaService: DatabaseService) {}
-  create(createDriverDto: CreateDriverDto) {
+  create(createDriverDto) {
     return 'This action adds a new driver';
   }
   //Admin only
