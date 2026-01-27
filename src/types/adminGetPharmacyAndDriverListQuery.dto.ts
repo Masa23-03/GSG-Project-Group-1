@@ -15,7 +15,7 @@ export class AdminBaseListQueryDto extends PaginationQueryDto {
 }
 
 //ADMIN: Get drivers  query dto
-export type AdminListQueryDto = AdminBaseListQueryDto;
+export type AdminListQueryDto = InstanceType<typeof AdminBaseListQueryDto>;
 export class AdminBaseUpdateVerificationStatusDto {
   @ApiProperty({ enum: VerificationStatus })
   verificationStatus!: VerificationStatus;

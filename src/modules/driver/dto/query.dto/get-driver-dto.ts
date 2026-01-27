@@ -7,4 +7,6 @@ export class AdminDriverListQueryDto extends AdminBaseListQueryDto {
   @ApiProperty({ enum: AvailabilityStatus })
   availability?: AvailabilityStatus;
 }
-export type AdminDriverListQueryDtoT = AdminDriverListQueryDto;
+export type AdminDriverListQueryDtoT = InstanceType<
+  typeof AdminDriverListQueryDto
+>;
