@@ -1,0 +1,19 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+export class UpdateMyUserDto {
+  @ApiProperty({ required: false, nullable: true })
+  name?: string | null;
+  @ApiProperty({ required: false, nullable: true })
+  phoneNumber?: string | null;
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    format: 'date',
+    example: '2002-04-26',
+  })
+  dateOfBirth?: string | null;
+  @ApiProperty({ required: false, nullable: true })
+  profileImageUrl?: string | null;
+}
+
+export type UpdateMyUserDtoType = InstanceType<typeof UpdateMyUserDto>;
