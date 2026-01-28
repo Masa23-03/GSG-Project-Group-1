@@ -96,6 +96,45 @@ enum PharmacyOrderStatus {
   COMPLETED
 }
 
+enum createdBy{
+  ADMIN
+  SELF
+}
+
+enum OtpChannel {
+  EMAIL
+  PHONE
+}
+
+enum OtpPurpose {
+  VERIFY
+  RESET_PASSWORD
+  LOGIN
+}
+
+
+model Otp {
+  id          Int        @id @default(autoincrement()) @db.UnsignedInt
+  userId      Int        @map("user_id") @db.UnsignedInt
+  channel     OtpChannel
+  purpose     OtpPurpose
+  destination String
+  codeHash    String     @map("code_hash") @db.VarChar(255)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  verifiedAt  DateTime?  @map("verified_at") @db.Timestamp()
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(5) @map("max_attempts")
+  sentAt      DateTime   @default(now()) @map("sent_at") @db.Timestamp()
+  createdAt   DateTime   @default(now()) @map("created_at") @db.DateTime(0)
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, channel, purpose], map: "idx_otp_lookup")
+  @@map("otps")
+}
+
+
 model RefreshToken {
   id        Int    @id @default(autoincrement()) @db.UnsignedInt
   userId    Int    @db.UnsignedInt
@@ -106,7 +145,7 @@ model RefreshToken {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id] , onDelete: Cascade)
 
   @@index([userId], map: "idx_tokens_user")
   @@map("refresh_tokens")
@@ -124,7 +163,10 @@ model User {
   profileImageUrl String?    @map("profile_image_url") @db.VarChar(255)
   createdAt       DateTime   @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt       DateTime   @updatedAt @map("updated_at") @db.DateTime(0)
-  //createdBy  :by admin or self
+  createdBy       createdBy  @default(SELF) @map("created_by")
+  
+  isEmailVerified Boolean  @default(false)
+  isPhoneVerified Boolean  @default(false)
 
   //! Relations
   pharmacy           Pharmacy?        @relation("PharmacyOwner")
@@ -134,6 +176,7 @@ model User {
   addresses          PatientAddress[]
   orders             Order[]
   refreshToken       RefreshToken[]
+    otps            Otp[]
 
   @@index([role], map: "idx_users_role")
   @@index([status], map: "idx_users_status")
@@ -162,9 +205,9 @@ model Pharmacy {
 
   //! Relations
   // owner (1–1)
-  user           User            @relation("PharmacyOwner", fields: [userId], references: [id])
+  user           User            @relation("PharmacyOwner", fields: [userId], references: [id] , onDelete: Cascade)
   // verifier (admin, 1–many)
-  admin          User?           @relation("PharmacyVerifier", fields: [verifiedBy], references: [id])
+  admin          User?           @relation("PharmacyVerifier", fields: [verifiedBy], references: [id] , onDelete : SetNull)
   inventoryItems InventoryItem[]
   pharmacyOrders PharmacyOrder[]
 
@@ -191,8 +234,8 @@ model Driver {
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  user       User       @relation("DriverOwner", fields: [userId], references: [id])
-  admin      User?      @relation("DriverVerifier", fields: [verifiedBy], references: [id])
+  user       User       @relation("DriverOwner", fields: [userId], references: [id] , onDelete: Cascade)
+  admin      User?      @relation("DriverVerifier", fields: [verifiedBy], references: [id], onDelete: SetNull)
   deliveries Delivery[]
 
   @@index([verificationStatus], map: "idx_drivers_verified")
@@ -216,7 +259,7 @@ model Delivery {
 
   //! Relations
   order          Order           @relation("OrderDelivery", fields: [orderId], references: [id])
-  driver         Driver?         @relation(fields: [driverId], references: [id])
+  driver         Driver?         @relation(fields: [driverId], references: [id] , onDelete: SetNull) //! because if we deleted driver, we still want to keep the delivery record
   pharmacyOrders PharmacyOrder[]
 
   @@index([driverId], map: "idx_deliveries_driver")
@@ -240,7 +283,7 @@ model PatientAddress {
   createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.DateTime(0)
   //! Relations
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id] , onDelete: Cascade)
   orders       Order[]
 
   @@index([userId], map: "idx_addresses_user")
@@ -380,7 +423,7 @@ model Order {
   updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  patient  User            @relation(fields: [patientId], references: [id])
+  patient  User            @relation(fields: [patientId], references: [id] , onDelete: Cascade)
   address  PatientAddress? @relation(fields: [addressId], references: [id])
   delivery Delivery?       @relation("OrderDelivery")
 
