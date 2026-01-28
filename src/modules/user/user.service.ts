@@ -3,13 +3,14 @@ import { UserRole, UserStatus } from '@prisma/client';
 import { hashPassword } from '../auth/util/crypto.util';
 import { removeFields } from '../../utils/object.util';
 import { DatabaseService } from '../database/database.service';
+import { RegisterationDTO } from '../auth/dto/auth.register.dto';
 
 @Injectable()
 export class UserService {
     constructor(private readonly prisma: DatabaseService) { }
 
     async create(
-        payload: any,
+        payload: RegisterationDTO,
         role?: UserRole,
         status?: UserStatus,
         tx?: any,
