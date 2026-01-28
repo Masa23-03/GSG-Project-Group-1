@@ -25,11 +25,10 @@ async function bootstrap() {
   });
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalFilters(
-    new UncaughtException(),
-    new HttpExceptionFilter(),
     new ZodExceptionFilter(),
     new PrismaExceptionFilter(),
-    new ImageKitException(),
+    new HttpExceptionFilter(),
+    //new UncaughtException(),
   );
 
   const swaggerConfig = new DocumentBuilder()
