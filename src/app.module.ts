@@ -14,6 +14,7 @@ import { FileModule } from './modules/file/file.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env'
     }),
     AuthModule,
     UserModule,
