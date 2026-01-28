@@ -5,12 +5,16 @@ import { JwtModule } from '@nestjs/jwt';
 import { env } from 'src/config/env';
 import { OtpService } from './otp/otp.service';
 import { UserModule } from '../user/user.module';
+import { PharmacyModule } from '../pharmacy/pharmacy.module';
+import { DriverModule } from '../driver/driver.module';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService, OtpService],
   imports: [
     UserModule,
+    PharmacyModule,
+    DriverModule,
     JwtModule.registerAsync({
       global: true,
       useFactory: async () => ({
