@@ -7,47 +7,56 @@ import { RegisterationDTO } from '../auth/dto/auth.register.dto';
 
 @Injectable()
 export class UserService {
-    constructor(private readonly prisma: DatabaseService) { }
+  constructor(private readonly prisma: DatabaseService) {}
 
-    async create(
-        payload: RegisterationDTO,
-        role?: UserRole,
-        status?: UserStatus,
-        tx?: any,
-    ) {
-        const client = tx ?? this.prisma;
-        await this.ensureEmailNotUsed(payload.email, tx);
+  async create(
+    payload: RegisterationDTO,
+    role?: UserRole,
+    status?: UserStatus,
+    tx?: any,
+  ) {
+    const client = tx ?? this.prisma;
 
-        const email = this.normalizeEmail(payload.email);
-        const hashedPassword = await hashPassword(payload.password);
+    const email = this.normalizeEmail(payload.email);
+    const phoneNumber = payload.phoneNumber.trim();
 
-        try {
-            const user = await client.user.create({
-                data: {
-                    name: payload.name,
-                    email: email,
-                    phoneNumber: payload.phoneNumber,
-                    password: hashedPassword,
-                    role: role ?? UserRole.PATIENT,
-                    status: status ?? UserStatus.ACTIVE,
-                },
-            });
+    await this.ensureEmailNotUsed(email, client);
+    await this.ensurePhoneNotUsed(phoneNumber, client);
 
-            const userWithoutPassword = removeFields(user, ['password']);
-            return userWithoutPassword;
-        } catch (e) {
-            throw e;
-        }
-    }
+    const hashedPassword = await hashPassword(payload.password);
 
-    normalizeEmail(email: string) {
-        return email.trim().toLowerCase();
-    }
+    const user = await client.user.create({
+      data: {
+        name: payload.name,
+        email,
+        phoneNumber,
+        password: hashedPassword,
+        role: role ?? UserRole.PATIENT,
+        status: status ?? UserStatus.ACTIVE,
+      },
+    });
 
-    async ensureEmailNotUsed(email: string, tx?: any) {
-        const client = tx ?? this.prisma;
-        const existing = await client.user.findUnique({ where: { email } });
+    return removeFields(user, ['password']);
+  }
 
-        if (existing) throw new ConflictException('Email already in use');
-    }
+  normalizeEmail(email: string) {
+    return email.trim().toLowerCase();
+  }
+
+  async ensureEmailNotUsed(email: string, client?: any) {
+    const db = client ?? this.prisma;
+
+    const existing = await db.user.findUnique({ where: { email } });
+    if (existing) throw new ConflictException('Email already in use');
+  }
+
+  async ensurePhoneNotUsed(phoneNumber: string, client?: any) {
+    const db = client ?? this.prisma;
+
+    const existing = await db.user.findFirst({
+      where: { phoneNumber },
+    });
+
+    if (existing) throw new ConflictException('Phone number already in use');
+  }
 }
