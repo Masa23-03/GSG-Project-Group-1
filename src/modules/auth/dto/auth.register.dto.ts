@@ -18,3 +18,9 @@ export type RegisterDriverDTO =
   Pick<Driver, "vehicleName" | "vehiclePlate"> & {
     licenseDocUrl: Driver["licenseDocumentUrl"]
   }
+
+
+export type RegisterationDTO =
+  | RegisterPatientDTO
+  | RegisterPharmacyDTO
+  | RegisterDriverDTO
