@@ -14,7 +14,7 @@ ALTER TABLE `pharmacies` MODIFY `verified_at` TIMESTAMP NULL,
     MODIFY `work_close_time` TIME NULL;
 
 -- CreateTable
-CREATE TABLE `Delivery` (
+CREATE TABLE `delivery` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 
     PRIMARY KEY (`id`)

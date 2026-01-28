@@ -1,26 +1,53 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Injectable, ConflictException } from '@nestjs/common';
+import { UserRole, UserStatus } from '@prisma/client';
+import { hashPassword } from '../auth/util/crypto.util';
+import { removeFields } from '../../utils/object.util';
+import { DatabaseService } from '../database/database.service';
+import { RegisterationDTO } from '../auth/dto/auth.register.dto';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
+    constructor(private readonly prisma: DatabaseService) { }
 
-  findAll() {
-    return `This action returns all user`;
-  }
+    async create(
+        payload: RegisterationDTO,
+        role?: UserRole,
+        status?: UserStatus,
+        tx?: any,
+    ) {
+        const client = tx ?? this.prisma;
+        await this.ensureEmailNotUsed(payload.email, tx);
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
+        const email = this.normalizeEmail(payload.email);
+        const hashedPassword = await hashPassword(payload.password);
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
+        try {
+            const user = await client.user.create({
+                data: {
+                    name: payload.name,
+                    email: email,
+                    phoneNumber: payload.phoneNumber,
+                    password: hashedPassword,
+                    role: role ?? UserRole.PATIENT,
+                    status: status ?? UserStatus.ACTIVE,
+                },
+            });
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
+            const userWithoutPassword = removeFields(user, ['password']);
+            return userWithoutPassword;
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    normalizeEmail(email: string) {
+        return email.trim().toLowerCase();
+    }
+
+    async ensureEmailNotUsed(email: string, tx?: any) {
+        const client = tx ?? this.prisma;
+        const existing = await client.user.findUnique({ where: { email } });
+
+        if (existing) throw new ConflictException('Email already in use');
+    }
 }

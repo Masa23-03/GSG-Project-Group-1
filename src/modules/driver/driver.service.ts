@@ -1,26 +1,59 @@
 import { Injectable } from '@nestjs/common';
-import { CreateDriverDto } from './dto/create-driver.dto';
-import { UpdateDriverDto } from './dto/update-driver.dto';
+import { UserRole, UserStatus } from '@prisma/client';
+import { UserService } from '../user/user.service';
+import { DatabaseService } from '../database/database.service';
+import { RegisterDriverDTO } from '../auth/dto/auth.register.dto';
 
 @Injectable()
 export class DriverService {
-  create(createDriverDto: CreateDriverDto) {
-    return 'This action adds a new driver';
-  }
+    constructor(
+        private readonly prisma: DatabaseService,
+        private readonly userService: UserService,
+    ) { }
 
-  findAll() {
-    return `This action returns all driver`;
-  }
+    async create(payload: RegisterDriverDTO, role: UserRole) {
+        try {
+            return this.prisma.$transaction(async (tx) => {
+                const user = await this.userService.create(
+                    payload,
+                    UserRole.DRIVER,
+                    UserStatus.INACTIVE,
+                    tx,
+                );
 
-  findOne(id: number) {
-    return `This action returns a #${id} driver`;
-  }
+                const driver = await tx.driver.create({
+                    data: {
+                        userId: user.id,
+                        vehicleName: payload.vehicleName,
+                        vehiclePlate: payload.vehiclePlate,
+                        licenseDocumentUrl: payload.licenseDocUrl ?? null,
+                    },
+                });
 
-  update(id: number, updateDriverDto: UpdateDriverDto) {
-    return `This action updates a #${id} driver`;
-  }
+                return {
+                    user,
+                    driver,
+                    message: 'Registered successfully. Your driver license is under review.',
+                };
+            });
+        } catch (e) {
+            throw e;
+        }
+    }
 
-  remove(id: number) {
-    return `This action removes a #${id} driver`;
-  }
+    findAll() {
+        return `This action returns all driver`;
+    }
+
+    findOne(id: number) {
+        return `This action returns a #${id} driver`;
+    }
+
+    update(id: number, updateDriverDto: any) {
+        return `This action updates a #${id} driver`;
+    }
+
+    remove(id: number) {
+        return `This action removes a #${id} driver`;
+    }
 }
