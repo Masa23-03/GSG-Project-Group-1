@@ -114,4 +114,20 @@ export class AuthController {
   logout(@Body(new ZodValidationPipe(RefreshTokenSchema)) dto: LogoutDto) {
     return this.authService.logout(dto);
   }
+
+
+  //     @IsPublic()
+  //     @Post('otp/request')
+  //     requestOtp(@Body(new ZodValidationPipe(RequestOtpSchema)) dto: RequestOtpDTO) {
+  //         return this.authService.requestOtp(dto);
+  //     }
+
+
+  //     @IsPublic()
+  //     @Post('otp/verify')
+  //     verifyOtp(@Body(new ZodValidationPipe(VerifyOtpSchema)) dto: VerifyOtpDTO) {
+  //         return this.authService.verifyOtp(dto);
+  //     }
+
+  
 }
