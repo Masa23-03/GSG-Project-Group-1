@@ -31,31 +31,35 @@ export class DriverService {
     private readonly userService: UserService,
   ) {}
 
-  async create(payload: RegisterDriverDTO) {
-    return this.prismaService.$transaction(async (tx) => {
-      const user = await this.userService.create(
-        payload,
-        UserRole.DRIVER,
-        UserStatus.INACTIVE,
-        tx,
-      );
+  async create(payload: RegisterDriverDTO, role: UserRole) {
+    try {
+      return this.prismaService.$transaction(async (tx) => {
+        const user = await this.userService.create(
+          payload,
+          UserRole.DRIVER,
+          UserStatus.INACTIVE,
+          tx,
+        );
 
-      const driver = await tx.driver.create({
-        data: {
-          userId: user.id,
-          vehicleName: payload.vehicleName,
-          vehiclePlate: payload.vehiclePlate,
-          licenseDocumentUrl: payload.licenseDocUrl ?? null,
-        },
+        const driver = await tx.driver.create({
+          data: {
+            userId: user.id,
+            vehicleName: payload.vehicleName,
+            vehiclePlate: payload.vehiclePlate,
+            licenseDocumentUrl: payload.licenseDocUrl ?? null,
+          },
+        });
+
+        return {
+          user,
+          driver,
+          message:
+            'Registered successfully. Your driver license is under review.',
+        };
       });
-
-      return {
-        user,
-        driver,
-        message:
-          'Registered successfully. Your driver license is under review.',
-      };
-    });
+    } catch (e) {
+      throw e;
+    }
   }
 
   //Admin only

@@ -22,11 +22,11 @@ import {
   RegisterPatientSwaggerDto,
   RegisterPharmacySwaggerDto,
 } from './dto/auth.swagger.dto';
+import { UserRole } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
   @IsPublic()
   @Post('register/patient')
   @ApiBody({ type: RegisterPatientSwaggerDto })
@@ -38,8 +38,8 @@ export class AuthController {
   }
 
   @IsPublic()
-  @Post('register/pharmacy')
   @ApiBody({ type: RegisterPharmacySwaggerDto })
+  @Post('register/pharmacy')
   registerPharmacy(
     @Body(new ZodValidationPipe(pharmacyValidationSchema))
     dto: RegisterPharmacySwaggerDto,
@@ -48,8 +48,8 @@ export class AuthController {
   }
 
   @IsPublic()
-  @Post('register/driver')
   @ApiBody({ type: RegisterDriverSwaggerDto })
+  @Post('register/driver')
   registerDriver(
     @Body(new ZodValidationPipe(driverRegistrationValidationSchema))
     dto: RegisterDriverSwaggerDto,

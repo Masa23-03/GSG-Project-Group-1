@@ -16,6 +16,7 @@ import {
   hashRefreshToken,
 } from './util/refresh-token.util';
 import { removeFields } from 'src/utils/object.util';
+import { RegisterPharmacyDTO } from './dto/auth.register.dto';
 
 @Injectable()
 export class AuthService {
@@ -41,7 +42,10 @@ export class AuthService {
   }
 
   async registerPharmacy(dto: any) {
-    const { user, pharmacy } = await this.pharmacyService.create(dto);
+    const { user, pharmacy } = await this.pharmacyService.create(
+      dto,
+      UserRole.PHARMACY,
+    );
     return {
       user,
       pharmacy,
@@ -50,7 +54,10 @@ export class AuthService {
   }
 
   async registerDriver(dto: any) {
-    const { user, driver } = await this.driverService.create(dto);
+    const { user, driver } = await this.driverService.create(
+      dto,
+      UserRole.DRIVER,
+    );
     return {
       user,
       driver,

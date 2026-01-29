@@ -33,11 +33,6 @@ import { updateDriverProfileSchema } from './schema/profile.schema';
 export class DriverController {
   constructor(private readonly driverService: DriverService) {}
 
-  @Post()
-  create(@Body() createDriverDto) {
-    return this.driverService.create(createDriverDto);
-  }
-
   @Roles(UserRole.ADMIN)
   @Get('admin')
   @ApiQuery({ name: 'page', required: false, type: Number })
