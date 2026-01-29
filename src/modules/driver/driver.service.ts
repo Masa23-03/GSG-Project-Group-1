@@ -31,9 +31,10 @@ export class DriverService {
     private readonly userService: UserService,
   ) {}
 
-  async create(payload: RegisterDriverDTO, role: UserRole) {
+
+  async create(payload: RegisterDriverDTO) {
     try {
-      return this.prismaService.$transaction(async (tx) => {
+      return await this.prismaService.$transaction(async (tx) => {
         const user = await this.userService.create(
           payload,
           UserRole.DRIVER,
@@ -46,18 +47,18 @@ export class DriverService {
             userId: user.id,
             vehicleName: payload.vehicleName,
             vehiclePlate: payload.vehiclePlate,
-            licenseDocumentUrl: payload.licenseDocUrl ?? null,
+            licenseDocumentUrl: payload.licenseDocUrl,
           },
         });
 
         return {
           user,
-          driver,
-          message:
-            'Registered successfully. Your driver license is under review.',
-        };
-      });
+          driver
+        }
+
+      })
     } catch (e) {
+      console.log('driver service error - create() method :', e);
       throw e;
     }
   }

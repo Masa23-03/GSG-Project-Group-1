@@ -37,9 +37,10 @@ export class PharmacyService {
     private readonly userService: UserService,
   ) {}
 
-  async create(payload: RegisterPharmacyDTO, role: UserRole) {
+  async create(payload: RegisterPharmacyDTO) {
     try {
       return this.prismaService.$transaction(async (tx) => {
+
         const user = await this.userService.create(
           payload,
           UserRole.PHARMACY,
@@ -52,28 +53,28 @@ export class PharmacyService {
             userId: user.id,
             pharmacyName: payload.pharmacyName,
             licenseNumber: payload.licenseNumber,
-            cityId: payload.cityId,
+            city: payload.city,
             address: payload.address ?? null,
             licenseDocumentUrl: payload.licenseDocUrl ?? null,
-            latitude:
-              payload.lat != null ? new Prisma.Decimal(payload.lat) : null,
-            longitude:
-              payload.lng != null ? new Prisma.Decimal(payload.lng) : null,
+            latitude: payload.lat ?? null,
+            longitude: payload.lng ?? null,
           },
         });
 
         return {
           user,
-          pharmacy,
-          message:
-            'Registered successfully. Your pharmacy license is under review.',
+          pharmacy
         };
+
       });
     } catch (e) {
+      console.log('pharmacy service error - create() method :', e);
       throw e;
     }
   }
 
+
+  
   //Admin only
   async findAllAdmin(
     query: AdminListQueryDto,

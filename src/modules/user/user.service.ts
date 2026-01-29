@@ -3,13 +3,11 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { UserRole, UserStatus } from '@prisma/client';
-
+import { Prisma, UserRole, UserStatus } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 import { hashPassword } from '../auth/util/crypto.util';
 import { removeFields } from '../../utils/object.util';
 import { RegisterationDTO } from '../auth/dto/auth.register.dto';
-
 import { UserMeResponseDto } from './dto/response.dto/profile.dto';
 import { mapPatientAddress } from '../patient-address/util/mapper';
 import { UpdateMyPatientDto } from './dto/request.dto/profile.dto';
@@ -20,34 +18,43 @@ export class UserService {
 
   async create(
     payload: RegisterationDTO,
-    role?: UserRole,
+    role: UserRole,
     status?: UserStatus,
-    tx?: any,
+    tx?: Prisma.TransactionClient,
   ) {
+
     const client = tx ?? this.prismaService;
 
     const email = this.normalizeEmail(payload.email);
+
     const phoneNumber = payload.phoneNumber.trim();
-
-    await this.ensureEmailNotUsed(email, client);
-    await this.ensurePhoneNotUsed(phoneNumber, client);
-
+    await this.ensureEmailNotUsed(payload.email, tx);
     const hashedPassword = await hashPassword(payload.password);
 
-    const user = await client.user.create({
-      data: {
-        name: payload.name,
-        email,
-        phoneNumber,
-        password: hashedPassword,
-        role: role ?? UserRole.PATIENT,
-        status: status ?? UserStatus.ACTIVE,
-      },
-    });
+    try {
+      const user = await client.user.create({
+        data: {
+          name: payload.name,
+          email: email,
+          phoneNumber: phoneNumber,
+          password: hashedPassword,
+          role: role ?? UserRole.PATIENT,
+          status: status ?? UserStatus.ACTIVE,
+        },
+      });
 
-    return removeFields(user, ['password']);
+      const userWithoutPassword = removeFields(user, ['password']);
+
+      return userWithoutPassword;
+
+    } catch (e) {
+      console.log('user creation error  :', e);
+      throw e;
+    }
   }
 
+
+  
   normalizeEmail(email: string) {
     return email.trim().toLowerCase();
   }
@@ -59,12 +66,20 @@ export class UserService {
     if (existing) throw new ConflictException('Email already in use');
   }
 
-  private async ensurePhoneNotUsed(phoneNumber: string, client?: any) {
-    const db = client ?? this.prismaService;
 
-    const existing = await db.user.findFirst({ where: { phoneNumber } });
-    if (existing) throw new ConflictException('Phone number already in use');
-  }
+  //! we can't use this since the user can register in more than one role 
+  // private async ensurePhoneNotUsed(phoneNumber: string, client?: any) {
+  //   const db = client ?? this.prismaService;
+
+  //   const existing = await db.user.findFirst({ where: { phoneNumber } });
+  //   if (existing) throw new ConflictException('Phone number already in use');
+  // }
+
+
+  
+
+
+
 
   async findMyProfile(id: number): Promise<UserMeResponseDto> {
     const user = await this.prismaService.user.findUnique({
