@@ -30,6 +30,10 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: sh -lc "npm run start:dev"
 
 volumes:
   mysql_data:
