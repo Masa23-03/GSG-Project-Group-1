@@ -13,28 +13,28 @@ import { PatientAddressService } from './patient-address.service';
 export class PatientAddressController {
   constructor(private readonly patientAddressService: PatientAddressService) {}
 
-  @Post()
-  create(@Body() createPatientAddressDto) {
-    return this.patientAddressService.create(createPatientAddressDto);
-  }
+  // @Post()
+  // create(@Body() createPatientAddressDto) {
+  //   return this.patientAddressService.create(createPatientAddressDto);
+  // }
 
-  @Get()
-  findAll() {
-    return this.patientAddressService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.patientAddressService.findAll();
+  // }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.patientAddressService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.patientAddressService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePatientAddressDto) {
-    return this.patientAddressService.update(+id, updatePatientAddressDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updatePatientAddressDto) {
+  //   return this.patientAddressService.update(+id, updatePatientAddressDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.patientAddressService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.patientAddressService.remove(+id);
+  // }
 }

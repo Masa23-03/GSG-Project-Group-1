@@ -3,7 +3,6 @@ import { PrismaClient } from '@prisma/client';
 
 import * as argon2 from 'argon2';
 import { parseDbUrl } from 'src/utils/prisma.helper';
-import { env } from 'process';
 
 const cfg = parseDbUrl(process.env.DATABASE_URL!);
 
@@ -31,7 +30,7 @@ export async function seedAdmin(prisma: PrismaClient) {
       password: hashedPassword,
       role: 'ADMIN',
       name: 'Admin',
-      phoneNumber: '0000000000',
+      phoneNumber: '00000000000',
     },
   });
 
