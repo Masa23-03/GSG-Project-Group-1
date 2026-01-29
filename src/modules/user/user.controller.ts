@@ -23,13 +23,9 @@ import { UpdateMyPatientDto } from './dto/request.dto/profile.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  create(@Body() createUserDto) {
-    return this.userService.create(createUserDto);
-  }
-
   //TODO:PATCH /me/password  -- optional
-  @Patch('/me/password')
+  //@Patch('/me/password')
+
   @Roles(UserRole.PATIENT)
   @Get('me')
   async getMe(@AuthedUser() user: authedUserType) {

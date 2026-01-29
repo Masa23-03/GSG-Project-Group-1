@@ -89,7 +89,8 @@ export class PharmacyController {
     );
   }
   //TODO:PATCH /me/password  -- optional
-  @Patch('/me/password')
+  //@Patch('/me/password')
+
   //profile endpoint to view pharmacy profile
   @Roles(UserRole.PHARMACY)
   @Get('me')
@@ -109,10 +110,5 @@ export class PharmacyController {
       pharmacy.id,
       updatePharmacyDto,
     );
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.pharmacyService.remove(+id);
   }
 }

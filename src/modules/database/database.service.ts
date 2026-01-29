@@ -17,7 +17,8 @@ export class DatabaseService
     const url = env.DATABASE_URL;
     if (!url) throw new Error('DATABASE_URL is missing');
 
-    const cfg = parseDbUrl(url);
+    const cfg = parseDbUrl(env.DATABASE_URL);
+    console.log('[DB CFG]', cfg);
 
     const adapter = new PrismaMariaDb({
       host: cfg.host,
@@ -33,8 +34,18 @@ export class DatabaseService
     await this.$disconnect();
   }
   async onModuleInit() {
-    await this.$connect();
+    const max = 10;
+    for (let i = 1; i <= max; i++) {
+      try {
+        await this.$connect();
+        return;
+      } catch (e) {
+        if (i === max) throw e;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
   }
+
   //handle query pagination
   handleQueryPagination(query: PaginationQueryType) {
     const page = Number(query.page ?? 1);

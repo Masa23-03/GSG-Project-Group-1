@@ -19,14 +19,6 @@ const EnvSchema = z.object({
       }
     }, 'DATABASE_URL must be a valid mysql/mariadb URL'),
   JWT_SECRET: z.string().min(16),
-
-  DB_HOST: z.string().min(1),
-
-  DB_PORT: z.coerce.number().int().positive().default(3306),
-
-  DB_USER: z.string().min(1),
-  DB_PASS: z.string().min(6),
-  DB_NAME: z.string().min(1),
   CLOUDINARY_CLOUD_NAME: z.string().min(1),
   CLOUDINARY_API_KEY: z.string().min(1),
   CLOUDINARY_API_SECRET: z.string().min(1),

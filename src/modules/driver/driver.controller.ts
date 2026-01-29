@@ -99,7 +99,8 @@ export class DriverController {
   }
 
   //TODO:PATCH /me/password  -- optional
-  @Patch('/me/password')
+  //@Patch('/me/password')
+
   //profile endpoint to view driver profile
   @Roles(UserRole.DRIVER)
   @Get('me')
@@ -116,9 +117,5 @@ export class DriverController {
     updateDriverDto: UpdateMyDriverDto,
   ) {
     return await this.driverService.updateMyProfile(driver.id, updateDriverDto);
-  }
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.driverService.remove(+id);
   }
 }
