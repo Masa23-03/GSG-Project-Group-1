@@ -1,11 +1,14 @@
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { parseDbUrl } from 'src/utils/prisma.helper';
 
 export function makeMariaAdapter() {
-  const host = process.env.DB_HOST;
-  const port = Number(process.env.DB_PORT || 3306);
-  const user = process.env.DB_USER;
-  const password = process.env.DB_PASS;
-  const database = process.env.DB_NAME;
+  const cfg = parseDbUrl(process.env.DATABASE_URL!);
+  const host = cfg.host;
+  const port = cfg.port;
+  const user = cfg.user;
+  const password = cfg.password;
+  const database = cfg.database;
+
   if (!host || !user || !password || !database) {
     throw new Error(
       'Missing DB env vars for adapter (DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME)',
