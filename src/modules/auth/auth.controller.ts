@@ -1,40 +1,38 @@
 ﻿import { Controller, Post, Body } from '@nestjs/common';
+import { ApiBody } from '@nestjs/swagger';
+
 import { AuthService } from './auth.service';
 import { IsPublic } from '../../decorators/isPublic.decorator';
 import { ZodValidationPipe } from '../../pipes/zod-validation.pipe';
+
 import { pharmacyValidationSchema } from './validation/pharmacy.validation.schema';
 import { driverRegistrationValidationSchema } from './validation/auth.schema';
 import { baseRegisterSchema } from './validation/patient.validation.schema';
 import { RequestOtpSchema, VerifyOtpSchema } from './otp/otp.schema';
 import { LoginSchema } from './validation/login.validation.schema';
 import { RefreshTokenSchema } from './validation/refresh.validation.schema';
-import type {
-  RegisterDriverDTO,
-  RegisterPatientDTO,
-  RegisterPharmacyDTO,
-} from './dto/auth.register.dto';
+
 import type { RequestOtpDTO, VerifyOtpDTO } from './dto/otp.dto';
-import { type LoginDTO } from './dto/auth.login.dto';
 import type { RefreshTokenDTO } from './dto/refresh-token.dto';
 import type { LogoutDto } from './dto/auth.logout.dto';
-import { ApiBody } from '@nestjs/swagger';
+
 import {
   LoginSwaggerDto,
   RegisterDriverSwaggerDto,
   RegisterPatientSwaggerDto,
   RegisterPharmacySwaggerDto,
 } from './dto/auth.swagger.dto';
+import { UserRole } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
   @IsPublic()
   @Post('register/patient')
-    @ApiBody({ type: RegisterPatientSwaggerDto })
-
+  @ApiBody({ type: RegisterPatientSwaggerDto })
   registerPatient(
-    @Body(new ZodValidationPipe(baseRegisterSchema)) dto: RegisterPatientSwaggerDto,
+    @Body(new ZodValidationPipe(baseRegisterSchema))
+    dto: RegisterPatientSwaggerDto,
   ) {
     return this.authService.registerPatient(dto);
   }
@@ -50,8 +48,7 @@ export class AuthController {
   }
 
   @IsPublic()
-      @ApiBody({ type: RegisterDriverSwaggerDto })
-
+  @ApiBody({ type: RegisterDriverSwaggerDto })
   @Post('register/driver')
   registerDriver(
     @Body(new ZodValidationPipe(driverRegistrationValidationSchema))
@@ -75,8 +72,8 @@ export class AuthController {
   }
 
   @IsPublic()
-  @ApiBody({ type: LoginSwaggerDto })
   @Post('login')
+  @ApiBody({ type: LoginSwaggerDto })
   login(@Body(new ZodValidationPipe(LoginSchema)) dto: LoginSwaggerDto) {
     return this.authService.login(dto);
   }

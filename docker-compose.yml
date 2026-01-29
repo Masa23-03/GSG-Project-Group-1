@@ -1,28 +1,24 @@
 services:
   mysql_db:
     image: mysql:8.0
-    restart: always
-    env_file: [.env]
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASS}
-      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: "MySQL@123456"
+      MYSQL_DATABASE: "pharmacy_delivery_dev"
     ports:
       - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASS}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pMySQL@123456"]
       interval: 5s
       timeout: 3s
       retries: 30
 
   nestjs_api:
     build: .
-    ports: ["3000:3000"]
-    env_file: [.env]
     depends_on:
       mysql_db:
         condition: service_healthy
-
-volumes:
-  mysql_data:
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"

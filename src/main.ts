@@ -4,37 +4,42 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { env } from './config/env';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
 import { ResponseInterceptor } from './interceptors/response.interceptor';
-import { UncaughtException } from './filters/global-exception.filter';
+import { LoggingInterceptor } from './interceptors/logging.interceptor';
+
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { ZodExceptionFilter } from './filters/zod-exception.filter';
 import { PrismaExceptionFilter } from './filters/prisma-exception.filter';
-import { ImageKitException } from './filters/image-kit-exception.filter';
+import { MulterExceptionFilter } from './filters/file-upload.filter';
 
-BigInt.prototype.toJSON = function () {
-  return this.toString();
-};
 async function bootstrap() {
-  console.log('DATABASE_URL=', env['DATABASE_URL']);
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api');
+
   app.enableCors({
     origin: true,
     credentials: true,
   });
-  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new ResponseInterceptor(),
+  );
+
   app.useGlobalFilters(
     new ZodExceptionFilter(),
     new PrismaExceptionFilter(),
+    new MulterExceptionFilter(),
     new HttpExceptionFilter(),
-    //new UncaughtException(),
   );
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Pharmacy Delivery API')
     .setDescription('Backend API documentation')
     .setVersion('1.0')
+
     .addBearerAuth(
       {
         type: 'http',
@@ -46,15 +51,19 @@ async function bootstrap() {
     )
     .build();
 
-  const doc = SwaggerModule.createDocument(app, swaggerConfig);
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
 
-  SwaggerModule.setup('docs', app, doc, {
-    swaggerOptions: { persistAuthorization: true },
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
   });
 
-  const port = Number(process.env.PORT) || 3000;
+  const port = env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');
 
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running on http://localhost:${port}/api`);
+  console.log(`Swagger at http://localhost:${port}/docs`);
 }
+
 bootstrap();

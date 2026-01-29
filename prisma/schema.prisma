@@ -96,7 +96,13 @@ enum PharmacyOrderStatus {
   COMPLETED
 }
 
-enum createdBy{
+enum Currency {
+  ILS
+  USD
+  JOD
+}
+
+enum CreatedBy {
   ADMIN
   SELF
 }
@@ -111,7 +117,6 @@ enum OtpPurpose {
   RESET_PASSWORD
   LOGIN
 }
-
 
 model Otp {
   id          Int        @id @default(autoincrement()) @db.UnsignedInt
@@ -128,16 +133,15 @@ model Otp {
   sentAt      DateTime   @default(now()) @map("sent_at") @db.Timestamp()
   createdAt   DateTime   @default(now()) @map("created_at") @db.DateTime(0)
 
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, channel, purpose], map: "idx_otp_lookup")
   @@map("otps")
 }
 
-
 model RefreshToken {
-  id        Int    @id @default(autoincrement()) @db.UnsignedInt
-  userId    Int    @db.UnsignedInt
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  userId    Int       @db.UnsignedInt
   token     String    @unique @db.VarChar(255)
   expiresAt DateTime  @map("expires_at") @db.Timestamp()
   revokedAt DateTime? @map("revoked_at") @db.Timestamp()
@@ -145,14 +149,14 @@ model RefreshToken {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  user User @relation(fields: [userId], references: [id] , onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], map: "idx_tokens_user")
   @@map("refresh_tokens")
 }
 
 model User {
-  id              Int     @id @default(autoincrement()) @db.UnsignedInt
+  id              Int        @id @default(autoincrement()) @db.UnsignedInt
   email           String     @unique @db.VarChar(255)
   password        String     @db.VarChar(255)
   role            UserRole   @default(PATIENT)
@@ -163,10 +167,10 @@ model User {
   profileImageUrl String?    @map("profile_image_url") @db.VarChar(255)
   createdAt       DateTime   @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt       DateTime   @updatedAt @map("updated_at") @db.DateTime(0)
-  createdBy       createdBy  @default(SELF) @map("created_by")
-  
-  isEmailVerified Boolean  @default(false)
-  isPhoneVerified Boolean  @default(false)
+  createdBy       CreatedBy  @default(SELF) @map("created_by")
+
+  isEmailVerified Boolean @default(false)
+  isPhoneVerified Boolean @default(false)
 
   //! Relations
   pharmacy           Pharmacy?        @relation("PharmacyOwner")
@@ -176,7 +180,9 @@ model User {
   addresses          PatientAddress[]
   orders             Order[]
   refreshToken       RefreshToken[]
-    otps            Otp[]
+  otps               Otp[]
+  createdMedicines   Medicine[]       @relation("MedicineCreator")
+  reviewedMedicines  Medicine[]       @relation("MedicineReviewer")
 
   @@index([role], map: "idx_users_role")
   @@index([status], map: "idx_users_status")
@@ -184,19 +190,19 @@ model User {
 }
 
 model Pharmacy {
-  id                 Int             @id @default(autoincrement()) @db.UnsignedInt
-  userId             Int             @unique @db.UnsignedInt
-  verifiedBy         Int?            @db.UnsignedInt
+  id                 Int                @id @default(autoincrement()) @db.UnsignedInt
+  userId             Int                @unique @db.UnsignedInt
+  reviewedBy         Int?               @db.UnsignedInt
   pharmacyName       String             @map("pharmacy_name") @db.VarChar(255)
   licenseNumber      String             @unique @map("license_number") @db.VarChar(255)
   licenseDocumentUrl String?            @map("license_document_url") @db.VarChar(255)
-  city               String             @db.VarChar(255)
+  cityId             Int                @db.UnsignedInt
   address            String?            @db.Text
   latitude           Decimal?           @db.Decimal(10, 8)
   longitude          Decimal?           @db.Decimal(11, 8)
   coverImageUrl      String?            @map("cover_image_url") @db.VarChar(255)
   verificationStatus VerificationStatus @default(UNDER_REVIEW) @map("verification_status")
-  verifiedAt         DateTime?          @map("verified_at") @db.Timestamp()
+  reviewedAt         DateTime?          @map("reviewed_at") @db.Timestamp()
   workOpenTime       DateTime?          @map("work_open_time") @db.Time()
   workCloseTime      DateTime?          @map("work_close_time") @db.Time()
   avgPrepTimeMinutes Int                @default(10) @map("avg_prep_time_minutes") @db.TinyInt
@@ -204,23 +210,23 @@ model Pharmacy {
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  // owner (1–1)
-  user           User            @relation("PharmacyOwner", fields: [userId], references: [id] , onDelete: Cascade)
-  // verifier (admin, 1–many)
-  admin          User?           @relation("PharmacyVerifier", fields: [verifiedBy], references: [id] , onDelete : SetNull)
-  inventoryItems InventoryItem[]
-  pharmacyOrders PharmacyOrder[]
+  user  User  @relation("PharmacyOwner", fields: [userId], references: [id], onDelete: Cascade)
+  admin User? @relation("PharmacyVerifier", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  city               City            @relation(fields: [cityId], references: [id])
+  inventoryItems     InventoryItem[]
+  pharmacyOrders     PharmacyOrder[]
+  requestedMedicines Medicine[]      @relation("MedicineRequester")
 
   @@index([verificationStatus], map: "idx_pharmacies_verified")
-  @@index([city], map: "idx_pharmacies_cities")
   @@map("pharmacies")
 }
 
 model Driver {
-  id                 Int             @id @default(autoincrement()) @db.UnsignedInt
-  userId             Int             @unique @db.UnsignedInt
-  verifiedBy         Int?            @db.UnsignedInt
-  verifiedAt         DateTime?          @map("verified_at") @db.Timestamp()
+  id                 Int                @id @default(autoincrement()) @db.UnsignedInt
+  userId             Int                @unique @db.UnsignedInt
+  reviewedBy         Int?               @db.UnsignedInt
+  reviewedAt         DateTime?          @map("reviewed_at") @db.Timestamp()
   vehicleName        String             @map("vehicle_name") @db.VarChar(255)
   vehiclePlate       String             @unique @map("vehicle_plate") @db.VarChar(255)
   licenseDocumentUrl String             @map("license_document_url") @db.VarChar(255)
@@ -234,8 +240,9 @@ model Driver {
   updatedAt          DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  user       User       @relation("DriverOwner", fields: [userId], references: [id] , onDelete: Cascade)
-  admin      User?      @relation("DriverVerifier", fields: [verifiedBy], references: [id], onDelete: SetNull)
+  user  User  @relation("DriverOwner", fields: [userId], references: [id], onDelete: Cascade)
+  admin User? @relation("DriverVerifier", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
   deliveries Delivery[]
 
   @@index([verificationStatus], map: "idx_drivers_verified")
@@ -244,9 +251,9 @@ model Driver {
 }
 
 model Delivery {
-  id                   Int                      @id @default(autoincrement()) @db.UnsignedInt
-  orderId              Int                      @unique @map("order_id") @db.UnsignedInt
-  driverId             Int?                     @map("driver_id") @db.UnsignedInt
+  id                   Int                         @id @default(autoincrement()) @db.UnsignedInt
+  orderId              Int                         @unique @map("order_id") @db.UnsignedInt
+  driverId             Int?                        @map("driver_id") @db.UnsignedInt
   status               DeliveryStatus              @default(PENDING)
   confirmationMethod   DeliveryConfirmationMethod? @map("confirmation_method")
   confirmationPhotoUrl String?                     @map("confirmation_photo_url") @db.VarChar(255)
@@ -259,7 +266,7 @@ model Delivery {
 
   //! Relations
   order          Order           @relation("OrderDelivery", fields: [orderId], references: [id])
-  driver         Driver?         @relation(fields: [driverId], references: [id] , onDelete: SetNull) //! because if we deleted driver, we still want to keep the delivery record
+  driver         Driver?         @relation(fields: [driverId], references: [id], onDelete: SetNull) //! because if we deleted driver, we still want to keep the delivery record
   pharmacyOrders PharmacyOrder[]
 
   @@index([driverId], map: "idx_deliveries_driver")
@@ -268,12 +275,12 @@ model Delivery {
 }
 
 model PatientAddress {
-  id           Int   @id @default(autoincrement()) @db.UnsignedInt
-  userId       Int   @db.UnsignedInt
+  id           Int      @id @default(autoincrement()) @db.UnsignedInt
+  userId       Int      @db.UnsignedInt
   label        String?  @db.VarChar(255)
   area         String?  @db.VarChar(255)
   region       String?  @db.VarChar(255)
-  country      String?  @db.VarChar(255)
+  cityId       Int      @db.UnsignedInt
   addressLine1 String   @db.Text
   addressLine2 String?  @db.Text
   latitude     Decimal? @db.Decimal(10, 8)
@@ -283,27 +290,40 @@ model PatientAddress {
   createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.DateTime(0)
   //! Relations
-  user         User     @relation(fields: [userId], references: [id] , onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders       Order[]
+  city         City     @relation(fields: [cityId], references: [id])
 
   @@index([userId], map: "idx_addresses_user")
   @@map("patient_addresses")
 }
 
 model CityDeliveryFee {
-  id                Int   @id @default(autoincrement()) @db.UnsignedInt
-  city              String   @unique @db.VarChar(255) //city table
-  standardFeeAmount Decimal  @default(0) @map("standard_fee_amount") @db.Decimal(10, 7)
-  expressFeeAmount  Decimal? @map("express_fee_amount") @db.Decimal(10, 7)
-  currency          String   @default("ILS") @db.Char(3) //currency table 
+  id                Int      @id @default(autoincrement()) @db.UnsignedInt
+  cityId            Int      @unique @db.UnsignedInt
+  standardFeeAmount Decimal  @default(0) @map("standard_fee_amount") @db.Decimal(10, 2)
+  expressFeeAmount  Decimal? @map("express_fee_amount") @db.Decimal(10, 2)
+  currency          Currency @default(ILS)
   createdAt         DateTime @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt         DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+  //! Relations
+  city              City     @relation(fields: [cityId], references: [id])
 
   @@map("city_delivery_fees")
 }
 
+model City {
+  id   Int    @id @default(autoincrement()) @db.UnsignedInt
+  name String @unique
+
+  cityDeliveryFee  CityDeliveryFee?
+  pharmacies       Pharmacy[]
+  orders           Order[]
+  patientAddresses PatientAddress[]
+}
+
 model Category {
-  id               Int   @id @default(autoincrement()) @db.UnsignedInt
+  id               Int      @id @default(autoincrement()) @db.UnsignedInt
   name             String   @db.VarChar(255)
   categoryImageUrl String?  @db.VarChar(255)
   description      String?  @db.MediumText
@@ -313,36 +333,48 @@ model Category {
   //! Relations
   medicines Medicine[]
 
+  @@unique([name], map: "uq_categories_name")
   @@index([name], map: "idx_categories_name")
   @@map("categories")
 }
 
 model Medicine {
-  id                   Int          @id @default(autoincrement()) @db.UnsignedInt
-  categoryId           Int          @map("category_id") @db.UnsignedInt
-  genericName          String          @map("generic_name") @db.VarChar(255)
-  brandName            String?         @map("brand_name") @db.VarChar(255)
-  manufacturer         String?         @db.VarChar(255)
-  dosageForm           String?         @map("dosage_form") @db.VarChar(255)
-  strengthValue        Decimal?        @map("strength_value") @db.Decimal(10, 7)
-  strengthUnit         String?         @map("strength_unit") @db.VarChar(255)
-  packSize             Int?            @map("pack_size") @db.Int
-  packUnit             String?         @map("pack_unit") @db.VarChar(255)
-  requiresPrescription Boolean         @default(false) @map("requires_prescription")
-  activeIngredients    String?         @map("active_ingredients") @db.LongText
-  dosageInstructions   String?         @map("dosage_instructions") @db.LongText
-  storageInstructions  String?         @map("storage_instructions") @db.LongText
-  warnings             String?         @db.LongText
-  description          String          @db.LongText
-  status               MedicineStatus  @default(PENDING)
-  isActive             Boolean         @default(true) @map("is_active")
-  maxPrice             Decimal?        @map("max_price") @db.Decimal(10, 8)
-  createdAt            DateTime        @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt            DateTime        @updatedAt @map("updated_at") @db.DateTime(0)
+  id                    Int            @id @default(autoincrement()) @db.UnsignedInt
+  categoryId            Int            @map("category_id") @db.UnsignedInt
+  genericName           String         @map("generic_name") @db.VarChar(255)
+  brandName             String?        @map("brand_name") @db.VarChar(255)
+  manufacturer          String?        @db.VarChar(255)
+  dosageForm            String?        @map("dosage_form") @db.VarChar(255)
+  strengthValue         Decimal?       @map("strength_value") @db.Decimal(10, 7)
+  strengthUnit          String?        @map("strength_unit") @db.VarChar(255)
+  packSize              Int?           @map("pack_size") @db.Int
+  packUnit              String?        @map("pack_unit") @db.VarChar(255)
+  requiresPrescription  Boolean        @default(false) @map("requires_prescription")
+  activeIngredients     String?        @map("active_ingredients") @db.LongText
+  dosageInstructions    String?        @map("dosage_instructions") @db.LongText
+  storageInstructions   String?        @map("storage_instructions") @db.LongText
+  warnings              String?        @db.LongText
+  description           String         @db.LongText
+  status                MedicineStatus @default(PENDING)
+  isActive              Boolean        @default(true) @map("is_active")
+  maxPrice              Decimal?       @map("max_price") @db.Decimal(10, 8)
+  minPrice              Decimal?       @map("min_price") @db.Decimal(10, 8)
+  createdAt             DateTime       @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt             DateTime       @updatedAt @map("updated_at") @db.DateTime(0)
+  reviewedAt            DateTime?      @map("reviewed_at")
+  rejectionReason       String?        @map("rejection_reason") @db.VarChar(255)
+  createdByUserId       Int?           @map("created_by_user_id") @db.UnsignedInt
+  requestedByPharmacyId Int?           @map("requested_by_pharmacy_id") @db.UnsignedInt
+  reviewedBy            Int?           @map("reviewed_by") @db.UnsignedInt
+
   //! Relations
-  category             Category        @relation(fields: [categoryId], references: [id])
-  medicineImages       MedicineImage[]
-  inventoryItems       InventoryItem[]
+  category       Category        @relation(fields: [categoryId], references: [id])
+  medicineImages MedicineImage[]
+  inventoryItems InventoryItem[]
+
+  createdBy           User?     @relation("MedicineCreator", fields: [createdByUserId], references: [id])
+  requestedByPharmacy Pharmacy? @relation("MedicineRequester", fields: [requestedByPharmacyId], references: [id])
+  reviewer            User?     @relation("MedicineReviewer", fields: [reviewedBy], references: [id])
 
   @@index([categoryId, isActive, status], map: "idx_medicines_category_active_status")
   @@index([genericName], map: "idx_medicines_generic_name")
@@ -351,8 +383,8 @@ model Medicine {
 }
 
 model MedicineImage {
-  id         Int   @id @default(autoincrement()) @db.UnsignedInt
-  medicineId Int   @map("medicine_id") @db.UnsignedInt
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  medicineId Int      @map("medicine_id") @db.UnsignedInt
   url        String   @db.VarChar(255)
   sortOrder  Int      @map("sort_order") @db.TinyInt
   createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(0)
@@ -367,9 +399,9 @@ model MedicineImage {
 }
 
 model InventoryItem {
-  id                 Int              @id @default(autoincrement()) @db.UnsignedInt
-  pharmacyId         Int              @map("pharmacy_id") @db.UnsignedInt
-  medicineId         Int              @map("medicine_id") @db.UnsignedInt
+  id                 Int                 @id @default(autoincrement()) @db.UnsignedInt
+  pharmacyId         Int                 @map("pharmacy_id") @db.UnsignedInt
+  medicineId         Int                 @map("medicine_id") @db.UnsignedInt
   createdAt          DateTime            @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt          DateTime            @updatedAt @map("updated_at") @db.DateTime(0)
   stockQuantity      Int                 @default(0) @map("stock_quantity") @db.Int
@@ -399,33 +431,33 @@ model Order {
   patientId Int  @map("patient_id") @db.UnsignedInt
   addressId Int? @map("address_id") @db.UnsignedInt
 
-  deliveryCity        String  @map("delivery_city") @db.VarChar(255)
+  deliveryCityId      Int     @map("delivery_city_id") @db.UnsignedInt
   deliveryArea        String? @map("delivery_area") @db.VarChar(255)
   deliveryAddressLine String  @map("delivery_address_line") @db.Text
 
   contactName            String   @map("contact_name") @db.VarChar(255)
   contactPhone           String   @map("contact_phone") @db.VarChar(255)
-  subtotalAmount         Decimal  @map("subtotal_amount") @db.Decimal(10, 7)
-  originalSubtotalAmount Decimal? @map("original_subtotal_amount") @db.Decimal(10, 7)
-  discountAmount         Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 7)
-  deliveryFeeAmount      Decimal  @default(0) @map("delivery_fee_amount") @db.Decimal(10, 7)
-  totalAmount            Decimal  @map("total_amount") @db.Decimal(10, 7)
-  originalTotalAmount    Decimal? @map("original_total_amount") @db.Decimal(10, 7)
-  currency               String   @default("ILS") @db.Char(3)
+  subtotalAmount         Decimal  @map("subtotal_amount") @db.Decimal(10, 2)
+  originalSubtotalAmount Decimal? @map("original_subtotal_amount") @db.Decimal(10, 2)
+  discountAmount         Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  deliveryFeeAmount      Decimal  @default(0) @map("delivery_fee_amount") @db.Decimal(10, 2)
+  totalAmount            Decimal  @map("total_amount") @db.Decimal(10, 2)
+  originalTotalAmount    Decimal? @map("original_total_amount") @db.Decimal(10, 2)
+  currency               Currency @default(ILS)
 
   itemsCount         Int          @map("items_count") @db.Int
   originalItemsCount Int?         @map("original_items_count") @db.Int
   status             OrderStatus  @default(PENDING)
   deliveryType       DeliveryType @default(STANDARD) @map("delivery_type")
   notes              String?      @db.Text
-
-  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+  createdAt          DateTime     @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  patient  User            @relation(fields: [patientId], references: [id] , onDelete: Cascade)
-  address  PatientAddress? @relation(fields: [addressId], references: [id])
-  delivery Delivery?       @relation("OrderDelivery")
+  patient   User            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  address   PatientAddress? @relation(fields: [addressId], references: [id])
+  delivery  Delivery?       @relation("OrderDelivery")
+  orderCity City            @relation(fields: [deliveryCityId], references: [id])
 
   payment        Payment?
   pharmacyOrders PharmacyOrder[]
@@ -436,10 +468,10 @@ model Order {
 }
 
 model Payment {
-  id        Int        @id @default(autoincrement()) @db.UnsignedInt
-  orderId   Int        @unique @map("order_id") @db.UnsignedInt
-  amount    Decimal       @db.Decimal(10, 7)
-  currency  String        @default("ILS") @db.Char(3)
+  id        Int           @id @default(autoincrement()) @db.UnsignedInt
+  orderId   Int           @unique @map("order_id") @db.UnsignedInt
+  amount    Decimal       @db.Decimal(10, 2)
+  currency  Currency      @default(ILS)
   status    PaymentStatus @default(PENDING)
   createdAt DateTime      @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt DateTime      @updatedAt @map("updated_at") @db.DateTime(0)
@@ -452,20 +484,23 @@ model Payment {
 }
 
 model PharmacyOrder {
-  id                   Int              @id @default(autoincrement()) @db.UnsignedInt
-  orderId              Int              @map("order_id") @db.UnsignedInt
-  pharmacyId           Int              @map("pharmacy_id") @db.UnsignedInt
-  deliveryId           Int?             @map("delivery_id") @db.UnsignedInt
+  id                   Int                 @id @default(autoincrement()) @db.UnsignedInt
+  orderId              Int                 @map("order_id") @db.UnsignedInt
+  pharmacyId           Int                 @map("pharmacy_id") @db.UnsignedInt
+  deliveryId           Int?                @map("delivery_id") @db.UnsignedInt
   status               PharmacyOrderStatus @default(PENDING)
   pickupOrder          Int?                @map("pickup_order") @db.SmallInt
   pickedUpAt           DateTime?           @map("picked_up_at") @db.Timestamp()
   requiresPrescription Boolean             @map("requires_prescription")
-  subtotalAmount       Decimal             @map("subtotal_amount") @db.Decimal(10, 7)
-  currency             String              @default("ILS") @db.Char(3)
+  subtotalAmount       Decimal             @map("subtotal_amount") @db.Decimal(10, 2)
+  currency             Currency            @default(ILS)
   acceptedAt           DateTime?           @map("accepted_at") @db.Timestamp()
   rejectedAt           DateTime?           @map("rejected_at") @db.Timestamp()
   createdAt            DateTime            @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt            DateTime            @updatedAt @map("updated_at") @db.DateTime(0)
+  rejectionReason      String              @map("rejection_reason") @db.VarChar(255)
+  deliveryFee          Decimal?            @map("delivery_fee") @db.Decimal(10, 2)
+  totalAmount          Decimal             @map("total_amount") @db.Decimal(10, 2)
 
   //! Relations
   order              Order               @relation(fields: [orderId], references: [id])
@@ -482,13 +517,13 @@ model PharmacyOrder {
 }
 
 model PharmacyOrderItem {
-  id              Int  @id @default(autoincrement()) @db.UnsignedInt
-  pharmacyOrderId Int  @map("pharmacy_order_id") @db.UnsignedInt
-  inventoryItemId Int  @map("inventory_item_id") @db.UnsignedInt
-  quantity        Int     @db.Int
-  pricePerItem    Decimal @map("price_per_item") @db.Decimal(10, 7)
-  total           Decimal @db.Decimal(10, 7)
-  currency        String  @default("ILS") @db.Char(3)
+  id              Int      @id @default(autoincrement()) @db.UnsignedInt
+  pharmacyOrderId Int      @map("pharmacy_order_id") @db.UnsignedInt
+  inventoryItemId Int      @map("inventory_item_id") @db.UnsignedInt
+  quantity        Int      @db.Int
+  pricePerItem    Decimal  @map("price_per_item") @db.Decimal(10, 7)
+  total           Decimal  @db.Decimal(10, 7)
+  currency        Currency @default(ILS)
 
   createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
@@ -504,8 +539,8 @@ model PharmacyOrderItem {
 }
 
 model Prescription {
-  id                  Int             @id @default(autoincrement()) @db.UnsignedInt
-  pharmacyOrderId     Int             @map("pharmacy_order_id") @db.UnsignedInt
+  id                  Int                @id @default(autoincrement()) @db.UnsignedInt
+  pharmacyOrderId     Int                @map("pharmacy_order_id") @db.UnsignedInt
   status              PrescriptionStatus @default(UNDER_REVIEW)
   reuploadReason      String?            @map("reupload_reason") @db.Text
   reuploadRequestedAt DateTime?          @map("reupload_requested_at") @db.Timestamp()
@@ -524,7 +559,7 @@ model Prescription {
 model PrescriptionFile {
   id Int @id @default(autoincrement()) @db.UnsignedInt
 
-  prescriptionId Int @map("prescription_id") @db.UnsignedInt
+  prescriptionId Int    @map("prescription_id") @db.UnsignedInt
   url            String @db.VarChar(255)
   sortOrder      Int    @map("sort_order") @db.SmallInt
 

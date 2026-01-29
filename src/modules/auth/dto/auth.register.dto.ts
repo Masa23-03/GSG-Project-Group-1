@@ -9,10 +9,9 @@ export type RegisterBaseUserDTO = Pick<
 export type RegisterPatientDTO = RegisterBaseUserDTO;
 
 export type RegisterPharmacyDTO = RegisterBaseUserDTO &
-  Pick<Pharmacy, 'pharmacyName' | 'licenseNumber'> & {
-    city: string;
-    address: NonNullable<Pharmacy['address']>;
-    licenseDocUrl?: Pharmacy['licenseDocumentUrl'];
+  Pick<Pharmacy, 'pharmacyName' | 'licenseNumber' | 'cityId'> & {
+    address: string;
+    licenseDocUrl?: string | null;
     lat?: number;
     lng?: number;
   };

@@ -37,10 +37,13 @@ export class AuthGuard implements CanActivate {
 
     try {
       const payload = this.jwtService.verify<JWT_Payload>(token);
+      const userId = Number(payload.sub);
+      if (!Number.isInteger(userId))
+        throw new UnauthorizedException('Invalid token');
       const user = await this.prisma.user.findUniqueOrThrow({
-        where: { id: Number(payload.sub) },
+        where: { id: userId },
       });
-      req.user = { id: String(user.id), role: user.role };
+      req.user = { id: user.id, role: user.role };
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }

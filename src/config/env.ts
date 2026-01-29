@@ -19,6 +19,9 @@ const EnvSchema = z.object({
       }
     }, 'DATABASE_URL must be a valid mysql/mariadb URL'),
   JWT_SECRET: z.string().min(16),
+  CLOUDINARY_CLOUD_NAME: z.string().min(1),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
