@@ -1,31 +1,39 @@
 import {
-  Injectable,
-  ForbiddenException,
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
+  Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ALLOW_ONBOARDING_KEY } from '../decorators/stage.decorator';
+import { REQUIRE_STAGE_KEY, AuthStage } from '../decorators/stage.decorator'
 
 @Injectable()
 export class StageGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(private readonly reflector: Reflector) { }
 
-  canActivate(ctx: ExecutionContext): boolean {
-    const allowOnboarding = this.reflector.getAllAndOverride(
-      ALLOW_ONBOARDING_KEY,
-      [ctx.getHandler(), ctx.getClass()],
+  canActivate(context: ExecutionContext): boolean {
+    const requiredStage = this.reflector.getAllAndOverride<AuthStage>(
+      REQUIRE_STAGE_KEY,
+      [context.getHandler(), context.getClass()],
     );
 
-    const req = ctx.switchToHttp().getRequest();
-    const user = req.user;
+    if (!requiredStage) return true;
 
-    if (!user?.stage) return true;
+    const req = context.switchToHttp().getRequest();
+    const user = req.user as { stage?: AuthStage } | undefined;
 
-    if (user.stage === 'FULL') return true;
 
-    if (user.stage === 'ONBOARDING' && allowOnboarding) return true;
+    if (!user?.stage) {
+      throw new ForbiddenException('Stage not found on request');
+    }
 
-    throw new ForbiddenException('Onboarding access: profile only');
+
+    if (requiredStage === 'FULL' && user.stage !== 'FULL') {
+      throw new ForbiddenException(
+        'Your account is under review. Profile access only.',
+      );
+    }
+
+    return true;
   }
 }

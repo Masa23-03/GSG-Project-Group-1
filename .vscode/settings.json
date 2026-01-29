@@ -1,0 +1,19 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3307,
+            "driver": "MySQL",
+            "name": "pharmacy_delivery_dev",
+            "database": "pharmacy_delivery_dev",
+            "username": "root",
+            "password": "123456"
+        }
+    ]
+}
