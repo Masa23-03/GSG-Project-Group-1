@@ -2,13 +2,17 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import * as argon2 from 'argon2';
+import { parseDbUrl } from 'src/utils/prisma.helper';
+import { env } from 'process';
+
+const cfg = parseDbUrl(process.env.DATABASE_URL!);
 
 const adapter = new PrismaMariaDb({
-  host: process.env.MYSQLHOST,
-  port: Number(process.env.MYSQLPORT),
-  user: process.env.MYSQLUSER,
-  password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQLDATABASE,
+  host: cfg.host,
+  port: cfg.port,
+  user: cfg.user,
+  password: cfg.password,
+  database: cfg.database,
   connectionLimit: 5,
 });
 

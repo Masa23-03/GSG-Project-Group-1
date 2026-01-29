@@ -6,6 +6,7 @@ import {
   PaginationQueryType,
   PaginationResponseType,
 } from 'src/types/unifiedType.types';
+import { parseDbUrl } from 'src/utils/prisma.helper';
 
 @Injectable()
 export class DatabaseService
@@ -16,15 +17,16 @@ export class DatabaseService
     const url = env.DATABASE_URL;
     if (!url) throw new Error('DATABASE_URL is missing');
 
+    const cfg = parseDbUrl(url);
+
     const adapter = new PrismaMariaDb({
-      host: process.env.MYSQLHOST,
-      port: Number(process.env.MYSQLPORT),
-      user: process.env.MYSQLUSER,
-      password: process.env.MYSQLPASSWORD,
-      database: process.env.MYSQLDATABASE,
+      host: cfg.host,
+      port: cfg.port,
+      user: cfg.user,
+      password: cfg.password,
+      database: cfg.database,
       connectionLimit: 5,
     });
-
     super({ adapter });
   }
   async onModuleDestroy() {

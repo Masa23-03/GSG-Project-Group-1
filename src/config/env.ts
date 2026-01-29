@@ -4,9 +4,20 @@ import { z } from 'zod';
 const EnvSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
+    .optional()
     .default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
-  DATABASE_URL: z.string().min(1),
+  DATABASE_URL: z
+    .string()
+    .min(1)
+    .refine((v) => {
+      try {
+        const u = new URL(v);
+        return u.protocol === 'mysql:' || u.protocol === 'mariadb:';
+      } catch {
+        return false;
+      }
+    }, 'DATABASE_URL must be a valid mysql/mariadb URL'),
   JWT_SECRET: z.string().min(16),
 });
 
