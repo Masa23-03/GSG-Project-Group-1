@@ -32,7 +32,7 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing Authorization header');
 
     const [type, token] = authHeader.split(' ');
-    if (type !== 'Bearer' || !token)
+    if (type?.toLowerCase() !== 'bearer' || !token)
       throw new UnauthorizedException('Invalid Auth Header');
 
     try {

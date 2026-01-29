@@ -52,6 +52,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
+  document.security = [{ 'access-token': [] }];
 
   SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
