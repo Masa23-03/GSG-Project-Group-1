@@ -4,14 +4,14 @@ import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import * as argon2 from 'argon2';
 
 const adapter = new PrismaMariaDb({
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      user: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
-      connectionLimit: 5,
-      allowPublicKeyRetrieval: true,
-    });
+  host: process.env.MYSQLHOST,
+  port: Number(process.env.MYSQLPORT),
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
+  connectionLimit: 5,
+});
+
 const prisma = new PrismaClient({ adapter });
 
 export async function seedAdmin() {
@@ -30,7 +30,7 @@ export async function seedAdmin() {
     await prisma.$disconnect();
     return;
   }
-  
+
   const hashedPassword = await argon2.hash(password);
 
   await prisma.user.create({
@@ -42,8 +42,7 @@ export async function seedAdmin() {
       phoneNumber: '0000000000',
     },
   });
-  
+
   console.log('Admin user created successfully.');
   await prisma.$disconnect();
 }
-
