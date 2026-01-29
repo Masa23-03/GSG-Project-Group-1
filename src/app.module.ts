@@ -17,6 +17,7 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { CategoryModule } from './modules/category/category.module';
 import { MedicineModule } from './modules/medicine/medicine.module';
+import { CityModule } from './modules/city/city.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { MedicineModule } from './modules/medicine/medicine.module';
     InventoryModule,
     CategoryModule,
     MedicineModule,
+    CityModule,
   ],
   providers: [
     {
