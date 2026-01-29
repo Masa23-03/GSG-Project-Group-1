@@ -52,7 +52,7 @@ export class PharmacyService {
             userId: user.id,
             pharmacyName: payload.pharmacyName,
             licenseNumber: payload.licenseNumber,
-            city: payload.city,
+            cityId: payload.cityId,
             address: payload.address ?? null,
             licenseDocumentUrl: payload.licenseDocUrl ?? null,
             latitude:

@@ -30,10 +30,6 @@ import { updatePharmacyProfileSchema } from './schema/profile.schema';
 export class PharmacyController {
   constructor(private readonly pharmacyService: PharmacyService) {}
 
-  @Post()
-  create(@Body() createPharmacyDto) {
-    return this.pharmacyService.create(createPharmacyDto);
-  }
   @Roles(UserRole.ADMIN)
   @Get('admin')
   @ApiQuery({ name: 'page', required: false, type: Number })
