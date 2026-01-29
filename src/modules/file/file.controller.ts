@@ -22,8 +22,7 @@ import { IsPublic } from 'src/decorators/isPublic.decorator';
 @Controller('file')
 export class FileController {
   constructor(private readonly fileService: FileService) {}
-  //TODO: REMOVE IsPublic decorator when auth is done
-  @IsPublic()
+
   @Post('upload')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadFileBodyDto })
