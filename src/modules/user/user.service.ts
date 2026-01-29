@@ -1,6 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import { UserRole, UserStatus } from '@prisma/client';
 
 import { DatabaseService } from '../database/database.service';
+import { hashPassword } from '../auth/util/crypto.util';
+import { removeFields } from '../../utils/object.util';
+import { RegisterationDTO } from '../auth/dto/auth.register.dto';
+
 import { UserMeResponseDto } from './dto/response.dto/profile.dto';
 import { mapPatientAddress } from '../patient-address/util/mapper';
 import { UpdateMyPatientDto } from './dto/request.dto/profile.dto';
@@ -8,25 +17,55 @@ import { UpdateMyPatientDto } from './dto/request.dto/profile.dto';
 @Injectable()
 export class UserService {
   constructor(private readonly prismaService: DatabaseService) {}
-  create(createUserDto) {
-    return 'This action adds a new user';
+
+  async create(
+    payload: RegisterationDTO,
+    role?: UserRole,
+    status?: UserStatus,
+    tx?: any,
+  ) {
+    const client = tx ?? this.prismaService;
+
+    const email = this.normalizeEmail(payload.email);
+    const phoneNumber = payload.phoneNumber.trim();
+
+    await this.ensureEmailNotUsed(email, client);
+    await this.ensurePhoneNotUsed(phoneNumber, client);
+
+    const hashedPassword = await hashPassword(payload.password);
+
+    const user = await client.user.create({
+      data: {
+        name: payload.name,
+        email,
+        phoneNumber,
+        password: hashedPassword,
+        role: role ?? UserRole.PATIENT,
+        status: status ?? UserStatus.ACTIVE,
+      },
+    });
+
+    return removeFields(user, ['password']);
   }
 
-  findAll() {
-    return `This action returns all user`;
+  normalizeEmail(email: string) {
+    return email.trim().toLowerCase();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  private async ensureEmailNotUsed(email: string, client?: any) {
+    const db = client ?? this.prismaService;
+
+    const existing = await db.user.findUnique({ where: { email } });
+    if (existing) throw new ConflictException('Email already in use');
   }
 
-  update(id: number, updateUserDto) {
-    return `This action updates a #${id} user`;
+  private async ensurePhoneNotUsed(phoneNumber: string, client?: any) {
+    const db = client ?? this.prismaService;
+
+    const existing = await db.user.findFirst({ where: { phoneNumber } });
+    if (existing) throw new ConflictException('Phone number already in use');
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
   async findMyProfile(id: number): Promise<UserMeResponseDto> {
     const user = await this.prismaService.user.findUnique({
       where: { id },
@@ -63,11 +102,13 @@ export class UserService {
     });
 
     if (!user) throw new NotFoundException();
+
     const defaultAddress = user.addresses[0];
     const mappedAddress = defaultAddress
       ? mapPatientAddress(defaultAddress)
       : null;
-    const data: UserMeResponseDto = {
+
+    return {
       id: user.id,
       name: user.name,
       email: user.email,
@@ -81,9 +122,8 @@ export class UserService {
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };
-
-    return data;
   }
+
   async updateMyProfile(
     id: number,
     payload: UpdateMyPatientDto,
@@ -92,6 +132,7 @@ export class UserService {
       where: { id },
     });
     if (!foundedUser) throw new NotFoundException();
+
     const insertedData: any = { ...payload };
 
     if (payload.dateOfBirth !== undefined) {

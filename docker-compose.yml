@@ -1,24 +1,8 @@
 services:
-  nestjs_api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-      - "5555:5555"
-    env_file:
-      - .env
-    depends_on:
-      - mysql_db
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
-
   mysql_db:
     image: mysql:8.0
     restart: always
-    env_file:
-      - .env
+    env_file: [.env]
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASS}
       MYSQL_DATABASE: ${DB_NAME}
@@ -26,6 +10,26 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASS}"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  nestjs_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+      - "5555:5555"
+    env_file: [.env]
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
 
 volumes:
   mysql_data:

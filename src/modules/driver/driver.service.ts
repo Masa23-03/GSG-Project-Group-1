@@ -21,13 +21,43 @@ import { DriverMeResponseDto } from './dto/response.dto/profile.dto';
 import { userBaseSelect } from '../user/util/helper';
 import { UpdateMyDriverDto } from './dto/request.dto/profile.dto';
 import { mapBaseUserForProfileUpdate } from 'src/utils/util';
-
+import { UserRole, UserStatus } from '@prisma/client';
+import { UserService } from '../user/user.service';
+import type { RegisterDriverDTO } from '../auth/dto/auth.register.dto';
 @Injectable()
 export class DriverService {
-  constructor(private readonly prismaService: DatabaseService) {}
-  create(createDriverDto) {
-    return 'This action adds a new driver';
+  constructor(
+    private readonly prismaService: DatabaseService,
+    private readonly userService: UserService,
+  ) {}
+
+  async create(payload: RegisterDriverDTO) {
+    return this.prismaService.$transaction(async (tx) => {
+      const user = await this.userService.create(
+        payload,
+        UserRole.DRIVER,
+        UserStatus.INACTIVE,
+        tx,
+      );
+
+      const driver = await tx.driver.create({
+        data: {
+          userId: user.id,
+          vehicleName: payload.vehicleName,
+          vehiclePlate: payload.vehiclePlate,
+          licenseDocumentUrl: payload.licenseDocUrl ?? null,
+        },
+      });
+
+      return {
+        user,
+        driver,
+        message:
+          'Registered successfully. Your driver license is under review.',
+      };
+    });
   }
+
   //Admin only
   async findAllAdmin(
     query: AdminDriverListQueryDtoT,

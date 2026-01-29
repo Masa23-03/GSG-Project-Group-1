@@ -28,7 +28,6 @@ async function bootstrap() {
     new LoggingInterceptor(),
     new ResponseInterceptor(),
   );
-
   app.useGlobalFilters(
     new ZodExceptionFilter(),
     new PrismaExceptionFilter(),
@@ -58,8 +57,9 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  const port = process.env.PORT ?? 3000;
+  const port = Number(process.env.PORT) || 3000;
   await app.listen(port, '0.0.0.0');
+
   console.log(`Server running on port ${port}`);
 }
 bootstrap();

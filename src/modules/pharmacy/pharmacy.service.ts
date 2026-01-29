@@ -27,12 +27,51 @@ import {
 import { userBaseSelect } from '../user/util/helper';
 import { UpdateMyPharmacyProfileDto } from './dto/request.dto/profile.dto';
 import { mapBaseUserForProfileUpdate } from 'src/utils/util';
-
+import { Prisma, UserRole, UserStatus } from '@prisma/client';
+import { UserService } from '../user/user.service';
+import type { RegisterPharmacyDTO } from '../auth/dto/auth.register.dto';
 @Injectable()
 export class PharmacyService {
-  constructor(private readonly prismaService: DatabaseService) {}
-  create(createPharmacyDto) {
-    return 'This action adds a new pharmacy';
+  constructor(
+    private readonly prismaService: DatabaseService,
+    private readonly userService: UserService,
+  ) {}
+
+  async create(payload: RegisterPharmacyDTO, role: UserRole) {
+    try {
+      return this.prismaService.$transaction(async (tx) => {
+        const user = await this.userService.create(
+          payload,
+          UserRole.PHARMACY,
+          UserStatus.INACTIVE,
+          tx,
+        );
+
+        const pharmacy = await tx.pharmacy.create({
+          data: {
+            userId: user.id,
+            pharmacyName: payload.pharmacyName,
+            licenseNumber: payload.licenseNumber,
+            city: payload.city,
+            address: payload.address ?? null,
+            licenseDocumentUrl: payload.licenseDocUrl ?? null,
+            latitude:
+              payload.lat != null ? new Prisma.Decimal(payload.lat) : null,
+            longitude:
+              payload.lng != null ? new Prisma.Decimal(payload.lng) : null,
+          },
+        });
+
+        return {
+          user,
+          pharmacy,
+          message:
+            'Registered successfully. Your pharmacy license is under review.',
+        };
+      });
+    } catch (e) {
+      throw e;
+    }
   }
 
   //Admin only

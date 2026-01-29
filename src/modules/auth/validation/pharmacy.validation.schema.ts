@@ -1,6 +1,6 @@
 import z, { ZodType } from "zod";
 import { RegisterPharmacyDTO } from "src/modules/auth/dto/auth.register.dto";
-import { baseRegisterSchema } from "src/modules/user/util/patient.validation.schema";
+import { baseRegisterSchema } from "./patient.validation.schema";
 import { urlSchema } from "src/utils/zod.helper";
 
 export const pharmacyValidationSchema = baseRegisterSchema.extend({

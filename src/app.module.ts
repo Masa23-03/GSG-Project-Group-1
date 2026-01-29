@@ -22,6 +22,7 @@ import { MedicineModule } from './modules/medicine/medicine.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env'
     }),
     AuthModule,
     UserModule,
