@@ -16,7 +16,7 @@ import { MulterExceptionFilter } from './filters/file-upload.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.setGlobalPrefix('api');
+  // app.setGlobalPrefix('api');
 
   app.enableCors({
     origin: true,
