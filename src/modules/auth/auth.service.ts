@@ -153,6 +153,9 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    if (user.status === 'INACTIVE') {
+      throw new UnauthorizedException('Account is inactive');
+    }
 
     const ok = await verifyPassword(user.password, dto.password);
     if (!ok) {
