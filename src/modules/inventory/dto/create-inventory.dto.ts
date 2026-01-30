@@ -54,6 +54,7 @@ export class CreateInventoryItemDto {
   @ApiPropertyOptional({
     nullable: true,
     description: 'Internal notes',
+    type: String,
   })
   notes?: string | null;
 }
