@@ -22,12 +22,10 @@ import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
 import { ZodValidationPipe } from '../../pipes/zod-validation.pipe';
 import { CreateInventoryItemSchema } from './schema/inventory.schema';
-import { AuthStage } from 'src/decorators/stage.decorator';
-import { RequireStage } from 'src/decorators/stage.decorator';
-import { StageGuard } from 'src/guards/stage.guard';
+import { RequireVerified } from 'src/decorators/requireVerified.decorator';
 
 @ApiTags('Inventory')
-@RequireStage(AuthStage.FULL)
+@RequireVerified('PHARMACY')
 @Roles(UserRole.PHARMACY)
 @Controller('inventory')
 export class InventoryController {

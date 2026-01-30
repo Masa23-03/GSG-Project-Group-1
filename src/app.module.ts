@@ -18,13 +18,13 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { CategoryModule } from './modules/category/category.module';
 import { MedicineModule } from './modules/medicine/medicine.module';
 import { CityModule } from './modules/city/city.module';
-import { StageGuard } from './guards/stage.guard';
+import { VerifiedGuard } from './guards/verified.guard';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env'
+      envFilePath: '.env',
     }),
     AuthModule,
     UserModule,
@@ -53,7 +53,7 @@ import { StageGuard } from './guards/stage.guard';
     },
     {
       provide: APP_GUARD,
-      useClass: StageGuard,
+      useClass: VerifiedGuard,
     },
   ],
 })
