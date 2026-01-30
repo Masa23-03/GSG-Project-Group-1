@@ -22,7 +22,6 @@ export class UserService {
     status?: UserStatus,
     tx?: Prisma.TransactionClient,
   ) {
-
     const client = tx ?? this.prismaService;
 
     const email = this.normalizeEmail(payload.email);
@@ -46,15 +45,12 @@ export class UserService {
       const userWithoutPassword = removeFields(user, ['password']);
 
       return userWithoutPassword;
-
     } catch (e) {
       console.log('user creation error  :', e);
       throw e;
     }
   }
 
-
-  
   normalizeEmail(email: string) {
     return email.trim().toLowerCase();
   }
@@ -65,21 +61,6 @@ export class UserService {
     const existing = await db.user.findUnique({ where: { email } });
     if (existing) throw new ConflictException('Email already in use');
   }
-
-
-  //! we can't use this since the user can register in more than one role 
-  // private async ensurePhoneNotUsed(phoneNumber: string, client?: any) {
-  //   const db = client ?? this.prismaService;
-
-  //   const existing = await db.user.findFirst({ where: { phoneNumber } });
-  //   if (existing) throw new ConflictException('Phone number already in use');
-  // }
-
-
-  
-
-
-
 
   async findMyProfile(id: number): Promise<UserMeResponseDto> {
     const user = await this.prismaService.user.findUnique({

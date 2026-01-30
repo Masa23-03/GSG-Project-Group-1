@@ -2,10 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 //! login
 export class LoginRequestDto {
-  @ApiProperty({ example: 'shahd@email.com' })
+  @ApiProperty({ example: 'admin@example.com' })
   email!: string;
 
-  @ApiProperty({ example: 'StrongPassword123!' })
+  @ApiProperty({ example: 'Secuerepassword123456789???' })
   password!: string;
 }
 
@@ -41,8 +41,8 @@ export class RegisterPharmacyRequestDto extends RegisterBaseUserRequestDto {
   @ApiProperty({ example: 'LIC-2026-0001' })
   licenseNumber!: string;
 
-  @ApiProperty({ example: 'Gaza' })
-  city!: string;
+  @ApiProperty({ example: 1 })
+  cityId!: number;
 
   @ApiProperty({
     example: 'Street 1, Building 2',
