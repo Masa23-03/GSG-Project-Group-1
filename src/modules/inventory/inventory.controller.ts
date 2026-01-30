@@ -11,12 +11,18 @@ import { InventoryService } from './inventory.service';
 import { CreateInventoryItemDto } from './dto/create-inventory.dto';
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
 import { ZodValidationPipe } from '../../pipes/zod-validation.pipe';
-import { CreateInventoryItemSchema} from './schema/inventory.schema';
-import { AuthStage} from 'src/decorators/stage.decorator';
+import { CreateInventoryItemSchema } from './schema/inventory.schema';
+import { AuthStage } from 'src/decorators/stage.decorator';
 import { RequireStage } from 'src/decorators/stage.decorator';
 import { StageGuard } from 'src/guards/stage.guard';
 
@@ -28,22 +34,14 @@ import { StageGuard } from 'src/guards/stage.guard';
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
- @ApiOperation({ summary: 'Add a new medicine to pharmacy inventory' })
+  @ApiOperation({ summary: 'Add a new medicine to pharmacy inventory' })
   @ApiBody({ type: CreateInventoryItemDto })
-  
-  @ApiResponse({ status: 201, description: 'Successfully created or restored inventory item.' })
-  @ApiResponse({ status: 400, description: 'Bad Request: Price range violation or inactive medicine.' })
-  @ApiResponse({ status: 403, description: 'Forbidden: Pharmacy not verified.' })
-  @ApiResponse({ status: 409, description: 'Conflict: Item already exists in inventory.' })
-
-
   @Post()
   async create(
     @AuthedUser() user: authedUserType,
     @Body(new ZodValidationPipe(CreateInventoryItemSchema))
     createDto: CreateInventoryItemDto,
   ) {
-   
     return await this.inventoryService.create(user.id, createDto);
   }
 

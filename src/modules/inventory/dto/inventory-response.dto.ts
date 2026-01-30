@@ -1,11 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class MedicineSummaryDto {
   @ApiProperty()
   id!: number;
   @ApiProperty()
   genericName!: string;
-  @ApiProperty({ required: false, nullable: true })
+  @ApiPropertyOptional({ nullable: true, example: 'Panadol' })
   brandName?: string | null;
   @ApiProperty()
   status!: string;
@@ -71,7 +71,9 @@ export class InventoryItemResponseDto {
   @ApiProperty({ required: false, nullable: true })
   notes?: string | null;
 
-  @ApiProperty({ type: MedicineSummaryDto })
+  @ApiProperty({
+    type: MedicineSummaryDto,
+  })
   medicine!: MedicineSummaryDto;
 
   @ApiProperty({ format: 'date-time' })
