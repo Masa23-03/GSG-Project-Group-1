@@ -23,6 +23,7 @@ import { IsPublic } from 'src/decorators/isPublic.decorator';
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
+  @IsPublic()
   @Post('upload')
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadFileBodyDto })
