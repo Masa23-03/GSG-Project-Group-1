@@ -68,6 +68,11 @@ export class CityController {
     return this.cityService.removeCity(id);
   }
 
+  @Get('delivery-fees')
+  getAllDeliveryFees(): Promise<CityWithFeeDto[]> {
+    return this.feeService.getAll();
+  }
+
   @Get(':cityId/delivery-fee')
   @ApiParam({ name: 'cityId', type: Number })
   getDeliveryFee(
@@ -85,10 +90,5 @@ export class CityController {
     dto: UpsertCityDeliveryFeeDto,
   ): Promise<CityWithFeeDto> {
     return this.feeService.upsertFee(cityId, dto);
-  }
-
-  @Get('delivery-fees')
-  getAllDeliveryFees(): Promise<CityWithFeeDto[]> {
-    return this.feeService.getAll();
   }
 }
