@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -11,7 +12,7 @@ import {
   RequireVerifiedTarget,
 } from 'src/decorators/requireVerified.decorator';
 import { DatabaseService } from 'src/modules/database/database.service';
-
+@Injectable()
 export class VerifiedGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
