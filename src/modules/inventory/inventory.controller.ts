@@ -43,13 +43,6 @@ export class InventoryController {
     @Body(new ZodValidationPipe(CreateInventoryItemSchema))
     createDto: CreateInventoryItemDto,
   ) {
-    /**
-     * The service will handle:
-     * 1. Verifying pharmacy ownership/verification status
-     * 2. Medicine existence and status (APPROVED & ACTIVE)
-     * 3. Price range validation (minPrice <= sellPrice <= maxPrice)
-     * 4. Restore logic (if isDeleted is true)
-     */
     return await this.inventoryService.create(user.id, createDto);
   }
 
