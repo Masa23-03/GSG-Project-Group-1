@@ -68,7 +68,7 @@ export class InventoryService {
         data: { ...payload, isDeleted: false, isAvailable },
         ...includeQuery,
       });
-      return this.mapToResponseDto(updated);
+      return InventoryMapper.toResponseDto(updated);;
     }
     const created = await this.prisma.inventoryItem.create({
         data: { ...payload, pharmacyId: pharmacy.id, isAvailable },
