@@ -6,11 +6,7 @@ import { PharmacyLocationDto } from '../response.dto/admin-pharmacy.response.dto
 export class UpdateMyPharmacyProfileDto extends UpdateMyUserBaseDto {
   @ApiProperty({ required: false })
   pharmacyName?: string;
-  @ApiProperty({
-    required: false,
-    nullable: true,
-    type: PharmacyLocationDto,
-  })
+
   @ApiProperty({ required: false })
   address?: string | null;
 
