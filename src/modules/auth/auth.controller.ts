@@ -34,6 +34,7 @@ import type { LoginDTO } from './dto/auth.login.dto';
 import type { RefreshTokenDTO } from './dto/refresh-token.dto';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
+import { LogoutSchema } from './validation/logout.validation.schema';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -96,12 +97,12 @@ export class AuthController {
   }
 
   @Post('logout')
-  @ApiOperation({ summary: 'Logout (invalidate refresh token)' })
   @ApiBody({ type: LogoutRequestDto })
+  @ApiOperation({ summary: 'Logout (invalidate refresh token)' })
   @ApiResponse({ status: 200, type: LogoutResponseDto })
   logout(
     @AuthedUser() user: authedUserType,
-    @Body(new ZodValidationPipe(RefreshTokenSchema)) dto: LogoutDto,
+    @Body(new ZodValidationPipe(LogoutSchema)) dto: LogoutDto,
   ) {
     return this.authService.logout(user.id, dto);
   }

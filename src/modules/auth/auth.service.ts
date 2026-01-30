@@ -199,7 +199,7 @@ export class AuthService {
   }
 
   async logout(userId: number, dto: LogoutDto) {
-    const providedHash = hashRefreshToken(dto.token);
+    const providedHash = hashRefreshToken(dto.refreshToken);
     await this.prisma.refreshToken.updateMany({
       where: { token: providedHash, userId, revokedAt: null },
       data: { revokedAt: new Date() },
