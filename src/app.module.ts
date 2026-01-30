@@ -18,6 +18,7 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { CategoryModule } from './modules/category/category.module';
 import { MedicineModule } from './modules/medicine/medicine.module';
 import { CityModule } from './modules/city/city.module';
+import { StageGuard } from './guards/stage.guard';
 
 @Module({
   imports: [
@@ -49,6 +50,10 @@ import { CityModule } from './modules/city/city.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: StageGuard,
     },
   ],
 })

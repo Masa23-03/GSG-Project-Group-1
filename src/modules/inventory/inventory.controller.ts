@@ -1,24 +1,51 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
   Patch,
   Param,
   Delete,
+  Post,
+  Body,
 } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
-import { CreateInventoryDto } from './dto/create-inventory.dto';
-import { UpdateInventoryDto } from './dto/update-inventory.dto';
+import { CreateInventoryItemDto } from './dto/create-inventory.dto';
+import { Roles } from 'src/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthedUser } from 'src/decorators/authedUser.decorator';
+import type { authedUserType } from 'src/types/unifiedType.types';
+import { ZodValidationPipe } from '../../pipes/zod-validation.pipe';
+import { CreateInventoryItemSchema} from './schema/inventory.schema';
+import { AuthStage} from 'src/decorators/stage.decorator';
+import { RequireStage } from 'src/decorators/stage.decorator';
+import { StageGuard } from 'src/guards/stage.guard';
 
+@ApiTags('Inventory')
+@ApiBearerAuth('JWT-auth')
+@RequireStage(AuthStage.FULL)
+@Roles(UserRole.PHARMACY)
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
-  // @Post()
-  // create(@Body() createInventoryDto: CreateInventoryDto) {
-  //   return this.inventoryService.create(createInventoryDto);
-  // }
+ @ApiOperation({ summary: 'Add a new medicine to pharmacy inventory' })
+  @ApiBody({ type: CreateInventoryItemDto })
+  
+  @ApiResponse({ status: 201, description: 'Successfully created or restored inventory item.' })
+  @ApiResponse({ status: 400, description: 'Bad Request: Price range violation or inactive medicine.' })
+  @ApiResponse({ status: 403, description: 'Forbidden: Pharmacy not verified.' })
+  @ApiResponse({ status: 409, description: 'Conflict: Item already exists in inventory.' })
+
+
+  @Post()
+  async create(
+    @AuthedUser() user: authedUserType,
+    @Body(new ZodValidationPipe(CreateInventoryItemSchema))
+    createDto: CreateInventoryItemDto,
+  ) {
+   
+    return await this.inventoryService.create(user.id, createDto);
+  }
 
   // @Get()
   // findAll() {
