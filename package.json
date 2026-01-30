@@ -23,6 +23,9 @@
     "prisma:studio": "prisma studio",
     "seed": "ts-node src/seeds/seed.ts"
   },
+  "prisma": {
+    "seed": "ts-node src/seeds/seed.ts"
+  },
   "dependencies": {
     "@imagekit/nodejs": "^7.2.1",
     "@nestjs/common": "^11.0.1",
