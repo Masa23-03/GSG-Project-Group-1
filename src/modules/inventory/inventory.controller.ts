@@ -27,7 +27,6 @@ import { RequireStage } from 'src/decorators/stage.decorator';
 import { StageGuard } from 'src/guards/stage.guard';
 
 @ApiTags('Inventory')
-@ApiBearerAuth('JWT-auth')
 @RequireStage(AuthStage.FULL)
 @Roles(UserRole.PHARMACY)
 @Controller('inventory')
