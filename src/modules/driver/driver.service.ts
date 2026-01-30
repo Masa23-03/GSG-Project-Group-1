@@ -31,14 +31,13 @@ export class DriverService {
     private readonly userService: UserService,
   ) {}
 
-
   async create(payload: RegisterDriverDTO) {
     try {
       return await this.prismaService.$transaction(async (tx) => {
         const user = await this.userService.create(
           payload,
           UserRole.DRIVER,
-          UserStatus.INACTIVE,
+          UserStatus.ACTIVE,
           tx,
         );
 
@@ -53,10 +52,9 @@ export class DriverService {
 
         return {
           user,
-          driver
-        }
-
-      })
+          driver,
+        };
+      });
     } catch (e) {
       console.log('driver service error - create() method :', e);
       throw e;

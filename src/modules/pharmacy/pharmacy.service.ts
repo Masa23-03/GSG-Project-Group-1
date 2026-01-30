@@ -40,11 +40,10 @@ export class PharmacyService {
   async create(payload: RegisterPharmacyDTO) {
     try {
       return this.prismaService.$transaction(async (tx) => {
-
         const user = await this.userService.create(
           payload,
           UserRole.PHARMACY,
-          UserStatus.INACTIVE,
+          UserStatus.ACTIVE,
           tx,
         );
 
@@ -63,9 +62,8 @@ export class PharmacyService {
 
         return {
           user,
-          pharmacy
+          pharmacy,
         };
-
       });
     } catch (e) {
       console.log('pharmacy service error - create() method :', e);
@@ -73,8 +71,6 @@ export class PharmacyService {
     }
   }
 
-
-  
   //Admin only
   async findAllAdmin(
     query: AdminListQueryDto,
