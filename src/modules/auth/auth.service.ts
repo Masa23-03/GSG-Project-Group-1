@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { verifyPassword } from './util/crypto.util';
 import { DatabaseService } from '../database/database.service';
 import { UserService } from '../user/user.service';
@@ -8,8 +12,15 @@ import { PharmacyService } from '../pharmacy/pharmacy.service';
 import { DriverService } from '../driver/driver.service';
 // import { OtpService } from './otp/otp.service';
 import { removeFields } from '../../utils/object.util';
-import { generateRefreshToken, hashRefreshToken } from './util/refresh-token.util';
-import { RegisterDriverDTO, RegisterPatientDTO, RegisterPharmacyDTO } from './dto/auth.register.dto';
+import {
+  generateRefreshToken,
+  hashRefreshToken,
+} from './util/refresh-token.util';
+import {
+  RegisterDriverDTO,
+  RegisterPatientDTO,
+  RegisterPharmacyDTO,
+} from './dto/auth.register.dto';
 // import { RegisterResponseDTO } from './dto/auth.response.dto';
 // import { ApiSuccessResponse } from 'src/types/unifiedType.types';
 import { LoginDTO } from './dto/auth.login.dto';
@@ -27,15 +38,13 @@ export class AuthService {
     private readonly driverService: DriverService,
     // private readonly otpService: OtpService,
     private readonly prisma: DatabaseService,
-  ) { }
-
-
-
-
+  ) {}
 
   async registerPatient(dto: RegisterPatientDTO) {
     const user = await this.userService.create(dto, UserRole.PATIENT);
-    const { accessToken, refreshToken, stage } = await this.issueTokens(user.id);
+    const { accessToken, refreshToken, stage } = await this.issueTokens(
+      user.id,
+    );
     return {
       user,
       accessToken,
@@ -44,62 +53,50 @@ export class AuthService {
     };
   }
 
-
-
-
-
-
-
   async registerPharmacy(dto: RegisterPharmacyDTO) {
     const { user, pharmacy } = await this.pharmacyService.create(dto);
-    const { accessToken, refreshToken, stage } = await this.issueTokens(user.id);
+    const { accessToken, refreshToken, stage } = await this.issueTokens(
+      user.id,
+    );
     return {
       user,
       profile: pharmacy,
       accessToken: accessToken,
       refreshToken: refreshToken,
-      message: 'Registered successfully. Your pharmacy license is under review.'
+      message:
+        'Registered successfully. Your pharmacy license is under review.',
     };
   }
 
-
-
-
-
   async registerDriver(dto: RegisterDriverDTO) {
     const { user, driver } = await this.driverService.create(dto);
-    const { accessToken, refreshToken, stage } = await this.issueTokens(user.id);
+    const { accessToken, refreshToken, stage } = await this.issueTokens(
+      user.id,
+    );
     return {
       user,
       profile: driver,
       accessToken: accessToken,
       refreshToken: refreshToken,
-      message: 'Registered successfully. Your pharmacy license is under review.'
+      message:
+        'Registered successfully. Your pharmacy license is under review.',
     };
   }
-
-
-
-
-
 
   computeStage(user: any) {
     if (user.role === 'PATIENT' || user.role === 'ADMIN') return 'FULL';
     if (user.role === 'PHARMACY') {
-      return user.pharmacy?.verificationStatus === 'VERIFIED' ? 'FULL' : 'LIMITED';
+      return user.pharmacy?.verificationStatus === 'VERIFIED'
+        ? 'FULL'
+        : 'LIMITED';
     }
     if (user.role === 'DRIVER') {
-      return user.driver?.verificationStatus === 'VERIFIED' ? 'FULL' : 'LIMITED';
+      return user.driver?.verificationStatus === 'VERIFIED'
+        ? 'FULL'
+        : 'LIMITED';
     }
     return 'LIMITED';
   }
-
-
-
-
-
-
-
 
   async issueTokens(userId: number) {
     const user = await this.prisma.user.findUnique({
@@ -110,7 +107,8 @@ export class AuthService {
       },
     });
 
-    if (!user) throw new UnauthorizedException('Invalid session , wait for approval!');
+    if (!user)
+      throw new UnauthorizedException('Invalid session , wait for approval!');
 
     const stage = this.computeStage(user);
     const payload = {
@@ -138,20 +136,12 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      stage
+      stage,
     };
   }
 
-
-
-
-
-
-
-
   async login(dto: LoginDTO) {
-
-    const email = this.userService.normalizeEmail(dto.email)
+    const email = this.userService.normalizeEmail(dto.email);
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
@@ -169,7 +159,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { accessToken, refreshToken, stage } = await this.issueTokens(user.id);
+    const { accessToken, refreshToken, stage } = await this.issueTokens(
+      user.id,
+    );
     const userWithoutPassword = removeFields(user, [
       'password',
       'pharmacy',
@@ -182,12 +174,6 @@ export class AuthService {
       accessToken,
     };
   }
-
-
-
-
-
-
 
   async refresh(dto: RefreshTokenDTO) {
     const providedHash = hashRefreshToken(dto.refreshToken);
@@ -212,25 +198,14 @@ export class AuthService {
     return this.issueTokens(stored.userId);
   }
 
-
-
-
-
-
-  async logout(dto: LogoutDto) {
+  async logout(userId: number, dto: LogoutDto) {
     const providedHash = hashRefreshToken(dto.token);
     await this.prisma.refreshToken.updateMany({
-      where: { token: providedHash, revokedAt: null },
+      where: { token: providedHash, userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
     return { success: true };
   }
-
-
-
-
-
-
 
   // async requestOtp(dto: RequestOtpDTO) {
   //     const destination =
@@ -262,12 +237,6 @@ export class AuthService {
   //         message: 'code was sent.',
   //     };
   // }
-
-
-
-
-
-
 
   // async verifyOtp(dto: VerifyOtpDTO) {
   //     try {
@@ -318,8 +287,4 @@ export class AuthService {
   //         throw e;
   //     }
   // }
-
-
-
-
 }

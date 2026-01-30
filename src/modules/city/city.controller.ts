@@ -87,8 +87,7 @@ export class CityController {
     return this.feeService.upsertFee(cityId, dto);
   }
 
-  @Roles(UserRole.ADMIN)
-  @Get('admin/delivery-fees')
+  @Get('delivery-fees')
   getAllDeliveryFees(): Promise<CityWithFeeDto[]> {
     return this.feeService.getAll();
   }
