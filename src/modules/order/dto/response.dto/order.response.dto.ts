@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  Currency,
   OrderStatus,
   PharmacyOrderStatus,
   PrescriptionStatus,
@@ -14,7 +15,7 @@ export class OrderDeliveryAddressSnapshotDto {
   @ApiPropertyOptional({ nullable: true })
   lat?: number | null;
 }
-export class PharmacyOrderItemResponseDto {
+export class CreatePharmacyOrderItemResponseDto {
   @ApiProperty()
   inventoryId!: number;
 
@@ -32,9 +33,9 @@ export class PharmacyOrderItemResponseDto {
   @ApiProperty()
   totalPrice!: number;
 }
-export class PharmacyOrderResponseDto {
+export class CreatePharmacyOrderResponseDto {
   @ApiProperty()
-  id!: number;
+  pharmacyOrderId!: number;
 
   @ApiProperty()
   pharmacyId!: number;
@@ -59,12 +60,21 @@ export class PharmacyOrderResponseDto {
   @ApiPropertyOptional({ enum: PrescriptionStatus, nullable: true })
   prescriptionStatus?: PrescriptionStatus | null;
 
-  @ApiProperty({ type: [PharmacyOrderItemResponseDto] })
-  items!: PharmacyOrderItemResponseDto[];
+  @ApiProperty({ type: [CreatePharmacyOrderItemResponseDto] })
+  items!: CreatePharmacyOrderItemResponseDto[];
 }
-export class OrderResponseDto {
+export class CreateOrderResponseDto {
   @ApiProperty()
   id!: number;
+
+  @ApiProperty()
+  contactName!: string;
+
+  @ApiProperty()
+  contactPhone!: string;
+
+  @ApiProperty()
+  contactEmail!: string;
 
   @ApiProperty({ enum: OrderStatus })
   status!: OrderStatus;
@@ -73,10 +83,13 @@ export class OrderResponseDto {
   notes?: string | null;
 
   @ApiProperty()
-  createdAt!: Date;
+  currency!: Currency;
+
+  @ApiProperty()
+  createdAt!: string;
 
   @ApiPropertyOptional({ type: OrderDeliveryAddressSnapshotDto })
-  delivery?: OrderDeliveryAddressSnapshotDto;
+  deliveryAddress?: OrderDeliveryAddressSnapshotDto;
 
   @ApiProperty()
   subtotal!: number;
@@ -91,6 +104,6 @@ export class OrderResponseDto {
   @ApiProperty()
   itemsCount!: number;
 
-  @ApiProperty({ type: [PharmacyOrderResponseDto] })
-  pharmacies!: PharmacyOrderResponseDto[];
+  @ApiProperty({ type: [CreatePharmacyOrderResponseDto] })
+  pharmacies!: CreatePharmacyOrderResponseDto[];
 }
