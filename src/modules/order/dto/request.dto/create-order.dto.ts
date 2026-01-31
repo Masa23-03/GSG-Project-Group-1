@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Currency } from '@prisma/client';
 
 export class CreatePharmacyOrderItemDto {
   @ApiProperty({
@@ -52,6 +53,13 @@ export class CreateOrderDto {
     type: String,
   })
   notes?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Order currency. Defaults to ILS if not provided',
+    enum: Currency,
+    example: Currency.ILS,
+  })
+  currency?: Currency;
 
   @ApiProperty({
     description:
