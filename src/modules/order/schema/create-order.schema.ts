@@ -1,5 +1,6 @@
 import z, { ZodType } from 'zod';
 import { CreatePharmacyOrderItemDtoType } from '../dto/request.dto/create-order.dto';
+import { Currency } from '@prisma/client';
 
 export const createPharmacyOrderItemSchema = z
   .object({
@@ -29,7 +30,13 @@ export const createPharmacyOrderSchema = z
 export const createOrderSchema = z
   .object({
     deliveryAddressId: z.coerce.number().int().positive(),
-    notes: z.string().trim().min(1).nullable().optional(),
+    notes: z
+      .string()
+      .trim()
+      .transform((v) => (v.length ? v : null))
+      .nullable()
+      .optional(),
+    currency: z.nativeEnum(Currency).optional(),
     pharmacies: z.array(createPharmacyOrderSchema).min(1),
   })
   .superRefine((val, ctx) => {
