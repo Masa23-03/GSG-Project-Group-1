@@ -46,5 +46,7 @@ export function isPharmacyOpenNow(
   const openMin = calculateMinutesSinceMidnight(openTime);
   const closeMin = calculateMinutesSinceMidnight(closeTime);
 
-  return nowMin > openMin && nowMin < closeMin;
+  if (openMin < closeMin) return nowMin >= openMin && nowMin < closeMin;
+
+  return nowMin >= openMin || nowMin < closeMin;
 }
