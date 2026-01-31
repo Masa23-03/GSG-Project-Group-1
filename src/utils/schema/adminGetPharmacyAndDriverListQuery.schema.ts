@@ -6,9 +6,7 @@ import { PaginationQuerySchema } from './pagination.schema.util';
 //ADMIN: Get pharmacies and drivers schema
 export const adminBaseListQuerySchema = z
   .object({
-    verificationStatus: z
-      .nativeEnum(VerificationStatus)
-      .default(VerificationStatus.UNDER_REVIEW),
+    verificationStatus: z.nativeEnum(VerificationStatus).optional(),
 
     userStatus: z.nativeEnum(UserStatus).optional(),
 
