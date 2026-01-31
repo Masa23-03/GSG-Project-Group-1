@@ -431,7 +431,7 @@ model Order {
   patientId Int  @map("patient_id") @db.UnsignedInt
   addressId Int? @map("address_id") @db.UnsignedInt
 
-  deliveryCityId      Int      @map("delivery_city_id") @db.UnsignedInt
+  pickupCityId        Int      @map("delivery_city_id") @db.UnsignedInt
   deliveryAddressLine String   @map("delivery_address_line") @db.Text
   deliveryLatitude    Decimal? @map("delivery_latitude") @db.Decimal(10, 8)
   deliveryLongitude   Decimal? @map("delivery_longitude") @db.Decimal(11, 8)
@@ -459,7 +459,7 @@ model Order {
   patient   User            @relation(fields: [patientId], references: [id], onDelete: Cascade)
   address   PatientAddress? @relation(fields: [addressId], references: [id])
   delivery  Delivery?       @relation("OrderDelivery")
-  orderCity City            @relation(fields: [deliveryCityId], references: [id])
+  orderCity City            @relation(fields: [pickupCityId], references: [id])
 
   payment        Payment?
   pharmacyOrders PharmacyOrder[]
