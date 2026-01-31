@@ -266,7 +266,7 @@ model Delivery {
 
   //! Relations
   order          Order           @relation("OrderDelivery", fields: [orderId], references: [id])
-  driver         Driver?         @relation(fields: [driverId], references: [id], onDelete: SetNull) //! because if we deleted driver, we still want to keep the delivery record
+  driver         Driver?         @relation(fields: [driverId], references: [id], onDelete: SetNull)
   pharmacyOrders PharmacyOrder[]
 
   @@index([driverId], map: "idx_deliveries_driver")
@@ -431,12 +431,14 @@ model Order {
   patientId Int  @map("patient_id") @db.UnsignedInt
   addressId Int? @map("address_id") @db.UnsignedInt
 
-  deliveryCityId      Int     @map("delivery_city_id") @db.UnsignedInt
-  deliveryArea        String? @map("delivery_area") @db.VarChar(255)
-  deliveryAddressLine String  @map("delivery_address_line") @db.Text
+  deliveryCityId      Int      @map("delivery_city_id") @db.UnsignedInt
+  deliveryAddressLine String   @map("delivery_address_line") @db.Text
+  deliveryLatitude    Decimal? @map("delivery_latitude") @db.Decimal(10, 8)
+  deliveryLongitude   Decimal? @map("delivery_longitude") @db.Decimal(11, 8)
 
-  contactName            String   @map("contact_name") @db.VarChar(255)
-  contactPhone           String   @map("contact_phone") @db.VarChar(255)
+  contactName  String @map("contact_name") @db.VarChar(255)
+  contactPhone String @map("contact_phone") @db.VarChar(255)
+
   subtotalAmount         Decimal  @map("subtotal_amount") @db.Decimal(10, 2)
   originalSubtotalAmount Decimal? @map("original_subtotal_amount") @db.Decimal(10, 2)
   discountAmount         Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
@@ -471,6 +473,7 @@ model Payment {
   id        Int           @id @default(autoincrement()) @db.UnsignedInt
   orderId   Int           @unique @map("order_id") @db.UnsignedInt
   amount    Decimal       @db.Decimal(10, 2)
+  method    PaymentMethod @default(COD)
   currency  Currency      @default(ILS)
   status    PaymentStatus @default(PENDING)
   createdAt DateTime      @default(now()) @map("created_at") @db.DateTime(0)
@@ -491,15 +494,13 @@ model PharmacyOrder {
   status               PharmacyOrderStatus @default(PENDING)
   pickupOrder          Int?                @map("pickup_order") @db.SmallInt
   pickedUpAt           DateTime?           @map("picked_up_at") @db.Timestamp()
-  requiresPrescription Boolean             @map("requires_prescription")
-  subtotalAmount       Decimal             @map("subtotal_amount") @db.Decimal(10, 2)
+  requiresPrescription Boolean             @default(false) @map("requires_prescription")
   currency             Currency            @default(ILS)
   acceptedAt           DateTime?           @map("accepted_at") @db.Timestamp()
   rejectedAt           DateTime?           @map("rejected_at") @db.Timestamp()
   createdAt            DateTime            @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt            DateTime            @updatedAt @map("updated_at") @db.DateTime(0)
-  rejectionReason      String              @map("rejection_reason") @db.VarChar(255)
-  deliveryFee          Decimal?            @map("delivery_fee") @db.Decimal(10, 2)
+  rejectionReason      String?             @map("rejection_reason") @db.VarChar(255)
   totalAmount          Decimal             @map("total_amount") @db.Decimal(10, 2)
 
   //! Relations
@@ -521,8 +522,8 @@ model PharmacyOrderItem {
   pharmacyOrderId Int      @map("pharmacy_order_id") @db.UnsignedInt
   inventoryItemId Int      @map("inventory_item_id") @db.UnsignedInt
   quantity        Int      @db.Int
-  pricePerItem    Decimal  @map("price_per_item") @db.Decimal(10, 7)
-  total           Decimal  @db.Decimal(10, 7)
+  pricePerItem    Decimal  @map("price_per_item") @db.Decimal(10, 2)
+  total           Decimal  @db.Decimal(10, 2)
   currency        Currency @default(ILS)
 
   createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
