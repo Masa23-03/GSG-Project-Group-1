@@ -436,9 +436,9 @@ model Order {
   deliveryLatitude    Decimal? @map("delivery_latitude") @db.Decimal(10, 8)
   deliveryLongitude   Decimal? @map("delivery_longitude") @db.Decimal(11, 8)
 
-  contactName  String @map("contact_name") @db.VarChar(255)
-  contactPhone String @map("contact_phone") @db.VarChar(255)
-
+  contactName            String   @map("contact_name") @db.VarChar(255)
+  contactPhone           String   @map("contact_phone") @db.VarChar(255)
+  contactEmail           String   @map("contact_email") @db.VarChar(255)
   subtotalAmount         Decimal  @map("subtotal_amount") @db.Decimal(10, 2)
   originalSubtotalAmount Decimal? @map("original_subtotal_amount") @db.Decimal(10, 2)
   discountAmount         Decimal  @default(0) @map("discount_amount") @db.Decimal(10, 2)
