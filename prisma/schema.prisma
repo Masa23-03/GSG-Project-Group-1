@@ -183,6 +183,7 @@ model User {
   otps               Otp[]
   createdMedicines   Medicine[]       @relation("MedicineCreator")
   reviewedMedicines  Medicine[]       @relation("MedicineReviewer")
+  prescriptions      Prescription[]
 
   @@index([role], map: "idx_users_role")
   @@index([status], map: "idx_users_status")
@@ -541,7 +542,8 @@ model PharmacyOrderItem {
 
 model Prescription {
   id                  Int                @id @default(autoincrement()) @db.UnsignedInt
-  pharmacyOrderId     Int                @map("pharmacy_order_id") @db.UnsignedInt
+  pharmacyOrderId     Int?               @map("pharmacy_order_id") @db.UnsignedInt
+  patientId           Int                @map("patient_id") @db.UnsignedInt
   status              PrescriptionStatus @default(UNDER_REVIEW)
   reuploadReason      String?            @map("reupload_reason") @db.Text
   reuploadRequestedAt DateTime?          @map("reupload_requested_at") @db.Timestamp()
@@ -549,7 +551,8 @@ model Prescription {
   updatedAt           DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
 
   //! Relations
-  pharmacyOrder     PharmacyOrder      @relation(fields: [pharmacyOrderId], references: [id])
+  pharmacyOrder     PharmacyOrder?     @relation(fields: [pharmacyOrderId], references: [id])
+  patient           User               @relation(fields: [patientId], references: [id])
   prescriptionFiles PrescriptionFile[]
 
   @@index([pharmacyOrderId], map: "idx_prescriptions_pharmacy_order")
