@@ -1,4 +1,4 @@
-import z, { ZodType } from 'zod';
+import { z, type ZodType } from 'zod';
 import { CreatePharmacyOrderItemDtoType } from '../dto/request.dto/create-order.dto';
 import { Currency } from '@prisma/client';
 
@@ -16,6 +16,7 @@ export const createPharmacyOrderSchema = z
 
     prescriptionId: z.coerce.number().int().positive().nullable().optional(),
   })
+  .strict()
   .superRefine((val, ctx) => {
     const itemsIds = val.items.map((i) => i.inventoryId);
     const duplicate = itemsIds.find((id, i) => itemsIds.indexOf(id) !== i);
@@ -39,6 +40,7 @@ export const createOrderSchema = z
     currency: z.nativeEnum(Currency).optional(),
     pharmacies: z.array(createPharmacyOrderSchema).min(1),
   })
+  .strict()
   .superRefine((val, ctx) => {
     const pharmacyIds = val.pharmacies.map((i) => i.pharmacyId);
     const duplicate = pharmacyIds.find(
