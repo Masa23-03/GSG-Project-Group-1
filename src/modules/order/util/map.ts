@@ -1,5 +1,9 @@
 import { Prisma } from '@prisma/client';
-import { CreateOrderResponseDto } from '../dto/response.dto/order.response.dto';
+import {
+  CreateOrderResponseDto,
+  CreatePharmacyOrderItemResponseDto,
+  CreatePharmacyOrderResponseDto,
+} from '../dto/response.dto/order.response.dto';
 
 export const orderWithRelations = {
   address: true,
@@ -67,32 +71,37 @@ export const mapToOrderResponse = (
       lat,
       lng,
     },
-    pharmacies: order.pharmacyOrders.map((o) => {
-      const currentPrescription = o.prescriptions?.[0];
+    pharmacies: order.pharmacyOrders.map((o) => mapPharmacyOrder(o)),
+  };
+};
 
-      return {
-        pharmacyOrderId: o.id,
-        pharmacyId: o.pharmacyId,
-        pharmacyName: o.pharmacy.pharmacyName,
-        status: o.status,
-        subtotal: o.totalAmount.toNumber(),
-        requiresPrescription: o.requiresPrescription,
-        prescriptionId: currentPrescription?.id ?? null,
-        prescriptionStatus: currentPrescription?.status ?? null,
-        pharmacyLocation: {
-          address: o.pharmacy.address ?? null,
-          latitude: o.pharmacy.latitude?.toNumber() ?? null,
-          longitude: o.pharmacy.longitude?.toNumber() ?? null,
-        },
-        items: o.pharmacyOrderItems.map((oi) => ({
-          inventoryId: oi.inventoryItemId,
-          medicineId: oi.inventoryItem.medicineId,
-          medicineName: oi.inventoryItem.medicine.genericName,
-          quantity: oi.quantity,
-          unitPrice: oi.pricePerItem.toNumber(),
-          totalPrice: oi.total.toNumber(),
-        })),
-      };
-    }),
+export const mapOrderItem = (oi: any): CreatePharmacyOrderItemResponseDto => {
+  return {
+    inventoryId: oi.inventoryItemId,
+    medicineId: oi.inventoryItem.medicineId,
+    medicineName: oi.inventoryItem.medicine.genericName,
+    quantity: oi.quantity,
+    unitPrice: oi.pricePerItem.toNumber(),
+    totalPrice: oi.total.toNumber(),
+  };
+};
+
+export const mapPharmacyOrder = (o): CreatePharmacyOrderResponseDto => {
+  const currentPrescription = o.prescriptions?.[0];
+  return {
+    pharmacyOrderId: o.id,
+    pharmacyId: o.pharmacyId,
+    pharmacyName: o.pharmacy.pharmacyName,
+    status: o.status,
+    subtotal: o.totalAmount.toNumber(),
+    requiresPrescription: o.requiresPrescription,
+    prescriptionId: currentPrescription?.id ?? null,
+    prescriptionStatus: currentPrescription?.status ?? null,
+    pharmacyLocation: {
+      address: o.pharmacy.address ?? null,
+      latitude: o.pharmacy.latitude?.toNumber() ?? null,
+      longitude: o.pharmacy.longitude?.toNumber() ?? null,
+    },
+    items: o.pharmacyOrderItems.map((item) => mapOrderItem(item)),
   };
 };
