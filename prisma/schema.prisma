@@ -218,6 +218,7 @@ model Pharmacy {
   inventoryItems     InventoryItem[]
   pharmacyOrders     PharmacyOrder[]
   requestedMedicines Medicine[]      @relation("MedicineRequester")
+  prescriptions      Prescription[]
 
   @@index([verificationStatus], map: "idx_pharmacies_verified")
   @@map("pharmacies")
@@ -549,11 +550,12 @@ model Prescription {
   reuploadRequestedAt DateTime?          @map("reupload_requested_at") @db.Timestamp()
   createdAt           DateTime           @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt           DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
-
+  pharmacyId          Int?               @map("pharmacy_id") @db.UnsignedInt
   //! Relations
-  pharmacyOrder     PharmacyOrder?     @relation(fields: [pharmacyOrderId], references: [id])
-  patient           User               @relation(fields: [patientId], references: [id])
-  prescriptionFiles PrescriptionFile[]
+  pharmacyOrder       PharmacyOrder?     @relation(fields: [pharmacyOrderId], references: [id])
+  patient             User               @relation(fields: [patientId], references: [id])
+  prescriptionFiles   PrescriptionFile[]
+  pharmacy            Pharmacy?          @relation(fields: [pharmacyId], references: [id])
 
   @@index([pharmacyOrderId], map: "idx_prescriptions_pharmacy_order")
   @@index([status], map: "idx_prescriptions_status")
