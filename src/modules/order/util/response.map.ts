@@ -34,7 +34,14 @@ export const orderWithRelations = {
     },
   },
 } satisfies Prisma.OrderInclude;
+export type PharmacyOrderWithRelations = Prisma.PharmacyOrderGetPayload<{
+  include: typeof orderWithRelations.pharmacyOrders.include;
+}>;
 
+export type PharmacyOrderItemWithRelations =
+  Prisma.PharmacyOrderItemGetPayload<{
+    include: typeof orderWithRelations.pharmacyOrders.include.pharmacyOrderItems.include;
+  }>;
 export type OrderWithRelations = Prisma.OrderGetPayload<{
   include: typeof orderWithRelations;
 }>;
@@ -75,7 +82,9 @@ export const mapToOrderResponse = (
   };
 };
 
-export const mapOrderItem = (oi: any): CreatePharmacyOrderItemResponseDto => {
+export const mapOrderItem = (
+  oi: PharmacyOrderItemWithRelations,
+): CreatePharmacyOrderItemResponseDto => {
   return {
     inventoryId: oi.inventoryItemId,
     medicineId: oi.inventoryItem.medicineId,
@@ -86,7 +95,9 @@ export const mapOrderItem = (oi: any): CreatePharmacyOrderItemResponseDto => {
   };
 };
 
-export const mapPharmacyOrder = (o): CreatePharmacyOrderResponseDto => {
+export const mapPharmacyOrder = (
+  o: PharmacyOrderWithRelations,
+): CreatePharmacyOrderResponseDto => {
   const currentPrescription = o.prescriptions?.[0];
   return {
     pharmacyOrderId: o.id,

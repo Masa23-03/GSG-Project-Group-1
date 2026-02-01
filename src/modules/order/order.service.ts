@@ -1,16 +1,38 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { MedicineStatus, UserStatus, VerificationStatus } from '@prisma/client';
+import {
+  Currency,
+  InventoryItem,
+  MedicineStatus,
+  PaymentMethod,
+  PaymentStatus,
+  Pharmacy,
+  Prisma,
+  UserStatus,
+  VerificationStatus,
+} from '@prisma/client';
 import { isPharmacyOpenNow } from '../pharmacy/util/helper';
 import { CreateOrderDto } from './dto/request.dto/create-order.dto';
+import { CalculatePharmacyOrderSubTotal } from './util/money-calc.util';
+import { CreateOrderResponseDto } from './dto/response.dto/order.response.dto';
+import { mapToOrderResponse, orderWithRelations } from './util/response.map';
 
 type ReqInv = { pharmacyId: number; quantity: number };
+type InventoryLite = {
+  id: number;
+  pharmacyId: number;
+  sellPrice: Prisma.Decimal;
+  medicine: { requiresPrescription: boolean };
+};
 
 @Injectable()
 export class OrderService {
   constructor(private readonly prismaService: DatabaseService) {}
 
-  async createOrder(userId: number, dto: CreateOrderDto) {
+  async createOrder(
+    userId: number,
+    dto: CreateOrderDto,
+  ): Promise<CreateOrderResponseDto> {
     return this.prismaService.$transaction(async (prisma) => {
       if (!dto.pharmacies?.length) {
         throw new BadRequestException('pharmacies are required');
@@ -194,6 +216,178 @@ export class OrderService {
         throw new BadRequestException(
           'Delivery fee is not configured for this city',
         );
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, email: true, phoneNumber: true },
+      });
+      if (!user) throw new BadRequestException('User not found');
+      const deliveryFee = cityDeliveryFee.standardFeeAmount;
+      const currency = dto.currency ?? cityDeliveryFee.currency;
+
+      const pharmacyOrdersData = dto.pharmacies.map((p) =>
+        this.buildSinglePharmacyOrder({
+          pharmacyDto: p,
+          inventories,
+          currency,
+        }),
+      );
+      const subTotalAmount = pharmacyOrdersData.reduce(
+        (acc, p) => acc.add(p.totalAmount),
+        new Prisma.Decimal(0),
+      );
+      const itemsCount = pharmacyOrdersData.reduce(
+        (acc, p) => acc + p.itemsCount,
+        0,
+      );
+
+      const totalAmount = subTotalAmount.add(deliveryFee);
+
+      const createdOrder = await prisma.order.create({
+        data: {
+          patientId: userId,
+          addressId: dto.deliveryAddressId,
+          pickupCityId,
+          deliveryAddressLine: address.addressLine1,
+          deliveryLatitude: address.latitude,
+          deliveryLongitude: address.longitude,
+          contactEmail: user.email,
+          contactName: user.name,
+          contactPhone: user.phoneNumber,
+          currency: currency,
+          itemsCount,
+          originalItemsCount: itemsCount,
+          subtotalAmount: subTotalAmount,
+          originalSubtotalAmount: subTotalAmount,
+          totalAmount: totalAmount,
+          originalTotalAmount: totalAmount,
+
+          notes: dto.notes ?? null,
+          deliveryFeeAmount: deliveryFee,
+
+          pharmacyOrders: {
+            create: pharmacyOrdersData.map((p) => ({
+              pharmacyId: p.pharmacyId,
+              requiresPrescription: p.requiresPrescription,
+              currency: p.currency,
+              totalAmount: p.totalAmount,
+              pharmacyOrderItems: p.pharmacyOrderItems,
+            })),
+          },
+
+          payment: {
+            create: {
+              amount: totalAmount,
+              currency,
+              status: PaymentStatus.PENDING,
+              method: PaymentMethod.COD,
+            },
+          },
+        },
+        select: {
+          id: true,
+          pharmacyOrders: { select: { id: true, pharmacyId: true } },
+        },
+      });
+      const poIdByPharmacyId = new Map(
+        createdOrder.pharmacyOrders.map((po) => [po.pharmacyId, po.id]),
+      );
+
+      for (const p of dto.pharmacies) {
+        for (const i of p.items) {
+          const updated = await prisma.inventoryItem.updateMany({
+            where: {
+              id: i.inventoryId,
+              pharmacyId: p.pharmacyId,
+              isDeleted: false,
+              isAvailable: true,
+              stockQuantity: { gte: i.quantity },
+            },
+            data: {
+              stockQuantity: { decrement: i.quantity },
+            },
+          });
+          if (updated.count !== 1)
+            throw new BadRequestException(
+              `Stock changed cannot fulfill inventory ${i.inventoryId}`,
+            );
+        }
+
+        if (!p.prescriptionId) continue;
+        const pharmacyOrderId = poIdByPharmacyId.get(p.pharmacyId);
+        if (!pharmacyOrderId)
+          throw new BadRequestException(
+            `Missing pharmacy order for ${p.pharmacyId}`,
+          );
+        const updated = await prisma.prescription.updateMany({
+          where: {
+            id: p.prescriptionId,
+            patientId: userId,
+            pharmacyOrderId: null,
+            pharmacyId: p.pharmacyId,
+          },
+          data: {
+            pharmacyOrderId,
+          },
+        });
+        if (updated.count !== 1)
+          throw new BadRequestException(
+            `Invalid prescriptionId ${p.prescriptionId}`,
+          );
+      }
+
+      const fullOrder = await prisma.order.findUniqueOrThrow({
+        where: { id: createdOrder.id },
+        include: orderWithRelations,
+      });
+
+      return mapToOrderResponse(fullOrder);
     });
+  }
+
+  private buildSinglePharmacyOrder({
+    pharmacyDto,
+
+    inventories,
+    currency,
+  }: {
+    pharmacyDto: CreateOrderDto['pharmacies'][number];
+    inventories: InventoryLite[];
+    currency: Currency;
+  }) {
+    const inventoryById = new Map(inventories.map((i) => [i.id, i]));
+    const calculateInput = pharmacyDto.items.map((i) => {
+      const inventory = inventoryById.get(i.inventoryId)!;
+      return {
+        itemId: inventory.id,
+        quantity: i.quantity,
+        unitPrice: inventory.sellPrice,
+      };
+    });
+
+    const { items, subTotal, itemsCount } =
+      CalculatePharmacyOrderSubTotal(calculateInput);
+    const requiresPrescription = items.some((i) => {
+      const inventory = inventoryById.get(i.itemId)!;
+      return inventory.medicine.requiresPrescription;
+    });
+
+    return {
+      pharmacyId: pharmacyDto.pharmacyId,
+      prescriptionId: pharmacyDto.prescriptionId ?? null,
+      requiresPrescription,
+      currency,
+      totalAmount: subTotal,
+      itemsCount,
+      pharmacyOrderItems: {
+        create: items.map((i) => ({
+          inventoryItemId: i.itemId,
+          quantity: i.quantity,
+          pricePerItem: i.unitPrice,
+          total: i.totalPrice,
+          currency,
+        })),
+      },
+    };
   }
 }
