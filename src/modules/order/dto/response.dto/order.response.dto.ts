@@ -23,13 +23,10 @@ export class CreatePharmacyOrderItemResponseDto {
   medicineId!: number;
   @ApiProperty()
   medicineName!: string;
-
   @ApiProperty()
   quantity!: number;
-
   @ApiProperty()
   unitPrice!: number;
-
   @ApiProperty()
   totalPrice!: number;
 }
