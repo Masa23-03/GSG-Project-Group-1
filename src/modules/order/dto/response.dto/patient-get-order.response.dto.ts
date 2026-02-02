@@ -1,6 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OrderStatus } from '@prisma/client';
-import { OrderDeliveryAddressSnapshotDto } from './order.response.dto';
+import {
+  Currency,
+  DeliveryStatus,
+  OrderStatus,
+  PrescriptionStatus,
+} from '@prisma/client';
+import {
+  CreatePharmacyOrderResponseDto,
+  OrderDeliveryAddressSnapshotDto,
+} from './order.response.dto';
+import { PrescriptionFileDto } from 'src/modules/prescription/dto/response/prescriptionfile.response';
 
 export class PatientOrderPharmacySummaryResponseDto {
   @ApiProperty({
@@ -43,12 +52,16 @@ export class PatientOrderResponseDto {
     description: 'Total order amount.',
   })
   totalAmount!: number;
-  @ApiPropertyOptional({
+
+  @ApiProperty({ enum: Currency, example: Currency.ILS })
+  currency!: Currency;
+
+  @ApiProperty({
     type: OrderDeliveryAddressSnapshotDto,
     description:
       'Delivery address snapshot stored on the order at creation time.',
   })
-  deliveryAddress?: OrderDeliveryAddressSnapshotDto;
+  deliveryAddress!: OrderDeliveryAddressSnapshotDto;
   @ApiProperty({
     example: 2,
     description: 'How many pharmacies are included in this order.',
@@ -82,4 +95,146 @@ export class PatientOrderResponseDto {
       'ETA is not implemented in this system and will always be null. Kept for a stable response contract.',
   })
   eta!: null;
+}
+
+export class PharmacyOrderDetailsResponseDto extends CreatePharmacyOrderResponseDto {
+  @ApiProperty({
+    example: '2026-02-03T10:25:00.000Z',
+    format: 'date-time',
+    nullable: true,
+    description:
+      'When the pharmacy rejected this pharmacy-order (if rejected).',
+  })
+  rejectedAt!: string | null;
+
+  @ApiProperty({
+    example: 'Out of stock',
+    nullable: true,
+    description:
+      'Reason provided by the pharmacy when rejecting (if rejected).',
+  })
+  rejectionReason!: string | null;
+}
+
+export class DeliveryDriverDto {
+  @ApiProperty({ example: 77, description: 'Driver ID.' })
+  id!: number;
+
+  @ApiProperty({ example: 'Ahmad Saleh', description: 'Driver full name.' })
+  name!: string;
+
+  @ApiProperty({
+    example: '+970599000000',
+    description: 'Driver phone number.',
+  })
+  phoneNumber!: string;
+}
+
+export class OrderDeliveryDetailsDto {
+  @ApiProperty({ example: 7, description: 'Delivery ID.' })
+  id!: number;
+
+  @ApiProperty({
+    enum: DeliveryStatus,
+    example: DeliveryStatus.EN_ROUTE,
+    description: 'Delivery status.',
+  })
+  status!: DeliveryStatus;
+
+  @ApiPropertyOptional({
+    type: DeliveryDriverDto,
+    nullable: true,
+    description: 'Assigned driver. Null until accepted/assigned.',
+    example: { id: 77, name: 'Ahmad Saleh', phoneNumber: '+970599000000' },
+  })
+  driver!: DeliveryDriverDto | null;
+
+  @ApiPropertyOptional({
+    example: '2026-02-03T11:00:00.000Z',
+    format: 'date-time',
+    nullable: true,
+    description: 'When the driver accepted the delivery.',
+  })
+  acceptedAt!: string | null;
+
+  @ApiPropertyOptional({
+    example: '2026-02-03T12:30:00.000Z',
+    format: 'date-time',
+    nullable: true,
+    description: 'When the delivery was marked as delivered.',
+  })
+  deliveredAt!: string | null;
+}
+
+export class PatientOrderDetailsResponseDto {
+  @ApiProperty({ example: 13, description: 'Order ID.' })
+  id!: number;
+
+  @ApiProperty({
+    enum: OrderStatus,
+    example: OrderStatus.PROCESSING,
+    description: 'Order status.',
+  })
+  status!: OrderStatus;
+
+  @ApiProperty({
+    example: '2026-02-03T10:15:30.000Z',
+    format: 'date-time',
+    description: 'Order creation timestamp (ISO 8601).',
+  })
+  createdAt!: string;
+
+  @ApiProperty({
+    example: '2026-02-03T10:20:00.000Z',
+    format: 'date-time',
+    description: 'Order last update timestamp (ISO 8601).',
+  })
+  updatedAt!: string;
+
+  @ApiProperty({
+    example: 66,
+    description: 'Subtotal before delivery fee.',
+  })
+  subAmount!: number;
+
+  @ApiProperty({
+    example: 20,
+    description: 'Delivery fee applied to this order.',
+  })
+  deliveryFee!: number;
+
+  @ApiProperty({
+    example: 86,
+    description:
+      'Final total. Guaranteed: totalAmount = subAmount + deliveryFee.',
+  })
+  totalAmount!: number;
+
+  @ApiProperty({
+    enum: Currency,
+    example: Currency.ILS,
+    description: 'Currency.',
+  })
+  currency!: Currency;
+
+  @ApiProperty({
+    type: OrderDeliveryAddressSnapshotDto,
+    description:
+      'Delivery address snapshot stored on the order at creation time.',
+    example: { addressText: 'Street 1, Building 2', lat: 31.5, lng: 34.46 },
+  })
+  deliveryAddress!: OrderDeliveryAddressSnapshotDto;
+
+  @ApiProperty({
+    type: [PharmacyOrderDetailsResponseDto],
+    description: 'Pharmacy orders generated from the root order.',
+  })
+  pharmacyOrders!: PharmacyOrderDetailsResponseDto[];
+
+  @ApiPropertyOptional({
+    type: OrderDeliveryDetailsDto,
+    nullable: true,
+    description: 'Delivery entity (null if not created yet).',
+  })
+  delivery!: OrderDeliveryDetailsDto | null;
 }
