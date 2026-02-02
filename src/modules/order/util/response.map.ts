@@ -27,6 +27,7 @@ export const orderWithRelations = {
         },
       },
       prescriptions: {
+        where: { isActive: true },
         select: { id: true, status: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 1,

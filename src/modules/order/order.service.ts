@@ -451,6 +451,10 @@ export class OrderService {
           `Missing pharmacy order for ${p.pharmacyId}`,
         );
       }
+      await prisma.prescription.updateMany({
+        where: { pharmacyOrderId, isActive: true },
+        data: { isActive: false },
+      });
 
       const updated = await prisma.prescription.updateMany({
         where: {
@@ -461,6 +465,7 @@ export class OrderService {
         },
         data: {
           pharmacyOrderId,
+          isActive: true,
         },
       });
 
