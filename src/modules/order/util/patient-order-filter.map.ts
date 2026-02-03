@@ -1,4 +1,4 @@
-import { OrderStatus } from '@prisma/client';
+import { Order, OrderStatus } from '@prisma/client';
 import { OrderFilter } from '../dto/request.dto/order.query.dto';
 
 const ACTIVE_STATUSES = new Set<OrderStatus>([
