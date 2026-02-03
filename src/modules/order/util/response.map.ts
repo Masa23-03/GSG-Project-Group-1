@@ -35,6 +35,7 @@ export const orderWithRelations = {
     },
   },
 } satisfies Prisma.OrderInclude;
+
 export type PharmacyOrderWithRelations = Prisma.PharmacyOrderGetPayload<{
   include: typeof orderWithRelations.pharmacyOrders.include;
 }>;
