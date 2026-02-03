@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import {
   Currency,
@@ -24,11 +28,27 @@ import {
   ReqInv,
   UserContactLite,
 } from './util/types.helper.create';
+import { PatientOrderQueryDto } from './dto/request.dto/order.query.dto';
+import {
+  PatientOrderDetailsResponseDto,
+  PatientOrderResponseDto,
+} from './dto/response.dto/patient-get-order.response.dto';
+import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
+import { computeOrderStatus } from './util/compute-order-status.helper';
+import {
+  buildOrderOrderBy,
+  buildOrderWhereStatement,
+} from './util/patient-orders-where-build.helper';
+import { removeFields } from 'src/utils/object.util';
+import { canTrack } from './util/canTrack.helper';
+import { canCancel } from './util/canCancel.helper';
+import { mapToPatientOrderDetails } from './util/mapToPatientOrderDetails';
 
 @Injectable()
 export class OrderService {
   constructor(private readonly prismaService: DatabaseService) {}
 
+  //! create order
   async createOrder(
     userId: number,
     dto: CreateOrderDto,
@@ -107,6 +127,120 @@ export class OrderService {
       return mapToOrderResponse(fullOrder);
     });
   }
+  //! get orders
+  async getOrders(
+    userId: number,
+    query: PatientOrderQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<PatientOrderResponseDto>> {
+    const pagination = this.prismaService.handleQueryPagination(query);
+    const whereSt = buildOrderWhereStatement(userId, query);
+    const orderBy = buildOrderOrderBy(query);
+
+    return this.prismaService.$transaction(async (prisma) => {
+      const [orders, count] = await Promise.all([
+        prisma.order.findMany({
+          ...removeFields(pagination, ['page']),
+          where: whereSt,
+          orderBy: orderBy,
+
+          select: {
+            id: true,
+            createdAt: true,
+            status: true,
+            totalAmount: true,
+            itemsCount: true,
+            currency: true,
+            deliveryAddressLine: true,
+            deliveryLatitude: true,
+            deliveryLongitude: true,
+            pharmacyOrders: {
+              select: {
+                status: true,
+                pharmacy: {
+                  select: {
+                    pharmacyName: true,
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        prisma.order.count({
+          where: whereSt,
+        }),
+      ]);
+      const data: PatientOrderResponseDto[] = orders.map((o) => {
+        const pharmacyStatuses = o.pharmacyOrders.map((p) => p.status);
+        const pharmacies = o.pharmacyOrders.map((po) => ({
+          pharmacyId: po.pharmacy.id,
+          pharmacyName: po.pharmacy.pharmacyName,
+        }));
+
+        return {
+          id: o.id,
+          status: o.status,
+          createdAt: o.createdAt.toISOString(),
+          totalAmount: Number(o.totalAmount),
+          itemsCount: o.itemsCount,
+          currency: o.currency,
+          deliveryAddress: {
+            addressText: o.deliveryAddressLine,
+            lat: o.deliveryLatitude ? Number(o.deliveryLatitude) : null,
+            lng: o.deliveryLongitude ? Number(o.deliveryLongitude) : null,
+          },
+          pharmacies: pharmacies,
+          pharmaciesCount: pharmacies.length,
+          canCancel: canCancel(pharmacyStatuses),
+          canTrack: canTrack(o.status),
+          eta: null,
+        };
+      });
+      return {
+        success: true,
+        data,
+        meta: this.prismaService.formatPaginationResponse({
+          count: count,
+          page: pagination.page,
+          limit: pagination.take,
+        }),
+      };
+    });
+  }
+  //! get order details
+  async getOrderDetails(
+    userId: number,
+    orderId: number,
+  ): Promise<PatientOrderDetailsResponseDto> {
+    return this.prismaService.$transaction(async (prisma) => {
+      const order = await prisma.order.findUnique({
+        where: { id: orderId, patientId: userId },
+        include: {
+          ...orderWithRelations,
+          delivery: {
+            select: {
+              id: true,
+              status: true,
+              acceptedAt: true,
+              deliveredAt: true,
+              driver: {
+                select: {
+                  id: true,
+                  user: { select: { name: true, phoneNumber: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!order) throw new NotFoundException('Order not found');
+
+      return mapToPatientOrderDetails(order);
+    });
+  }
+
+  //! helpers
   //load pharmacies and do validation on pharmacies
   private async loadAndValidatePharmacies(
     prisma: Prisma.TransactionClient,
@@ -479,7 +613,6 @@ export class OrderService {
 
   private buildSinglePharmacyOrder({
     pharmacyDto,
-
     inventories,
     currency,
   }: {
@@ -563,5 +696,27 @@ export class OrderService {
       inventoryIds: [...reqByInventoryId.keys()],
       reqByInventoryId,
     };
+  }
+  //update order status and recompute it
+  //used when pharmacy update their order status
+  //when driver update delivery
+  //when patient cancel
+  async syncOrderStatus(prisma: Prisma.TransactionClient, orderId: number) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        pharmacyOrders: { select: { status: true } },
+        delivery: { select: { status: true } },
+      },
+    });
+    if (!order) throw new NotFoundException('Order with this id was not found');
+    const statuses = order.pharmacyOrders.map((p) => p.status);
+    const delivery = order.delivery ? { status: order.delivery.status } : null;
+
+    const newStatus = computeOrderStatus(statuses, delivery);
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: newStatus },
+    });
   }
 }
