@@ -1,8 +1,16 @@
-import { Prisma } from '@prisma/client';
+import { OrderStatus, Prisma } from '@prisma/client';
 import {
+  OrderFilter,
   PatientOrderQueryDto,
   SortOrder,
 } from '../dto/request.dto/order.query.dto';
+export const ACTIVE_STATUSES: OrderStatus[] = [
+  OrderStatus.ACCEPTED,
+  OrderStatus.OUT_FOR_DELIVERY,
+  OrderStatus.PARTIALLY_ACCEPTED,
+  OrderStatus.PENDING,
+  OrderStatus.PROCESSING,
+] as const;
 
 export function buildOrderWhereStatement(
   patientId: number,
@@ -18,6 +26,19 @@ export function buildOrderWhereStatement(
         some: { pharmacy: { pharmacyName: { contains: query.pharmacyName } } },
       },
     });
+  const filter = query.filter ?? OrderFilter.ALL;
+  if (filter === OrderFilter.DELIVERED) {
+    and.push({ status: OrderStatus.DELIVERED });
+  } else if (filter === OrderFilter.CANCELLED) {
+    and.push({ status: { in: [OrderStatus.CANCELLED, OrderStatus.REJECTED] } });
+  } else if (filter === OrderFilter.ACTIVE) {
+    and.push({
+      status: {
+        in: ACTIVE_STATUSES,
+      },
+    });
+  }
+
   return { AND: and };
 }
 
