@@ -90,6 +90,7 @@ enum PharmacyOrderStatus {
   ACCEPTED
   REJECTED
   PREPARING
+  CANCELLED
   READY_FOR_PICKUP
   //at least one pharmacy status is READY_FOR_PICKUP -> into delivery
   PICKED_UP
