@@ -120,7 +120,7 @@ export class OrderService {
         deliveryFee,
         currency,
       });
-      await this.decrementStock(prisma, dto);
+      await this.reserveStockFromCreateDto(prisma, dto);
       await this.attachPrescriptions(prisma, userId, dto, poIdByPharmacyId);
       const fullOrder = await prisma.order.findUniqueOrThrow({
         where: { id: orderId },
@@ -216,7 +216,7 @@ export class OrderService {
     orderId: number,
   ): Promise<PatientOrderDetailsResponseDto> {
     return this.prismaService.$transaction(async (prisma) => {
-      const order = await prisma.order.findUnique({
+      const order = await prisma.order.findFirst({
         where: { id: orderId, patientId: userId },
         include: {
           ...orderWithRelations,
@@ -248,13 +248,15 @@ export class OrderService {
     orderId: number,
   ): Promise<PatientCancelOrderResponseDto> {
     return this.prismaService.$transaction(async (prisma) => {
-      const order = await prisma.order.findUnique({
+      const order = await prisma.order.findFirst({
         where: { id: orderId, patientId: userId },
         select: {
           id: true,
           status: true,
           delivery: { select: { status: true } },
-          pharmacyOrders: { select: { id: true, status: true } },
+          pharmacyOrders: {
+            select: { id: true, status: true, deliveryId: true },
+          },
         },
       });
       if (!order) throw new NotFoundException('Order not found');
@@ -265,27 +267,41 @@ export class OrderService {
       ) {
         throw new BadRequestException('Order cannot be cancelled');
       }
-      if (order.delivery)
+
+      if (
+        order.delivery ||
+        order.pharmacyOrders.some((po) => po.deliveryId !== null)
+      )
         throw new BadRequestException(
           'Order cannot be cancelled after delivery is created',
         );
       const statuses = order.pharmacyOrders.map((p) => p.status);
+
       if (!canCancel(statuses)) {
         throw new BadRequestException(
           'Order cannot be cancelled at this stage',
         );
       }
 
-      await prisma.pharmacyOrder.updateMany({
+      const total = order.pharmacyOrders.length;
+
+      const cancelResult = await prisma.pharmacyOrder.updateMany({
         where: { orderId: orderId, status: { in: [...CANCELLABLE] } },
         data: { status: PharmacyOrderStatus.CANCELLED },
       });
+
+      if (cancelResult.count !== total)
+        throw new BadRequestException(
+          'Order status changed, cannot cancel now',
+        );
 
       const updated = await prisma.order.update({
         where: { id: orderId },
         data: { status: OrderStatus.CANCELLED },
         select: { id: true, status: true },
       });
+
+      await this.releaseStockForOrder(prisma, order.id);
 
       return updated;
     });
@@ -593,7 +609,7 @@ export class OrderService {
     return { orderId: created.id, poIdByPharmacyId };
   }
   //update inventory stock
-  private async decrementStock(
+  private async reserveStockFromCreateDto(
     prisma: Prisma.TransactionClient,
     dto: CreateOrderDto,
   ) {
@@ -618,6 +634,54 @@ export class OrderService {
     if (failedIndex !== -1) {
       throw new BadRequestException('Stock changed cannot fulfill order');
     }
+  }
+
+  //increment inventory stock for the whole order -> in case of cancel
+  async releaseStockForOrder(
+    prisma: Prisma.TransactionClient,
+    orderId: number,
+  ) {
+    const pharmacyOrders = await prisma.pharmacyOrder.findMany({
+      where: { orderId },
+      select: { id: true },
+    });
+
+    for (const po of pharmacyOrders) {
+      await this.releaseStockForPharmacyOrder(prisma, po.id);
+    }
+  }
+
+  //(increment inventory stock ) --> pharmacy order
+  //in case of rejection and cancel
+  async releaseStockForPharmacyOrder(
+    prisma: Prisma.TransactionClient,
+    pharmacyOrderId: number,
+  ) {
+    const locked = await prisma.pharmacyOrder.updateMany({
+      where: {
+        id: pharmacyOrderId,
+        stockReleasedAt: null,
+        status: {
+          in: [PharmacyOrderStatus.CANCELLED, PharmacyOrderStatus.REJECTED],
+        },
+      },
+      data: { stockReleasedAt: new Date() },
+    });
+    if (locked.count !== 1) return;
+
+    const items = await prisma.pharmacyOrderItem.findMany({
+      where: { pharmacyOrderId },
+      select: { inventoryItemId: true, quantity: true },
+    });
+
+    await Promise.all(
+      items.map((i) =>
+        prisma.inventoryItem.update({
+          where: { id: i.inventoryItemId },
+          data: { stockQuantity: { increment: i.quantity } },
+        }),
+      ),
+    );
   }
 
   //update prescription (attach it)
