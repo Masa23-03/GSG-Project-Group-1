@@ -7,8 +7,10 @@ import { DatabaseService } from '../database/database.service';
 import {
   Currency,
   MedicineStatus,
+  OrderStatus,
   PaymentMethod,
   PaymentStatus,
+  PharmacyOrderStatus,
   Prisma,
   UserStatus,
   VerificationStatus,
@@ -41,7 +43,7 @@ import {
 } from './util/patient-orders-where-build.helper';
 import { removeFields } from 'src/utils/object.util';
 import { canTrack } from './util/canTrack.helper';
-import { canCancel } from './util/canCancel.helper';
+import { canCancel, CANCELLABLE } from './util/canCancel.helper';
 import { mapToPatientOrderDetails } from './util/mapToPatientOrderDetails';
 
 @Injectable()
@@ -237,6 +239,51 @@ export class OrderService {
       if (!order) throw new NotFoundException('Order not found');
 
       return mapToPatientOrderDetails(order);
+    });
+  }
+  //! cancel order
+  async cancelOrder(userId: number, orderId: number) {
+    return this.prismaService.$transaction(async (prisma) => {
+      const order = await prisma.order.findUnique({
+        where: { id: orderId, patientId: userId },
+        select: {
+          id: true,
+          status: true,
+          delivery: { select: { status: true } },
+          pharmacyOrders: { select: { id: true, status: true } },
+        },
+      });
+      if (!order) throw new NotFoundException('Order not found');
+      if (
+        order.status === OrderStatus.CANCELLED ||
+        order.status === OrderStatus.REJECTED ||
+        order.status === OrderStatus.DELIVERED
+      ) {
+        throw new BadRequestException('Order cannot be cancelled');
+      }
+      if (order.delivery)
+        throw new BadRequestException(
+          'Order cannot be cancelled after delivery is created',
+        );
+      const statuses = order.pharmacyOrders.map((p) => p.status);
+      if (!canCancel(statuses)) {
+        throw new BadRequestException(
+          'Order cannot be cancelled at this stage',
+        );
+      }
+
+      await prisma.pharmacyOrder.updateMany({
+        where: { orderId: orderId, status: { in: [...CANCELLABLE] } },
+        data: { status: PharmacyOrderStatus.CANCELLED },
+      });
+
+      const updated = await prisma.order.update({
+        where: { id: orderId },
+        data: { status: OrderStatus.CANCELLED },
+        select: { id: true, status: true },
+      });
+
+      return updated;
     });
   }
 
