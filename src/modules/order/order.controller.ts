@@ -38,7 +38,11 @@ import {
   PatientOrderQueryDto,
   SortOrder,
 } from './dto/request.dto/order.query.dto';
-import { PatientOrderResponseDto } from './dto/response.dto/patient-get-order.response.dto';
+import {
+  PatientCancelOrderResponseDto,
+  PatientOrderDetailsResponseDto,
+  PatientOrderResponseDto,
+} from './dto/response.dto/patient-get-order.response.dto';
 
 @ApiTags('Orders')
 @ApiExtraModels(
@@ -70,10 +74,10 @@ export class OrderController {
         success: true,
         data: [],
         meta: {
-          page: 1,
+          total: 10,
           limit: 10,
+          page: 1,
           totalPages: 1,
-          totalCount: 0,
         },
       },
     },
@@ -106,6 +110,7 @@ export class OrderController {
 
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Get my order details' })
+  @ApiOkResponse({ type: PatientOrderDetailsResponseDto })
   @ApiParam({ name: 'id', type: Number, example: 13 })
   @Get('my/:id')
   async findOne(
@@ -122,6 +127,7 @@ export class OrderController {
 
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Cancel my order' })
+  @ApiOkResponse({ type: PatientCancelOrderResponseDto })
   @ApiParam({ name: 'id', type: Number, example: 13 })
   @Patch('my/:id/cancel')
   async cancel(
