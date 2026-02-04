@@ -32,6 +32,7 @@ import {
 } from './util/types.helper.create';
 import { PatientOrderQueryDto } from './dto/request.dto/order.query.dto';
 import {
+  PatientCancelOrderResponseDto,
   PatientOrderDetailsResponseDto,
   PatientOrderResponseDto,
 } from './dto/response.dto/patient-get-order.response.dto';
@@ -242,7 +243,10 @@ export class OrderService {
     });
   }
   //! cancel order
-  async cancelOrder(userId: number, orderId: number) {
+  async cancelOrder(
+    userId: number,
+    orderId: number,
+  ): Promise<PatientCancelOrderResponseDto> {
     return this.prismaService.$transaction(async (prisma) => {
       const order = await prisma.order.findUnique({
         where: { id: orderId, patientId: userId },
