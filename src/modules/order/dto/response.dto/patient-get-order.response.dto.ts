@@ -238,3 +238,15 @@ export class PatientOrderDetailsResponseDto {
   })
   delivery!: OrderDeliveryDetailsDto | null;
 }
+
+export class PatientCancelOrderResponseDto {
+  @ApiProperty({ example: 13, description: 'Order ID.' })
+  id!: number;
+
+  @ApiProperty({
+    enum: OrderStatus,
+    example: OrderStatus.CANCELLED,
+    description: 'Order status.',
+  })
+  status!: OrderStatus;
+}
