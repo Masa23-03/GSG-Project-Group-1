@@ -54,7 +54,7 @@ export class CityService {
     //check references
     const [pharmaciesCount, ordersCount, addressesCount] = await Promise.all([
       this.prismaService.pharmacy.count({ where: { cityId: id } }),
-      this.prismaService.order.count({ where: { deliveryCityId: id } }),
+      this.prismaService.order.count({ where: { pickupCityId: id } }),
       this.prismaService.patientAddress.count({
         where: { cityId: id, isDeleted: false },
       }),
