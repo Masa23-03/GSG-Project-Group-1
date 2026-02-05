@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import { GetInventoryQueryDto } from '../dto/get-inventory-query.dto';
+import { GetInventoryQueryDto } from '../dto/query.dto/get-inventory-query.dto';
 
 export const GetInventoryQuerySchema = z.object({
   page: z.preprocess((val) => Number(val ?? 1), z.number().min(1)).default(1),

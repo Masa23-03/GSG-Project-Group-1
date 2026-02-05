@@ -4,12 +4,12 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { CreateInventoryItemDto } from './dto/create-inventory.dto';
-import { UpdateInventoryItemDto } from './dto/update-inventory.dto';
-import { GetInventoryQueryDto } from './dto/get-inventory-query.dto';
+import { CreateInventoryItemDto } from './dto/request.dto/create-inventory.dto';
+import { UpdateInventoryItemDto } from './dto/request.dto/update-inventory.dto';
+import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
 import { PaginationResult } from 'src/types/unifiedType.types';
 import { DatabaseService } from '../database/database.service';
-import { InventoryItemResponseDto } from './dto/inventory-response.dto';
+import { InventoryItemResponseDto } from './dto/response.dto/inventory-response.dto';
 import { InventoryMapper } from './util/mapToResponse.helper';
 
 @Injectable()

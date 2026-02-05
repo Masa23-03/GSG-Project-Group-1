@@ -1,20 +1,44 @@
-import { InventoryItemResponseDto, MedicineSummaryDto } from '../dto/inventory-response.dto';
+import { InventoryItemResponseDto, MedicineSummaryDto } from '../dto/response.dto/inventory-response.dto';
 
 export class InventoryMapper {
   
   static toResponseDto(item: any): InventoryItemResponseDto {
      return {
-      ...item,
+     id: item.id,
+      medicineId: item.medicineId,
+      pharmacyId: item.pharmacyId,
+      stockQuantity: item.stockQuantity,
+      minStock: item.minStock,
       sellPrice: Number(item.sellPrice),
       costPrice: item.costPrice ? Number(item.costPrice) : null,
-      expiryDate: item.expiryDate?.toISOString() || null,
+      isAvailable: item.isAvailable,
+      batchNumber: item.batchNumber || null,
+      expiryDate: item.expiryDate ? item.expiryDate.toISOString() : null,
+      shelfLocation: item.shelfLocation || null,
+      notes: item.notes || null,
       createdAt: item.createdAt.toISOString(),
       updatedAt: item.updatedAt.toISOString(),
-      medicine: {
-        ...item.medicine,
-        minPrice: item.medicine.minPrice ? Number(item.medicine.minPrice) : null,
-        maxPrice: item.medicine.maxPrice ? Number(item.medicine.maxPrice) : null,
-      },
+      medicine: this.toMedicineSummaryDto(item.medicine),
+    };
+  } 
+  private static toMedicineSummaryDto(medicine: any): MedicineSummaryDto {
+    return {
+      id: medicine.id,
+      genericName: medicine.genericName,
+      brandName: medicine.brandName || null,
+      status: medicine.status,
+      isActive: medicine.isActive,
+      minPrice: medicine.minPrice ? Number(medicine.minPrice) : null,
+      maxPrice: medicine.maxPrice ? Number(medicine.maxPrice) : null,
+      requiresPrescription: medicine.requiresPrescription,
+      categoryId: String(medicine.categoryId), // Cast to string as per DTO
+      manufacturer: medicine.manufacturer || null,
+      dosageForm: medicine.dosageForm || null,
+      dosageInstructions: medicine.dosageInstructions || null,
+      storageInstructions: medicine.storageInstructions || null,
+      warnings: medicine.warnings || null,
+      description: medicine.description,
+      packSize: medicine.packSize ? String(medicine.packSize) : null,
     };
   }
   

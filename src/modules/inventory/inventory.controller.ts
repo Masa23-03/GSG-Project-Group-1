@@ -17,8 +17,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
-import { CreateInventoryItemDto } from './dto/create-inventory.dto';
-import { UpdateInventoryItemDto } from './dto/update-inventory.dto';
+import { CreateInventoryItemDto } from './dto/request.dto/create-inventory.dto';
+import { UpdateInventoryItemDto } from './dto/request.dto/update-inventory.dto';
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
@@ -29,7 +29,7 @@ import {
   UpdateInventoryItemSchema,
 } from './schema/inventory.schema';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
-import { GetInventoryQueryDto } from './dto/get-inventory-query.dto';
+import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
 import { GetInventoryQuerySchema } from './schema/get-inventory-query.schema';
 
 @ApiTags('Inventory')

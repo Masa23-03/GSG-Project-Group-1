@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CreateInventoryItemDtoType } from '../dto/create-inventory.dto';
+import { CreateInventoryItemDtoType } from '../dto/request.dto/create-inventory.dto';
 export const CreateInventoryItemSchema = z
   .object({
     medicineId: z.number().int().positive(),
