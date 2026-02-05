@@ -80,51 +80,62 @@ export class InventoryService {
     return InventoryMapper.toResponseDto(created);
   }
 
-  async findAll(userId: number, query: GetInventoryQueryDto): Promise<PaginationResult<InventoryItemResponseDto>> {
-    const { page = 1, limit = 10, q, medicineId, isAvailable, lowStock } = query;
+  async findAll(
+    userId: number,
+    query: GetInventoryQueryDto,
+  ): Promise<PaginationResult<InventoryItemResponseDto>> {
+    const {
+      page = 1,
+      limit = 10,
+      q,
+      medicineId,
+      isAvailable,
+      lowStock,
+    } = query;
     // 1. onwership check
-    const pharmacy = await this.prisma.pharmacy.findUnique({where: { userId }});
+    const pharmacy = await this.prisma.pharmacy.findUnique({
+      where: { userId },
+    });
     if (!pharmacy) throw new NotFoundException('Pharmacy profile not found');
     // 2. build filters
-    const where:any = {
+    const where: any = {
       pharmacyId: pharmacy.id,
       isDeleted: false,
-    }
+    };
     if (medicineId) where.medicineId = medicineId;
     if (isAvailable !== undefined) where.isAvailable = isAvailable;
     if (q) {
-    where.medicine = {
-      OR: [
-        { genericName: { contains: q, mode: 'insensitive' } },
-        { brandName: { contains: q, mode: 'insensitive' } },
-      ],
+      where.medicine = {
+        OR: [
+          { genericName: { contains: q, mode: 'insensitive' } },
+          { brandName: { contains: q, mode: 'insensitive' } },
+        ],
+      };
+    }
+    if (lowStock) {
+      where.stockQuantity = { lte: this.prisma.inventoryItem.fields.minStock };
+    }
+    // 3. Fetch data and count for pagination
+    const [items, total] = await Promise.all([
+      this.prisma.inventoryItem.findMany({
+        where,
+        ...this.includeQuery,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.inventoryItem.count({ where }),
+    ]);
+
+    return {
+      data: items.map((item) => InventoryMapper.toResponseDto(item)),
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
-  }
-  if (lowStock) {
-    where.stockQuantity = { lte: this.prisma.inventoryItem.fields.minStock };
-  }
-  // 3. Fetch data and count for pagination
-  const [items, total] = await Promise.all([
-    this.prisma.inventoryItem.findMany({
-      where,
-      ...this.includeQuery,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { updatedAt: 'desc' },
-    }),
-    this.prisma.inventoryItem.count({ where }),
-  ]);
-
-  return {
-    data: items.map((item) => InventoryMapper.toResponseDto(item)),
-    meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
-  };
-
   }
 
   async findOne(userId: number, id: number): Promise<InventoryItemResponseDto> {
     const item = await this.prisma.inventoryItem.findFirst({
-      where:{
+      where: {
         id,
         pharmacy: { userId },
         isDeleted: false,
@@ -187,7 +198,7 @@ export class InventoryService {
     const deleted = await this.prisma.inventoryItem.update({
       where: { id },
       data: { isDeleted: true, isAvailable: false },
-      ...this.includeQuery
+      ...this.includeQuery,
     });
     return InventoryMapper.toResponseDto(deleted);
   }
