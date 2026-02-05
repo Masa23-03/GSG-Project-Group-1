@@ -20,7 +20,7 @@ export class StageGuard implements CanActivate {
     if (!requiredStage) return true;
 
     const req = context.switchToHttp().getRequest();
-    const user = req.user as { stage?: AuthStage } | undefined;
+    const user = req.user 
 
 
     if (!user?.stage) {
