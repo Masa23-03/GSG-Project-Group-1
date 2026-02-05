@@ -197,7 +197,7 @@ model Pharmacy {
   pharmacyName       String             @map("pharmacy_name") @db.VarChar(255)
   licenseNumber      String             @unique @map("license_number") @db.VarChar(255)
   licenseDocumentUrl String?            @map("license_document_url") @db.VarChar(255)
-  cityId             Int                @db.UnsignedInt
+  cityId             Int               @db.UnsignedInt
   address            String?            @db.Text
   latitude           Decimal?           @db.Decimal(10, 8)
   longitude          Decimal?           @db.Decimal(11, 8)
@@ -214,7 +214,7 @@ model Pharmacy {
   user  User  @relation("PharmacyOwner", fields: [userId], references: [id], onDelete: Cascade)
   admin User? @relation("PharmacyVerifier", fields: [reviewedBy], references: [id], onDelete: SetNull)
 
-  city               City            @relation(fields: [cityId], references: [id])
+  city               City           @relation(fields: [cityId], references: [id])
   inventoryItems     InventoryItem[]
   pharmacyOrders     PharmacyOrder[]
   requestedMedicines Medicine[]      @relation("MedicineRequester")
