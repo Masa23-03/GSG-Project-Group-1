@@ -13,3 +13,6 @@ export const CreateInventoryItemSchema = z
     notes: z.string().trim().max(500).nullable().optional(),
   })
   .strict() satisfies z.ZodType<CreateInventoryItemDtoType>;
+
+export const UpdateInventoryItemSchema =
+  CreateInventoryItemSchema.partial().omit({ medicineId: true });

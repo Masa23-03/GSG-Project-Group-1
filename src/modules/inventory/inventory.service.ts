@@ -5,18 +5,36 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { CreateInventoryItemDto } from './dto/create-inventory.dto';
-import { UpdateInventoryDto } from './dto/update-inventory.dto';
+import { UpdateInventoryItemDto } from './dto/update-inventory.dto';
 import { DatabaseService } from '../database/database.service';
 import { InventoryItemResponseDto } from './dto/inventory-response.dto';
 import { InventoryMapper } from './util/mapToResponse.helper';
 
 @Injectable()
-
 export class InventoryService {
+  constructor(private prisma: DatabaseService) {}
 
-constructor(private prisma: DatabaseService) {}
+  private validatePriceRange(price: number, medicine: any) {
+    if (medicine.minPrice && price < medicine.minPrice) {
+      throw new BadRequestException(
+        `Price is below minimum allowed (${medicine.minPrice})`,
+      );
+    }
+    if (medicine.maxPrice && price > medicine.maxPrice) {
+      throw new BadRequestException(
+        `Price is above maximum allowed (${medicine.maxPrice})`,
+      );
+    }
+  }
 
- async create(userId: number, payload: CreateInventoryItemDto): Promise<InventoryItemResponseDto> {
+  private readonly includeQuery = {
+    include: { medicine: true },
+  };
+
+  async create(
+    userId: number,
+    payload: CreateInventoryItemDto,
+  ): Promise<InventoryItemResponseDto> {
     // 1. Get the Pharmacylinked to this User
     const pharmacy = await this.prisma.pharmacy.findUnique({
       where: { userId },
@@ -33,29 +51,12 @@ constructor(private prisma: DatabaseService) {}
       );
     }
 
-    // 3. Enforce Price Range : minPrice <= sellPrice <= maxPrice
-    if (
-      medicine.minPrice !== null &&
-      payload.sellPrice <= Number(medicine.minPrice)
-    ) {
-      throw new BadRequestException(
-        `Price is below the minimum allowed (${medicine.minPrice})`,
-      );
-    }
-    if (
-      medicine.maxPrice !== null &&
-      payload.sellPrice >= Number(medicine.maxPrice)
-    ) {
-      throw new BadRequestException(
-        `Price exceeds the maximum allowed (${medicine.maxPrice})`,
-      );
-    }
+    // 3. Enforce Price Range : minPrice < sellPrice <  maxPrice
+    this.validatePriceRange(payload.sellPrice, medicine);
     // 4. Availability check
     const isAvailable = payload.stockQuantity > 0;
-    // 5. Check for existing record 
-     const includeQuery = {
-      include: { medicine: true }
-    };
+    // 5. Check for existing record
+
     const existing = await this.prisma.inventoryItem.findFirst({
       where: { pharmacyId: pharmacy.id, medicineId: payload.medicineId },
     });
@@ -66,16 +67,16 @@ constructor(private prisma: DatabaseService) {}
       const updated = await this.prisma.inventoryItem.update({
         where: { id: existing.id },
         data: { ...payload, isDeleted: false, isAvailable },
-        ...includeQuery,
+        ...this.includeQuery,
       });
       return InventoryMapper.toResponseDto(updated);
     }
     const created = await this.prisma.inventoryItem.create({
-        data: { ...payload, pharmacyId: pharmacy.id, isAvailable },
-        ...includeQuery,
-      });
+      data: { ...payload, pharmacyId: pharmacy.id, isAvailable },
+      ...this.includeQuery,
+    });
     return InventoryMapper.toResponseDto(created);
-    }
+  }
 
   findAll() {
     return `This action returns all inventory`;
@@ -85,11 +86,60 @@ constructor(private prisma: DatabaseService) {}
     return `This action returns a #${id} inventory`;
   }
 
-  update(id: number, updateInventoryDto: UpdateInventoryDto) {
-    return `This action updates a #${id} inventory`;
+  async update(
+    id: number,
+    userId: number,
+    payload: UpdateInventoryItemDto,
+  ): Promise<InventoryItemResponseDto> {
+    const item = await this.prisma.inventoryItem.findFirst({
+      where: {
+        id,
+        pharmacy: { userId },
+        isDeleted: false,
+      },
+      ...this.includeQuery,
+    });
+    if (!item) {
+      throw new NotFoundException('Inventory item not found');
+    }
+    // if price is being updated, validate price range
+    if (payload.sellPrice) {
+      this.validatePriceRange(payload.sellPrice, item.medicine);
+    }
+    // upadate availability if stockQuantity is being updated
+    const newStock =
+      payload.stockQuantity !== undefined
+        ? payload.stockQuantity
+        : item.stockQuantity;
+    const isAvailable = newStock > 0;
+
+    const updated = await this.prisma.inventoryItem.update({
+      where: { id },
+      data: {
+        ...payload,
+        isAvailable,
+      },
+      ...this.includeQuery,
+    });
+    return InventoryMapper.toResponseDto(updated);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} inventory`;
+  async remove(id: number, userId: number): Promise<InventoryItemResponseDto> {
+    const item = await this.prisma.inventoryItem.findFirst({
+      where: {
+        id,
+        pharmacy: { userId },
+        isDeleted: false,
+      },
+    });
+    if (!item) {
+      throw new NotFoundException('Inventory item not found');
+    }
+    const deleted = await this.prisma.inventoryItem.update({
+      where: { id },
+      data: { isDeleted: true, isAvailable: false },
+      ...this.includeQuery,
+    });
+    return InventoryMapper.toResponseDto(deleted);
   }
 }

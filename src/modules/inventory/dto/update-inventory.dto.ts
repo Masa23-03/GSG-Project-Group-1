@@ -1,4 +1,6 @@
-import { PartialType } from '@nestjs/swagger';
+import { PartialType, OmitType } from '@nestjs/swagger';
 import { CreateInventoryItemDto } from './create-inventory.dto';
 
-export class UpdateInventoryDto extends PartialType(CreateInventoryItemDto) {}
+export class UpdateInventoryItemDto extends PartialType(
+  OmitType(CreateInventoryItemDto, ['medicineId'] as const),
+) {}
