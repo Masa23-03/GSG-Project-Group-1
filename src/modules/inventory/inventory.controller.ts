@@ -7,12 +7,8 @@ import {
   Post,
   Body,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
-import { InventoryService } from './inventory.service';
-import { CreateInventoryItemDto } from './dto/create-inventory.dto';
-import { UpdateInventoryItemDto } from './dto/update-inventory.dto';
-import { Roles } from 'src/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
 import {
   ApiBody,
   ApiOperation,
@@ -20,6 +16,11 @@ import {
   ApiTags,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { InventoryService } from './inventory.service';
+import { CreateInventoryItemDto } from './dto/create-inventory.dto';
+import { UpdateInventoryItemDto } from './dto/update-inventory.dto';
+import { Roles } from 'src/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
 import { ZodValidationPipe } from '../../pipes/zod-validation.pipe';
@@ -28,6 +29,8 @@ import {
   UpdateInventoryItemSchema,
 } from './schema/inventory.schema';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
+import { GetInventoryQueryDto } from './dto/get-inventory-query.dto';
+import { GetInventoryQuerySchema } from './schema/get-inventory-query.schema';
 
 @ApiTags('Inventory')
 @RequireVerified('PHARMACY')
@@ -47,15 +50,25 @@ export class InventoryController {
     return await this.inventoryService.create(user.id, createDto);
   }
 
-  // @Get()
-  // findAll() {
-  //   return this.inventoryService.findAll();
-  // }
+  @ApiOperation({ summary: 'List pharmacy inventory items' })
+  @Get()
+  async findAll(
+    @AuthedUser() user: authedUserType,
+    @Query(new ZodValidationPipe(GetInventoryQuerySchema))
+    query: GetInventoryQueryDto,
+  ) {
+    return this.inventoryService.findAll(user.id, query);
+  }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.inventoryService.findOne(+id);
-  // }
+  @ApiOperation({ summary: 'Get details of a single inventory item' })
+  @Get(':id')
+  async findOne(
+    @AuthedUser() user: authedUserType,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.inventoryService.findOne(user.id, id);
+  }
+
   @ApiOperation({
     summary: 'Update inventory item',
   })
