@@ -120,12 +120,12 @@ export class AuthService {
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '15m',
+      expiresIn: '7d',
     });
 
     const refreshToken = generateRefreshToken();
     const refreshHash = hashRefreshToken(refreshToken);
-    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
     await this.prisma.refreshToken.create({
       data: {
@@ -152,6 +152,32 @@ export class AuthService {
   async login(dto: LoginDTO) {
 
     const email = this.userService.normalizeEmail(dto.email)
+
+    // ! DEV-ONLY BOOTSTRAP (REMOVE BEFORE PROD)
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      email === process.env.ADMIN_EMAIL &&
+      dto.password === process.env.ADMIN_PASSWORD
+    ) {
+      const admin = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!admin) {
+        throw new UnauthorizedException('Admin not seeded');
+      }
+
+      const { accessToken, refreshToken } = await this.issueTokens(admin.id);
+
+      return {
+        user: removeFields(admin, ['password']),
+        accessToken,
+        refreshToken,
+      };
+    }
+    //! -----------------------------------------
+
+
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
