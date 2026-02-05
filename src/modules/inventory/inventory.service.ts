@@ -107,8 +107,8 @@ export class InventoryService {
     if (q) {
       where.medicine = {
         OR: [
-          { genericName: { contains: q, mode: 'insensitive' } },
-          { brandName: { contains: q, mode: 'insensitive' } },
+          { genericName: { contains: q} },
+          { brandName: { contains: q } },
         ],
       };
     }
