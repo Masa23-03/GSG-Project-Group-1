@@ -30,6 +30,27 @@ function mapFilterToStatus(
       return null;
   }
 }
+
+export function mapStatusToFilter(
+  status: PharmacyOrderStatus,
+): PharmacyOrderFilter | null {
+  if (!status) return null;
+  switch (status) {
+    case PharmacyOrderStatus.PENDING:
+    case PharmacyOrderStatus.ACCEPTED:
+    case PharmacyOrderStatus.PREPARING:
+    case PharmacyOrderStatus.READY_FOR_PICKUP:
+      return PharmacyOrderFilter.NEW;
+    case PharmacyOrderStatus.COMPLETED:
+      return PharmacyOrderFilter.DELIVERED;
+    case PharmacyOrderStatus.REJECTED:
+    case PharmacyOrderStatus.CANCELLED:
+    case PharmacyOrderStatus.PICKED_UP:
+      return PharmacyOrderFilter.PAST;
+    default:
+      return null;
+  }
+}
 export function buildPharmacyOrderWhereStatement(
   pharmacyId: number,
 
