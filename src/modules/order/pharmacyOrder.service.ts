@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { PharmacyOrderQueryDto } from './dto/request.dto/order.query.dto';
-import { PharmacyOrderListResponseDto } from './dto/response.dto/pharmacyOrder.response.dto';
+import {
+  PharmacyOrderDetailsResponseDto,
+  PharmacyOrderListResponseDto,
+} from './dto/response.dto/pharmacyOrder.response.dto';
 import { buildPharmacyOrderWhereStatement } from './util/pharmacyOrderWhereBuilder.util';
 import { buildCreatedAtOrderBy } from 'src/types/pagination.query';
 import { removeFields } from 'src/utils/object.util';
 import {
-  mapToPharmacyOrderItemList,
+  mapToPharmacyOrderDetails,
   mapToPharmacyOrderList,
+  pharmacyOrderDetailsInclude,
   pharmacyOrderWithRelations,
 } from './util/pharmacyOrder.mapper';
 import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
@@ -17,7 +21,7 @@ export class PharmacyOrderService {
   constructor(private readonly prismaService: DatabaseService) {}
 
   //! get orders list
-  async getOrders(
+  async getPharmacyOrders(
     pharmacyId: number,
     query: PharmacyOrderQueryDto,
   ): Promise<ApiPaginationSuccessResponse<PharmacyOrderListResponseDto>> {
@@ -49,5 +53,18 @@ export class PharmacyOrderService {
         limit: pagination.take,
       }),
     };
+  }
+
+  //! get order
+  async getPharmacyOrder(
+    pharmacyId: number,
+    pharmacyOrderId: number,
+  ): Promise<PharmacyOrderDetailsResponseDto> {
+    const order = await this.prismaService.pharmacyOrder.findFirst({
+      where: { id: pharmacyOrderId, pharmacyId },
+      include: pharmacyOrderDetailsInclude,
+    });
+    if (!order) throw new NotFoundException('Pharmacy order not found');
+    return mapToPharmacyOrderDetails(order);
   }
 }

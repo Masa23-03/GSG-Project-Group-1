@@ -50,7 +50,7 @@ export const pharmacyOrderDeliveryWithRelations =
 export type PharmacyOrderWithRelations = Prisma.PharmacyOrderGetPayload<{
   include: typeof pharmacyOrderWithRelations;
 }>;
-type PharmacyOrderDetailsDeliveryWithRelations =
+export type PharmacyOrderDetailsDeliveryWithRelations =
   Prisma.PharmacyOrderGetPayload<{
     include: typeof pharmacyOrderDeliveryWithRelations;
   }>;
@@ -168,3 +168,8 @@ export function mapToPharmacyOrderDetails(
     filter: mapStatusToFilter(po.status) ?? null,
   };
 }
+export const pharmacyOrderDetailsInclude =
+  Prisma.validator<Prisma.PharmacyOrderInclude>()({
+    ...pharmacyOrderWithRelations,
+    ...pharmacyOrderDeliveryWithRelations,
+  });
