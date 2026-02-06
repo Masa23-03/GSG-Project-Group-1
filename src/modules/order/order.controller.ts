@@ -36,13 +36,13 @@ import { patientOrderQuerySchema } from './schema/patient-order-query.schema';
 import {
   OrderFilter,
   PatientOrderQueryDto,
-  SortOrder,
 } from './dto/request.dto/order.query.dto';
 import {
   PatientCancelOrderResponseDto,
   PatientOrderDetailsResponseDto,
   PatientOrderResponseDto,
 } from './dto/response.dto/patient-get-order.response.dto';
+import { SortOrder } from 'src/types/pagination.query';
 
 @ApiTags('Orders')
 @ApiExtraModels(

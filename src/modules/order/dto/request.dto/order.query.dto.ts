@@ -1,10 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { PaginationQueryDto } from 'src/types/pagination.query';
-
-export enum SortOrder {
-  ASC = 'asc',
-  DESC = 'desc',
-}
+import { PaginationQueryDto, SortOrder } from 'src/types/pagination.query';
 
 export enum OrderFilter {
   ALL = 'ALL',

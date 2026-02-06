@@ -38,14 +38,12 @@ import {
 } from './dto/response.dto/patient-get-order.response.dto';
 import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
 import { computeOrderStatus } from './util/compute-order-status.helper';
-import {
-  buildOrderOrderBy,
-  buildOrderWhereStatement,
-} from './util/patient-orders-where-build.helper';
+import { buildOrderWhereStatement } from './util/patient-orders-where-build.helper';
 import { removeFields } from 'src/utils/object.util';
 import { canTrack } from './util/canTrack.helper';
 import { canCancel, CANCELLABLE } from './util/canCancel.helper';
 import { mapToPatientOrderDetails } from './util/mapToPatientOrderDetails';
+import { buildCreatedAtOrderBy } from 'src/types/pagination.query';
 
 @Injectable()
 export class OrderService {
@@ -137,7 +135,7 @@ export class OrderService {
   ): Promise<ApiPaginationSuccessResponse<PatientOrderResponseDto>> {
     const pagination = this.prismaService.handleQueryPagination(query);
     const whereSt = buildOrderWhereStatement(userId, query);
-    const orderBy = buildOrderOrderBy(query);
+    const orderBy = buildCreatedAtOrderBy(query);
 
     return this.prismaService.$transaction(async (prisma) => {
       const [orders, count] = await Promise.all([

@@ -2,9 +2,10 @@ import z, { ZodType } from 'zod';
 import {
   PharmacyOrderFilter,
   PharmacyOrderQueryDtoType,
-  SortOrder,
+
 } from '../dto/request.dto/order.query.dto';
 import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
+import { SortOrder } from 'src/types/pagination.query';
 
 export const pharmacyOrderQuerySchema = z
   .object({

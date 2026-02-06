@@ -34,7 +34,6 @@ export const pharmacyOrderWithRelations =
 export type PharmacyOrderWithRelations = Prisma.PharmacyOrderGetPayload<{
   include: typeof pharmacyOrderWithRelations;
 }>;
-
 export function mapToPharmacyOrderBase(
   po: Pick<
     PharmacyOrderWithRelations,
