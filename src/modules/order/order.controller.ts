@@ -120,11 +120,6 @@ export class OrderController {
     return await this.orderService.getOrderDetails(user.id, id);
   }
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-  //   return this.orderService.update(+id, updateOrderDto);
-  // }
-
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Cancel my order' })
   @ApiOkResponse({ type: PatientCancelOrderResponseDto })
