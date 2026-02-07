@@ -21,7 +21,13 @@ export class PharmacyOrderDecisionDto {
   })
   rejectionReason?: string | null;
 }
-export class UpdatePharmacyOrderStatus {
+export type PharmacyOrderDecisionDtoType = InstanceType<
+  typeof PharmacyOrderDecisionDto
+>;
+export class UpdatePharmacyOrderStatusDto {
   @ApiProperty({ enum: PharmacyProgressStatus })
   status!: PharmacyProgressStatus;
 }
+export type UpdatePharmacyOrderStatusDtoType = InstanceType<
+  typeof UpdatePharmacyOrderStatusDto
+>;
