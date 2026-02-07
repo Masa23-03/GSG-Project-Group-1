@@ -22,6 +22,8 @@ import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
 import {
   PharmacyOrderDecision,
   PharmacyOrderDecisionDto,
+  PharmacyProgressStatus,
+  UpdatePharmacyOrderStatusDto,
 } from './dto/request.dto/update-order.dto';
 import {
   OrderStatus,
@@ -185,6 +187,88 @@ export class PharmacyOrderService {
     });
   }
 
+  //! update pharmacy order status
+  async updatePharmacyOrderStatus(
+    pharmacyId: number,
+    pharmacyOrderId: number,
+    dto: UpdatePharmacyOrderStatusDto,
+  ): Promise<PharmacyOrderDetailsResponseDto> {
+    return this.prismaService.$transaction(async (prisma) => {
+      const pharmacyOrder = await prisma.pharmacyOrder.findFirst({
+        where: { id: pharmacyOrderId, pharmacyId },
+        select: {
+          id: true,
+          status: true,
+          orderId: true,
+          deliveryId: true,
+          order: {
+            select: { status: true, delivery: { select: { id: true } } },
+          },
+        },
+      });
+      if (!pharmacyOrder)
+        throw new NotFoundException('Pharmacy order not found');
+      if (
+        pharmacyOrder.order.status === OrderStatus.DELIVERED ||
+        pharmacyOrder.order.status === OrderStatus.CANCELLED ||
+        pharmacyOrder.order.status === OrderStatus.REJECTED
+      )
+        throw new BadRequestException(
+          `Cannot update: parent order is ${pharmacyOrder.order.status}`,
+        );
+
+      const allowed: PharmacyOrderStatus[] = [
+        PharmacyOrderStatus.PREPARING,
+        PharmacyOrderStatus.READY_FOR_PICKUP,
+      ];
+      if (!allowed.includes(dto.status)) {
+        throw new BadRequestException('Invalid progress status');
+      }
+
+      assertPharmacyOrderTransition(pharmacyOrder.status, dto.status);
+
+      if (dto.status === PharmacyOrderStatus.READY_FOR_PICKUP) {
+        const delivery = pharmacyOrder.order.delivery
+          ? pharmacyOrder.order.delivery
+          : await prisma.delivery.upsert({
+              where: { orderId: pharmacyOrder.orderId },
+              create: { orderId: pharmacyOrder.orderId },
+              update: {},
+              select: { id: true },
+            });
+        await prisma.pharmacyOrder.updateMany({
+          where: {
+            orderId: pharmacyOrder.orderId,
+            deliveryId: null,
+            status: {
+              in: [
+                PharmacyOrderStatus.ACCEPTED,
+                PharmacyOrderStatus.PREPARING,
+                PharmacyOrderStatus.READY_FOR_PICKUP,
+              ],
+            },
+          },
+          data: { deliveryId: delivery.id },
+        });
+      }
+
+      await prisma.pharmacyOrder.update({
+        where: { id: pharmacyOrder.id },
+        data: { status: dto.status },
+      });
+
+      await this.orderService.syncOrderStatus(prisma, pharmacyOrder.orderId);
+
+      const full = await prisma.pharmacyOrder.findUniqueOrThrow({
+        where: { id: pharmacyOrder.id },
+        include: pharmacyOrderDetailsInclude,
+      });
+
+      return mapToPharmacyOrderDetails(full);
+    });
+  }
+
+  //! helpers
   private decisionToStatus(
     decision: PharmacyOrderDecision,
   ): PharmacyOrderStatus {
@@ -272,11 +356,9 @@ export class PharmacyOrderService {
       },
     });
     //update payment -> total
-    await prisma.payment.update({
-      where: { orderId: po.orderId },
-      data: {
-        amount: newOrderTotal,
-      },
+    await prisma.payment.updateMany({
+      where: { orderId: po.orderId, status: PaymentStatus.PENDING },
+      data: { amount: newOrderTotal },
     });
   }
 }
