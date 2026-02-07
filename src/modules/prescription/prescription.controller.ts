@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { PrescriptionService } from './prescription.service';
 import { CreatePrescriptionDto } from './dto/create-prescription.dto';
-import { UpdatePrescriptionDto } from './dto/update-prescription.dto';
 
 @Controller('prescription')
 export class PrescriptionController {
