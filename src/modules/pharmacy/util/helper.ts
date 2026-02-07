@@ -1,8 +1,6 @@
 import { Prisma } from '@prisma/client';
-import { adminPharmacyListQueryDto } from '../dto/pharmacy.dto';
 import { buildAdminBaseWhere, extractId } from 'src/utils/util';
 import { AdminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
-import { boolean } from 'zod';
 
 export type CityFilterType = Prisma.PharmacyWhereInput['city'];
 
