@@ -7,7 +7,10 @@ export enum PharmacyOrderDecision {
   ACCEPT = 'ACCEPT',
   REJECT = 'REJECT',
 }
-
+export enum PharmacyProgressStatus {
+  PREPARING = 'PREPARING',
+  READY_FOR_PICKUP = 'READY_FOR_PICKUP',
+}
 export class PharmacyOrderDecisionDto {
   @ApiProperty({ enum: PharmacyOrderDecision })
   decision!: PharmacyOrderDecision;
