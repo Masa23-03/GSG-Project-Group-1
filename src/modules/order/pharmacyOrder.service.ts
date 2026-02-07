@@ -216,11 +216,13 @@ export class PharmacyOrderService {
 
       if (!pharmacyOrder)
         throw new NotFoundException('Pharmacy order not found');
-      if (
-        pharmacyOrder.order.status === OrderStatus.DELIVERED ||
-        pharmacyOrder.order.status === OrderStatus.CANCELLED ||
-        pharmacyOrder.order.status === OrderStatus.REJECTED
-      ) {
+      const terminalOrderStatuses: OrderStatus[] = [
+        OrderStatus.DELIVERED,
+        OrderStatus.CANCELLED,
+        OrderStatus.REJECTED,
+      ];
+
+      if (terminalOrderStatuses.includes(pharmacyOrder.order.status)) {
         throw new BadRequestException(
           `Cannot update: parent order is ${pharmacyOrder.order.status}`,
         );
