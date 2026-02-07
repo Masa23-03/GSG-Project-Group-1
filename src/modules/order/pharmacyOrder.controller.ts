@@ -22,13 +22,21 @@ import { PharmacyOrderService } from './pharmacyOrder.service';
 import type { authedUserType } from 'src/types/unifiedType.types';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import { ZodValidationPipe } from 'nestjs-zod';
-import { pharmacyOrderQuerySchema } from './schema/pharmacy-order.schema';
-import { PharmacyOrderQueryDto } from './dto/request.dto/order.query.dto';
-import { PharmacyOrderDetailsResponseDto } from './dto/response.dto/patient-get-order.response.dto';
+import {
+  pharmacyOrderDecisionSchema,
+  pharmacyOrderQuerySchema,
+  updatePharmacyOrderStatusSchema,
+} from './schema/pharmacy-order.schema';
+import {
+  PharmacyOrderFilter,
+  PharmacyOrderQueryDto,
+} from './dto/request.dto/order.query.dto';
+import { PharmacyOrderDetailsResponseDto } from './dto/response.dto/pharmacyOrder.response.dto';
 import {
   PharmacyOrderDecisionDto,
   UpdatePharmacyOrderStatusDto,
 } from './dto/request.dto/update-order.dto';
+import { SortOrder } from 'src/types/pagination.query';
 
 @ApiTags('Pharmacy Order')
 @Roles(UserRole.PHARMACY)
@@ -49,7 +57,20 @@ export class PharmacyOrderController {
   })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @Get()
+  @ApiQuery({
+    name: 'filter',
+    required: false,
+    enum: PharmacyOrderFilter,
+    example: PharmacyOrderFilter.ALL,
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: SortOrder,
+    example: SortOrder.DESC,
+  })
+  @ApiQuery({ name: 'q', required: false, type: String })
+  @Get('my')
   async list(
     @AuthedUser() user: authedUserType,
     @Query(new ZodValidationPipe(pharmacyOrderQuerySchema))
@@ -61,7 +82,7 @@ export class PharmacyOrderController {
   @ApiOperation({ summary: 'Get my pharmacy order details' })
   @ApiOkResponse({ type: PharmacyOrderDetailsResponseDto })
   @ApiParam({ name: 'id', type: Number, example: 13 })
-  @Get(':id')
+  @Get('my/:id')
   async details(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,
@@ -77,7 +98,8 @@ export class PharmacyOrderController {
   async decide(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: PharmacyOrderDecisionDto,
+    @Body(new ZodValidationPipe(pharmacyOrderDecisionSchema))
+    dto: PharmacyOrderDecisionDto,
   ) {
     return this.pharmacyOrderService.decidePharmacyOrder(user.id, id, dto);
   }
@@ -89,10 +111,11 @@ export class PharmacyOrderController {
   @ApiOkResponse({ type: PharmacyOrderDetailsResponseDto })
   @ApiParam({ name: 'id', type: Number, example: 13 })
   @Patch(':id/status')
-  async progress(
+  async updateStatus(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdatePharmacyOrderStatusDto,
+    @Body(new ZodValidationPipe(updatePharmacyOrderStatusSchema))
+    dto: UpdatePharmacyOrderStatusDto,
   ) {
     return this.pharmacyOrderService.updatePharmacyOrderStatus(
       user.id,
