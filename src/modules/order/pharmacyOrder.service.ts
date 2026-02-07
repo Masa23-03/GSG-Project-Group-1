@@ -34,6 +34,7 @@ import {
 } from '@prisma/client';
 import { assertPharmacyOrderTransition } from './util/status.order.helper';
 import { OrderService } from './order.service';
+import { requirePharmacyId } from 'src/utils/getPharmacyAndDriverFromUserId';
 
 @Injectable()
 export class PharmacyOrderService {
@@ -44,61 +45,66 @@ export class PharmacyOrderService {
 
   //! get orders list
   async getPharmacyOrders(
-    pharmacyId: number,
+    userId: number,
     query: PharmacyOrderQueryDto,
   ): Promise<ApiPaginationSuccessResponse<PharmacyOrderListResponseDto>> {
-    const pagination = this.prismaService.handleQueryPagination(query);
-    const orderBy = buildCreatedAtOrderBy(query);
-    const whereSt = buildPharmacyOrderWhereStatement(pharmacyId, query);
+    return this.prismaService.$transaction(async (prisma) => {
+      const pharmacyId = await requirePharmacyId(prisma, userId);
 
-    const [orders, count] = await Promise.all([
-      this.prismaService.pharmacyOrder.findMany({
-        ...removeFields(pagination, ['page']),
-        where: whereSt,
-        orderBy: orderBy,
+      const pagination = this.prismaService.handleQueryPagination(query);
+      const orderBy = buildCreatedAtOrderBy(query);
+      const whereSt = buildPharmacyOrderWhereStatement(pharmacyId, query);
 
-        include: pharmacyOrderWithRelations,
-      }),
-      this.prismaService.pharmacyOrder.count({
-        where: whereSt,
-      }),
-    ]);
-    const data: PharmacyOrderListResponseDto[] = orders.map(
-      mapToPharmacyOrderList,
-    );
-    return {
-      success: true,
-      data: data,
-      meta: this.prismaService.formatPaginationResponse({
-        count,
-        page: pagination.page,
-        limit: pagination.take,
-      }),
-    };
+      const [orders, count] = await Promise.all([
+        prisma.pharmacyOrder.findMany({
+          ...removeFields(pagination, ['page']),
+          where: whereSt,
+          orderBy,
+          include: pharmacyOrderWithRelations,
+        }),
+        prisma.pharmacyOrder.count({ where: whereSt }),
+      ]);
+
+      return {
+        success: true,
+        data: orders.map(mapToPharmacyOrderList),
+        meta: this.prismaService.formatPaginationResponse({
+          count,
+          page: pagination.page,
+          limit: pagination.take,
+        }),
+      };
+    });
   }
 
   //! get order
   async getPharmacyOrder(
-    pharmacyId: number,
+    userId: number,
     pharmacyOrderId: number,
   ): Promise<PharmacyOrderDetailsResponseDto> {
-    const order = await this.prismaService.pharmacyOrder.findFirst({
-      where: { id: pharmacyOrderId, pharmacyId },
-      include: pharmacyOrderDetailsInclude,
+    return this.prismaService.$transaction(async (prisma) => {
+      const pharmacyId = await requirePharmacyId(prisma, userId);
+
+      const order = await prisma.pharmacyOrder.findFirst({
+        where: { id: pharmacyOrderId, pharmacyId },
+        include: pharmacyOrderDetailsInclude,
+      });
+
+      if (!order) throw new NotFoundException('Pharmacy order not found');
+      return mapToPharmacyOrderDetails(order);
     });
-    if (!order) throw new NotFoundException('Pharmacy order not found');
-    return mapToPharmacyOrderDetails(order);
   }
 
   //! accept/reject order (decision)
   async decidePharmacyOrder(
-    pharmacyId: number,
+    userId: number,
     orderId: number,
     dto: PharmacyOrderDecisionDto,
   ): Promise<PharmacyOrderDetailsResponseDto> {
     return await this.prismaService.$transaction(async (prisma) => {
+      const pharmacyId = await requirePharmacyId(prisma, userId);
       const po = await prisma.pharmacyOrder.findFirst({
-        where: { id: orderId, pharmacyId },
+        where: { id: orderId, pharmacyId: pharmacyId },
         select: {
           id: true,
           status: true,
@@ -143,7 +149,7 @@ export class PharmacyOrderService {
         this.decisionToStatus(dto.decision),
       );
       if (dto.decision === PharmacyOrderDecision.REJECT && !dto.rejectionReason)
-        throw new BadRequestException('not vlaid');
+        throw new BadRequestException('not valid');
       const nextStatus = this.decisionToStatus(dto.decision);
       const now = new Date();
       const poItemsCount = po.pharmacyOrderItems.reduce(
@@ -189,39 +195,43 @@ export class PharmacyOrderService {
 
   //! update pharmacy order status
   async updatePharmacyOrderStatus(
-    pharmacyId: number,
+    userId: number,
     pharmacyOrderId: number,
     dto: UpdatePharmacyOrderStatusDto,
   ): Promise<PharmacyOrderDetailsResponseDto> {
     return this.prismaService.$transaction(async (prisma) => {
+      const pharmacyId = await requirePharmacyId(prisma, userId);
+
       const pharmacyOrder = await prisma.pharmacyOrder.findFirst({
         where: { id: pharmacyOrderId, pharmacyId },
         select: {
           id: true,
           status: true,
           orderId: true,
-          deliveryId: true,
           order: {
             select: { status: true, delivery: { select: { id: true } } },
           },
         },
       });
+
       if (!pharmacyOrder)
         throw new NotFoundException('Pharmacy order not found');
       if (
         pharmacyOrder.order.status === OrderStatus.DELIVERED ||
         pharmacyOrder.order.status === OrderStatus.CANCELLED ||
         pharmacyOrder.order.status === OrderStatus.REJECTED
-      )
+      ) {
         throw new BadRequestException(
           `Cannot update: parent order is ${pharmacyOrder.order.status}`,
         );
+      }
 
-      const allowed: PharmacyOrderStatus[] = [
-        PharmacyOrderStatus.PREPARING,
-        PharmacyOrderStatus.READY_FOR_PICKUP,
-      ];
-      if (!allowed.includes(dto.status)) {
+      if (
+        ![
+          PharmacyOrderStatus.PREPARING,
+          PharmacyOrderStatus.READY_FOR_PICKUP,
+        ].includes(dto.status)
+      ) {
         throw new BadRequestException('Invalid progress status');
       }
 
@@ -236,6 +246,7 @@ export class PharmacyOrderService {
               update: {},
               select: { id: true },
             });
+
         await prisma.pharmacyOrder.updateMany({
           where: {
             orderId: pharmacyOrder.orderId,
