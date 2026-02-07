@@ -21,3 +21,7 @@ export class PharmacyOrderDecisionDto {
   })
   rejectionReason?: string | null;
 }
+export class UpdatePharmacyOrderStatus {
+  @ApiProperty({ enum: PharmacyProgressStatus })
+  status!: PharmacyProgressStatus;
+}
