@@ -15,10 +15,12 @@ import {
   VerificationStatus,
 } from '@prisma/client';
 import { mapToPrescriptionResponse } from './util/prescription.mapper';
+import { requirePharmacyId } from 'src/utils/getPharmacyAndDriverFromUserId';
 
 @Injectable()
 export class PrescriptionService {
   constructor(private readonly prismaService: DatabaseService) {}
+  //! patient methods
   async create(
     userId: number,
     dto: CreatePrescriptionDto,
@@ -53,10 +55,6 @@ export class PrescriptionService {
 
       return mapToPrescriptionResponse(prescription);
     });
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} prescription`;
   }
 
   async reupload(
@@ -105,6 +103,38 @@ export class PrescriptionService {
       });
 
       return mapToPrescriptionResponse(newPrescription);
+    });
+  }
+  async getMyPrescription(
+    userId: number,
+    prescriptionId: number,
+  ): Promise<PrescriptionResponseDto> {
+    const prescription = await this.prismaService.prescription.findFirst({
+      where: { id: prescriptionId, patientId: userId },
+      include: { prescriptionFiles: true },
+    });
+    if (!prescription) throw new NotFoundException('Prescription not found');
+    return mapToPrescriptionResponse(prescription);
+  }
+
+  //!pharmacy methods
+  async getPharmacyPrescription(
+    userId: number,
+    prescriptionId: number,
+  ): Promise<PrescriptionResponseDto> {
+    return this.prismaService.$transaction(async (prisma) => {
+      const pharmacyId = await requirePharmacyId(prisma, userId);
+      const prescription = await prisma.prescription.findFirst({
+        where: {
+          id: prescriptionId,
+          pharmacyId: pharmacyId,
+        },
+        include: {
+          prescriptionFiles: true,
+        },
+      });
+      if (!prescription) throw new NotFoundException('Prescription not found');
+      return mapToPrescriptionResponse(prescription);
     });
   }
 }
