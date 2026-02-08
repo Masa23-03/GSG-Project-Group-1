@@ -3,7 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreatePrescriptionDto } from './dto/create-prescription.dto';
+import {
+  CreatePrescriptionDto,
+  ReuploadPrescriptionDto,
+} from './dto/create-prescription.dto';
 import { PrescriptionResponseDto } from './dto/response/response.dto';
 import { DatabaseService } from '../database/database.service';
 import {
@@ -56,7 +59,52 @@ export class PrescriptionService {
     return `This action returns a #${id} prescription`;
   }
 
-  update(id: number, updatePrescriptionDto) {
-    return `This action updates a #${id} prescription`;
+  async reupload(
+    userId: number,
+    prescriptionId: number,
+    dto: ReuploadPrescriptionDto,
+  ): Promise<PrescriptionResponseDto> {
+    return this.prismaService.$transaction(async (prisma) => {
+      const oldPrescription = await prisma.prescription.findFirst({
+        where: {
+          id: prescriptionId,
+          patientId: userId,
+          isActive: true,
+        },
+        include: {
+          prescriptionFiles: true,
+        },
+      });
+      if (!oldPrescription) {
+        throw new NotFoundException('Prescription not found');
+      }
+      if (!oldPrescription.reuploadRequestedAt) {
+        throw new BadRequestException('Re-upload not requested');
+      }
+      await prisma.prescription.update({
+        where: { id: oldPrescription.id },
+        data: { isActive: false },
+      });
+      const newPrescription = await prisma.prescription.create({
+        data: {
+          patientId: oldPrescription.patientId,
+          pharmacyId: oldPrescription.pharmacyId,
+          pharmacyOrderId: oldPrescription.pharmacyOrderId,
+          status: PrescriptionStatus.UNDER_REVIEW,
+          isActive: true,
+          prescriptionFiles: {
+            create: dto.fileUrls.map((url, index) => ({
+              url,
+              sortOrder: index + 1,
+            })),
+          },
+        },
+        include: {
+          prescriptionFiles: true,
+        },
+      });
+
+      return mapToPrescriptionResponse(newPrescription);
+    });
   }
 }
