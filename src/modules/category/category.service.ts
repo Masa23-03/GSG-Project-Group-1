@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from 'src/modules/database/database.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CreateCategoryDto } from './dto/request.dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/request.dto/update-category.dto';
 import { CategoryResponseDto } from './dto/response.dto/category-response.dto';
 import { ApiSuccessResponse } from 'src/types/unifiedType.types';
 
@@ -9,8 +9,12 @@ import { ApiSuccessResponse } from 'src/types/unifiedType.types';
 export class CategoryService {
   constructor(private readonly prisma: DatabaseService) {}
 
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+  async create(
+    createCategoryDto: CreateCategoryDto,
+  ): Promise<CategoryResponseDto> {
+    return await this.prisma.category.create({
+      data: createCategoryDto,
+    });
   }
 
   async findAll(): Promise<ApiSuccessResponse<CategoryResponseDto[]>> {
@@ -30,11 +34,11 @@ export class CategoryService {
     };
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async update(id: number, updateCategoryDto: UpdateCategoryDto): Promise<CategoryResponseDto> {
+    return await this.prisma.category.update({
+      where: { id },
+      data: updateCategoryDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
-  }
 }
