@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOkResponse,
   ApiOperation,
@@ -41,6 +42,7 @@ import { SortOrder } from 'src/types/pagination.query';
 @ApiTags('Pharmacy Order')
 @Roles(UserRole.PHARMACY)
 @RequireVerified('PHARMACY')
+@ApiBearerAuth('access-token')
 @Controller('pharmacy-order')
 export class PharmacyOrderController {
   constructor(private readonly pharmacyOrderService: PharmacyOrderService) {}

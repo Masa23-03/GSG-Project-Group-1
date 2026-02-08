@@ -40,6 +40,7 @@ import {
 import { PrescriptionResponseDto } from './dto/response/response.dto';
 
 @ApiTags('Prescriptions')
+@ApiBearerAuth('access-token')
 @Controller('prescriptions')
 export class PrescriptionController {
   constructor(private readonly prescriptionService: PrescriptionService) {}

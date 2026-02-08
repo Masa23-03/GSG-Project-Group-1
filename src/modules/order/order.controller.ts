@@ -20,6 +20,7 @@ import {
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
   ApiExtraModels,
@@ -51,6 +52,7 @@ import { SortOrder } from 'src/types/pagination.query';
   CreatePharmacyOrderItemDto,
 )
 @Controller('order')
+@ApiBearerAuth('access-token')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
