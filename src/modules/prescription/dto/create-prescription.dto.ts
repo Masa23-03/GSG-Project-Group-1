@@ -1,16 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export class CreatePrescriptionFileDto {
-  @ApiProperty({
-    description: 'Public URL of the uploaded prescription file.',
-  })
-  url!: string;
-  @ApiPropertyOptional({
-    description: 'Optional display order for this file.',
-    example: 1,
-  })
-  sortOrder?: number;
-}
 export class CreatePrescriptionDto {
   @ApiProperty({
     description: 'Pharmacy ID that this prescription belongs to.',
@@ -19,16 +7,15 @@ export class CreatePrescriptionDto {
   pharmacyId!: number;
   @ApiProperty({
     description:
-      'List of uploaded prescription files (URLs). Must include at least one file.',
-    type: [CreatePrescriptionFileDto],
+      'Uploaded prescription file URLs. Order in array = display order.',
+    type: [String],
   })
-  files!: CreatePrescriptionFileDto[];
+  fileUrls!: string[];
 }
 export class ReuploadPrescriptionDto {
   @ApiProperty({
-    description:
-      'New set of prescription files (URLs) for re-upload. Must include at least one file.',
-    type: [CreatePrescriptionFileDto],
+    description: 'Uploaded prescription file URLs.',
+    type: [String],
   })
-  files!: CreatePrescriptionFileDto[];
+  fileUrls!: string[];
 }
