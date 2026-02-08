@@ -40,7 +40,7 @@ import {
 import { PrescriptionResponseDto } from './dto/response/response.dto';
 
 @ApiTags('Prescriptions')
-@Controller('prescription')
+@Controller('prescriptions')
 export class PrescriptionController {
   constructor(private readonly prescriptionService: PrescriptionService) {}
 
