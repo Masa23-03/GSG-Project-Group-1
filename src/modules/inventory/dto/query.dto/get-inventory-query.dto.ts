@@ -1,21 +1,22 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationQueryDto } from 'src/types/pagination.query';
 
-export class GetInventoryQueryDto {
-  @ApiPropertyOptional({ default: 1 })
-  page?: number;
-
-  @ApiPropertyOptional({ default: 10 })
-  limit?: number;
-
-  @ApiPropertyOptional({ description: 'Search by medicine generic or brand name' })
+export class GetInventoryQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({
+    type: 'string',
+    description: 'Search by medicine generic or brand name',
+  })
   q?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: 'number' })
   medicineId?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: 'boolean' })
   isAvailable?: boolean;
 
-  @ApiPropertyOptional({ description: 'Filter items where stockQuantity <= minStock' })
+  @ApiPropertyOptional({
+    type: 'boolean',
+    description: 'Filter items where stockQuantity <= minStock',
+  })
   lowStock?: boolean;
 }

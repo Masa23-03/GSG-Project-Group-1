@@ -7,7 +7,7 @@ import {
 import { CreateInventoryItemDto } from './dto/request.dto/create-inventory.dto';
 import { UpdateInventoryItemDto } from './dto/request.dto/update-inventory.dto';
 import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
-import { PaginationResult } from 'src/types/unifiedType.types';
+import { ApiPaginationSuccessResponse, PaginationResult } from 'src/types/unifiedType.types';
 import { DatabaseService } from '../database/database.service';
 import { InventoryItemResponseDto } from './dto/response.dto/inventory-response.dto';
 import { InventoryMapper } from './util/mapToResponse.helper';
@@ -83,7 +83,7 @@ export class InventoryService {
   async findAll(
     userId: number,
     query: GetInventoryQueryDto,
-  ): Promise<PaginationResult<InventoryItemResponseDto>> {
+  ): Promise<ApiPaginationSuccessResponse<InventoryItemResponseDto>> {
     const {
       page = 1,
       limit = 10,
@@ -128,7 +128,8 @@ export class InventoryService {
     ]);
 
     return {
-      data: items.map((item) => InventoryMapper.toResponseDto(item)),
+      success: true,
+      data: InventoryMapper.toResponseDtoArray(items),
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }

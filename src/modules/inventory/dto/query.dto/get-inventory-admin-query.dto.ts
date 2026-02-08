@@ -1,24 +1,35 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationQueryDto } from 'src/types/pagination.query';
 
-export class GetInventoryAdminQueryDto {
-  @ApiPropertyOptional({ description: 'Filter by specific pharmacy' })
+export class GetInventoryAdminQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({
+    type: 'string',
+    description: 'Search by medicine name or brand',
+  })
+  q?: string;
+
+  @ApiPropertyOptional({
+    type: 'number',
+    description: 'Filter by specific pharmacy',
+  })
   pharmacyId?: number;
 
-  @ApiPropertyOptional({ description: 'Filter by specific medicine' })
+  @ApiPropertyOptional({
+    type: 'number',
+    description: 'Filter by specific medicine',
+  })
   medicineId?: number;
 
-  @ApiPropertyOptional({ description: 'Filter by stock availability' })
+  @ApiPropertyOptional({
+    type: 'boolean',
+    description: 'Filter by stock availability',
+  })
   isAvailable?: boolean;
 
-  @ApiPropertyOptional({ 
-    description: 'Whether to include soft-deleted items', 
-    default: false 
+  @ApiPropertyOptional({
+    type: 'boolean',
+    description: 'Whether to include soft-deleted items',
+    default: false,
   })
   includeDeleted?: boolean;
-
-  @ApiPropertyOptional({ default: 1 })
-  page?: number;
-
-  @ApiPropertyOptional({ default: 10 })
-  limit?: number;
 }
