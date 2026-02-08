@@ -3,12 +3,6 @@ import { PaginationQueryDto } from 'src/types/pagination.query';
 
 export class GetInventoryAdminQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
-    type: 'string',
-    description: 'Search by medicine name or brand',
-  })
-  q?: string;
-
-  @ApiPropertyOptional({
     type: 'number',
     description: 'Filter by specific pharmacy',
   })
