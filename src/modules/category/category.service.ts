@@ -38,7 +38,10 @@ export class CategoryService {
     };
   }
 
-  async update(id: number, updateCategoryDto: UpdateCategoryDto): Promise<ApiSuccessResponse<CategoryResponseDto>> {
+  async update(
+    id: number,
+    updateCategoryDto: UpdateCategoryDto,
+  ): Promise<ApiSuccessResponse<CategoryResponseDto>> {
     const updatedCategory = await this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
@@ -48,5 +51,4 @@ export class CategoryService {
       data: updatedCategory,
     };
   }
-
 }

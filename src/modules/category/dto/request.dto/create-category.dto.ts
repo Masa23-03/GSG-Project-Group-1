@@ -1,7 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Category } from "@prisma/client";
-import { create } from "domain";
-import { createCategorySchema } from "../../schema/category.schema";
 
 export class CreateCategoryDto {
     @ApiProperty()
