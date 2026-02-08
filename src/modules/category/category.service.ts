@@ -11,10 +11,14 @@ export class CategoryService {
 
   async create(
     createCategoryDto: CreateCategoryDto,
-  ): Promise<CategoryResponseDto> {
-    return await this.prisma.category.create({
+  ): Promise<ApiSuccessResponse<CategoryResponseDto>> {
+    const createdCategory = await this.prisma.category.create({
       data: createCategoryDto,
     });
+    return {
+      success: true,
+      data: createdCategory,
+    };
   }
 
   async findAll(): Promise<ApiSuccessResponse<CategoryResponseDto[]>> {
@@ -34,11 +38,15 @@ export class CategoryService {
     };
   }
 
-  async update(id: number, updateCategoryDto: UpdateCategoryDto): Promise<CategoryResponseDto> {
-    return await this.prisma.category.update({
+  async update(id: number, updateCategoryDto: UpdateCategoryDto): Promise<ApiSuccessResponse<CategoryResponseDto>> {
+    const updatedCategory = await this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
     });
+    return {
+      success: true,
+      data: updatedCategory,
+    };
   }
 
 }
