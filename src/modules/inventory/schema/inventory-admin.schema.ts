@@ -3,7 +3,6 @@ import { GetInventoryAdminQueryDto } from '../dto/query.dto/get-inventory-admin-
 import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
 
 export const GetInventoryAdminQuerySchema = z.object({
-  q: z.string().trim().min(1).optional(),
   pharmacyId: z.coerce.number().int().optional(),
   medicineId: z.coerce.number().int().optional(),
   isAvailable: z.preprocess(
