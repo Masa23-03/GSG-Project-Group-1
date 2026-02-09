@@ -4,7 +4,7 @@ import { UpdateCategoryDto } from '../dto/request.dto/update-category.dto';
 import { urlSchema } from 'src/utils/zod.helper';
 export const createCategorySchema = z
   .object({
-    name: z.string().trim().min(1, 'Name is required'),
+    name: z.string().trim().min(2, 'Name must be at least 2 characters long'),
     description: z.string().nullable().optional(),
     categoryImageUrl: urlSchema.nullable().optional(),
   })
