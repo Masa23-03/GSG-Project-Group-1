@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { ApiOperation } from '@nestjs/swagger';
@@ -15,6 +16,8 @@ import { UserRole } from '@prisma/client';
 import { UpdateCategoryDto } from './dto/request.dto/update-category.dto';
 import { CreateCategoryDto } from './dto/request.dto/create-category.dto';
 import { ZodValidationPipe } from 'nestjs-zod';
+import { PaginationQueryDto } from 'src/types/pagination.query';
+import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
 import {
   createCategorySchema,
   updateCategorySchema,
@@ -27,8 +30,8 @@ export class CategoryController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'List all categories' })
   @Get('admin')
-  findAllAdmin() {
-    return this.categoryService.findAll();
+  findAllAdmin(@Query(new ZodValidationPipe(PaginationQuerySchema)) query: PaginationQueryDto) {
+    return this.categoryService.findAll(query);
   }
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get category details' })
@@ -68,7 +71,7 @@ export class CategoryController {
   @IsPublic()
   @ApiOperation({ summary: 'List all categories' })
   @Get()
-  findAll() {
-    return this.categoryService.findAll();
+  findAll(@Query(new ZodValidationPipe(PaginationQuerySchema)) query: PaginationQueryDto) {
+    return this.categoryService.findAll(query);
   }
 }
