@@ -106,14 +106,6 @@ export function applyRadiusFilter<T extends { distanceKm: number | null }>(
   return items.filter((x) => x.distanceKm === null || x.distanceKm <= radiusKm);
 }
 
-export function mapCityFeeByCityId(
-  rows: Array<{ cityId: number; standardFeeAmount: any }>,
-): Map<number, number> {
-  const map = new Map<number, number>();
-  for (const r of rows) map.set(r.cityId, Number(r.standardFeeAmount));
-  return map;
-}
-
 export function buildPatientPharmacyWhere(
   query: PatientPharmaciesQueryDto,
 ): Prisma.PharmacyWhereInput {
