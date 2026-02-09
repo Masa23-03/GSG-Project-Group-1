@@ -22,15 +22,28 @@ import {
 import { userBaseSelect } from '../user/util/helper';
 import { UpdateMyPharmacyProfileDto } from './dto/request.dto/profile.dto';
 import { mapBaseUserForProfileUpdate } from 'src/utils/util';
-import { Prisma, UserRole, UserStatus } from '@prisma/client';
+import {
+  Prisma,
+  UserRole,
+  UserStatus,
+  VerificationStatus,
+} from '@prisma/client';
 import { UserService } from '../user/user.service';
 import type { RegisterPharmacyDTO } from '../auth/dto/auth.register.dto';
 import {
   PatientPharmaciesQueryDto,
   PharmacyScope,
 } from './dto/query.dto/patient.query.dto';
-import { PatientPharmacyListResponseDto } from './dto/response.dto/pateint-pharmacy.response.dto';
-import { mapToPatientPharmacyList, patientPharmacySelect } from './util/mapper';
+import {
+  PatientPharmacyDetailsDto,
+  PatientPharmacyListResponseDto,
+} from './dto/response.dto/pateint-pharmacy.response.dto';
+import {
+  mapToPatientPharmacyDetails,
+  mapToPatientPharmacyList,
+  patientPharmacyDetailsSelect,
+  patientPharmacySelect,
+} from './util/mapper';
 import {
   applyRadiusFilter,
   buildAdminPharmacyWhere,
@@ -215,6 +228,48 @@ export class PharmacyService {
         }),
       };
     });
+  }
+
+  async findPatientOnePharmacy(
+    patientId: number,
+    pharmacyId: number,
+  ): Promise<PatientPharmacyDetailsDto> {
+    const pharmacy = await this.prismaService.pharmacy.findFirst({
+      where: {
+        id: pharmacyId,
+        verificationStatus: VerificationStatus.VERIFIED,
+        user: { status: UserStatus.ACTIVE },
+      },
+      select: patientPharmacyDetailsSelect,
+    });
+
+    if (!pharmacy) {
+      throw new NotFoundException();
+    }
+    const defaultAddress = await this.prismaService.patientAddress.findFirst({
+      where: {
+        userId: patientId,
+        isDefault: true,
+        isDeleted: false,
+      },
+      select: {
+        latitude: true,
+        longitude: true,
+      },
+    });
+
+    const patientLat =
+      defaultAddress?.latitude !== null &&
+      defaultAddress?.latitude !== undefined
+        ? Number(defaultAddress.latitude)
+        : undefined;
+
+    const patientLng =
+      defaultAddress?.longitude !== null &&
+      defaultAddress?.longitude !== undefined
+        ? Number(defaultAddress.longitude)
+        : undefined;
+    return mapToPatientPharmacyDetails(pharmacy, patientLat, patientLng);
   }
 
   async updatePharmacyStatus(
