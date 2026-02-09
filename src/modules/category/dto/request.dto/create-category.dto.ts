@@ -1,13 +1,24 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCategoryDto {
-    @ApiProperty()
-    name!: string;
+  @ApiProperty({
+    description: 'Category name',
+    example: 'Painkillers',
+  })
+  name!: string;
 
-    @ApiPropertyOptional({nullable: true, type: String})
-    description?: string | null;
+  @ApiPropertyOptional({
+    description: 'Optional category description',
+    example: 'Medicines used to relieve pain',
+    nullable: true,
+  })
+  description?: string | null;
 
-    @ApiPropertyOptional({nullable: true, type: String})
-    categoryImageUrl?: string | null;
+  @ApiPropertyOptional({
+    description: 'Public URL for category image',
+    example: 'https://cdn.example.com/categories/painkillers.png',
+    nullable: true,
+  })
+  categoryImageUrl?: string | null;
 }
 export type createCategoryDtoType = InstanceType<typeof CreateCategoryDto>;
