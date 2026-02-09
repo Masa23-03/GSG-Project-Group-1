@@ -73,3 +73,25 @@ export class PatientPharmacyListResponseDto {
   })
   isOpenNow!: boolean;
 }
+
+export class PatientPharmacyDetailsDto extends PatientPharmacyListResponseDto {
+  @ApiPropertyOptional({
+    description: 'Work open time (HH:mm). Null if not set.',
+    example: '08:00',
+    nullable: true,
+  })
+  workOpenTime!: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Work close time (HH:mm). Null if not set.',
+    example: '23:00',
+    nullable: true,
+  })
+  workCloseTime!: string | null;
+
+  @ApiProperty({
+    description: 'Pharmacy owner phone number.',
+    example: '+970599000000',
+  })
+  phoneNumber!: string;
+}
