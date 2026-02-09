@@ -35,7 +35,7 @@ export class PatientPharmacyListResponseDto {
     example: 1.8,
     nullable: true,
   })
-  distanceKm?: number | null;
+  distanceKm!: number | null;
 
   @ApiProperty({
     description: 'ETA placeholder.',
