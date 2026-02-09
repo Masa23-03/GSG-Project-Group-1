@@ -4,10 +4,12 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { CreateInventoryItemDto } from './dto/create-inventory.dto';
-import { UpdateInventoryItemDto } from './dto/update-inventory.dto';
+import { CreateInventoryItemDto } from './dto/request.dto/create-inventory.dto';
+import { UpdateInventoryItemDto } from './dto/request.dto/update-inventory.dto';
+import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
+import { ApiPaginationSuccessResponse, PaginationResult } from 'src/types/unifiedType.types';
 import { DatabaseService } from '../database/database.service';
-import { InventoryItemResponseDto } from './dto/inventory-response.dto';
+import { InventoryItemResponseDto } from './dto/response.dto/inventory-response.dto';
 import { InventoryMapper } from './util/mapToResponse.helper';
 
 @Injectable()
@@ -78,12 +80,71 @@ export class InventoryService {
     return InventoryMapper.toResponseDto(created);
   }
 
-  findAll() {
-    return `This action returns all inventory`;
+  async findAll(
+    userId: number,
+    query: GetInventoryQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<InventoryItemResponseDto>> {
+    const {
+      page = 1,
+      limit = 10,
+      q,
+      medicineId,
+      isAvailable,
+      lowStock,
+    } = query;
+    // 1. onwership check
+    const pharmacy = await this.prisma.pharmacy.findUnique({
+      where: { userId },
+    });
+    if (!pharmacy) throw new NotFoundException('Pharmacy profile not found');
+    // 2. build filters
+    const where: any = {
+      pharmacyId: pharmacy.id,
+      isDeleted: false,
+    };
+    if (medicineId) where.medicineId = medicineId;
+    if (isAvailable !== undefined) where.isAvailable = isAvailable;
+    if (q) {
+      where.medicine = {
+        OR: [
+          { genericName: { contains: q} },
+          { brandName: { contains: q } },
+        ],
+      };
+    }
+    if (lowStock) {
+      where.stockQuantity = { lte: this.prisma.inventoryItem.fields.minStock };
+    }
+    // 3. Fetch data and count for pagination
+    const [items, total] = await Promise.all([
+      this.prisma.inventoryItem.findMany({
+        where,
+        ...this.includeQuery,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.inventoryItem.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data: InventoryMapper.toResponseDtoArray(items),
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} inventory`;
+  async findOne(userId: number, id: number): Promise<InventoryItemResponseDto> {
+    const item = await this.prisma.inventoryItem.findFirst({
+      where: {
+        id,
+        pharmacy: { userId },
+        isDeleted: false,
+      },
+      ...this.includeQuery,
+    });
+    if (!item) throw new NotFoundException('Inventory item not found');
+    return InventoryMapper.toResponseDto(item);
   }
 
   async update(
