@@ -19,3 +19,6 @@ https://drawsql.app/teams/masa236/diagrams/gsg-group1
 
 ## Swagger Link
 https://gsg-project-group-1-production.up.railway.app/docs
+
+## UI
+https://www.figma.com/design/SFb6Ay8DQl6kBmGi0UzfqY/Multi-vendor-Medicine-Pharmacy-Delivery-App?node-id=2323-4058&p=f&t=eN5RQKkcg6a6t6mk-0
