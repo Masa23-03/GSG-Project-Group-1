@@ -13,11 +13,6 @@ import {
   AdminListQueryDto,
 } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { DatabaseService } from '../database/database.service';
-import {
-  buildAdminPharmacyWhere,
-  isPharmacyOpenNow,
-  toHHmm,
-} from './util/helper';
 import { removeFields } from 'src/utils/object.util';
 import { assertVerificationStatusTransition } from 'src/utils/status.helper';
 import {
@@ -30,6 +25,20 @@ import { mapBaseUserForProfileUpdate } from 'src/utils/util';
 import { Prisma, UserRole, UserStatus } from '@prisma/client';
 import { UserService } from '../user/user.service';
 import type { RegisterPharmacyDTO } from '../auth/dto/auth.register.dto';
+import {
+  PatientPharmaciesQueryDto,
+  PharmacyScope,
+} from './dto/query.dto/patient.query.dto';
+import { PatientPharmacyListResponseDto } from './dto/response.dto/pateint-pharmacy.response.dto';
+import { mapToPatientPharmacyList, patientPharmacySelect } from './util/mapper';
+import {
+  applyRadiusFilter,
+  buildAdminPharmacyWhere,
+  buildPatientPharmacyWhere,
+  sortByDistanceThenName,
+  toHHmm,
+} from './util/helper';
+
 @Injectable()
 export class PharmacyService {
   constructor(
@@ -164,6 +173,50 @@ export class PharmacyService {
     });
   }
 
+  //! Patient
+  async findAllPatient(
+    query: PatientPharmaciesQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<PatientPharmacyListResponseDto>> {
+    return this.prismaService.$transaction(async (prisma) => {
+      const pagination = await this.prismaService.handleQueryPagination(query);
+      const whereSt = buildPatientPharmacyWhere(query);
+      const willComputeDistanceSort =
+        (query.scope ?? PharmacyScope.nearby) === PharmacyScope.nearby &&
+        query.lat !== undefined &&
+        query.lng !== undefined;
+
+      const orderBy: Prisma.PharmacyOrderByWithRelationInput[] = [
+        { pharmacyName: 'asc' },
+      ];
+
+      const [rows, count] = await Promise.all([
+        prisma.pharmacy.findMany({
+          ...removeFields(pagination, ['page']),
+          where: whereSt,
+          select: patientPharmacySelect,
+          orderBy: orderBy,
+        }),
+        prisma.pharmacy.count({ where: whereSt }),
+      ]);
+
+      let items = rows.map((p) => mapToPatientPharmacyList(p, query));
+      if (willComputeDistanceSort) {
+        items = applyRadiusFilter(items, query.radiusKm);
+        items = sortByDistanceThenName(items);
+      }
+
+      return {
+        success: true,
+        data: items,
+        meta: this.prismaService.formatPaginationResponse({
+          count: count,
+          page: pagination.page,
+          limit: pagination.take,
+        }),
+      };
+    });
+  }
+
   async updatePharmacyStatus(
     id: number,
     updatePharmacyDto: AdminBaseUpdateVerificationStatusDto,
@@ -203,9 +256,6 @@ export class PharmacyService {
     return data;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} pharmacy`;
-  }
   async findMyProfile(userId: number): Promise<PharmacyMeResponseDto> {
     const pharmacy = await this.prismaService.pharmacy.findUnique({
       where: { userId },
