@@ -1,39 +1,41 @@
 import { Prisma } from '@prisma/client';
 import { PatientPharmaciesQueryDto } from '../dto/query.dto/patient.query.dto';
 import { PatientPharmacyListResponseDto } from '../dto/response.dto/pateint-pharmacy.response.dto';
-import {
-  calculateDistanceKM,
-  calculateDistanceKMOrNull,
-  isPharmacyOpenNow,
-} from './helper';
+import { calculateDistanceKMOrNull, isPharmacyOpenNow } from './helper';
+
+export const patientPharmacySelect = {
+  id: true,
+  pharmacyName: true,
+
+  cityId: true,
+  city: {
+    select: {
+      id: true,
+      name: true,
+      cityDeliveryFee: {
+        select: { standardFeeAmount: true },
+      },
+    },
+  },
+
+  address: true,
+  latitude: true,
+  longitude: true,
+  coverImageUrl: true,
+  workOpenTime: true,
+  workCloseTime: true,
+
+  user: { select: { profileImageUrl: true, status: true } },
+} satisfies Prisma.PharmacySelect;
 
 export type PatientPharmacyWithRelations = Prisma.PharmacyGetPayload<{
-  select: {
-    id: true;
-    pharmacyName: true;
-
-    city: {
-      select: {
-        id: true;
-        name: true;
-        cityDeliveryFee: true;
-      };
-    };
-    address: true;
-    latitude: true;
-    longitude: true;
-    coverImageUrl: true;
-    workOpenTime: true;
-    workCloseTime: true;
-    user: { select: { profileImageUrl: true } };
-  };
+  select: typeof patientPharmacySelect;
 }>;
 
 export function mapToPatientPharmacyList(
   pharmacy: PatientPharmacyWithRelations,
   query: PatientPharmaciesQueryDto,
 ): PatientPharmacyListResponseDto {
-  //calculate distance in Km
   const distanceKm = calculateDistanceKMOrNull(
     query.lat,
     query.lng,
@@ -41,7 +43,7 @@ export function mapToPatientPharmacyList(
     pharmacy.longitude !== null ? Number(pharmacy.longitude) : undefined,
   );
 
-  const deliveryFee = pharmacy.city.cityDeliveryFee?.standardFeeAmount
+  const deliveryFee = pharmacy.city.cityDeliveryFee
     ? Number(pharmacy.city.cityDeliveryFee.standardFeeAmount)
     : null;
 
@@ -49,18 +51,23 @@ export function mapToPatientPharmacyList(
     id: pharmacy.id,
     pharmacyName: pharmacy.pharmacyName,
 
-    cityId: pharmacy.city.id,
+    cityId: pharmacy.cityId,
     cityName: pharmacy.city.name,
+
     address: {
-      address: pharmacy.address,
-      latitude: pharmacy.latitude ? Number(pharmacy.latitude) : null,
-      longitude: pharmacy.longitude ? Number(pharmacy.longitude) : null,
+      address: pharmacy.address ?? null,
+      latitude: pharmacy.latitude !== null ? Number(pharmacy.latitude) : null,
+      longitude:
+        pharmacy.longitude !== null ? Number(pharmacy.longitude) : null,
     },
-    distanceKm: distanceKm,
+
+    distanceKm,
     eta: null,
-    deliveryFee: deliveryFee,
+    deliveryFee,
+
     coverImageUrl: pharmacy.coverImageUrl ?? null,
     profileImageUrl: pharmacy.user.profileImageUrl ?? null,
+
     isOpenNow: isPharmacyOpenNow(pharmacy.workOpenTime, pharmacy.workCloseTime),
   };
 }
