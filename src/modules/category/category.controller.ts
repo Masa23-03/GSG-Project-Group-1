@@ -14,6 +14,11 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { UpdateCategoryDto } from './dto/request.dto/update-category.dto';
 import { CreateCategoryDto } from './dto/request.dto/create-category.dto';
+import { ZodValidationPipe } from 'nestjs-zod';
+import {
+  createCategorySchema,
+  updateCategorySchema,
+} from './schema/category.schema';
 
 @Controller('category')
 export class CategoryController {
@@ -35,7 +40,10 @@ export class CategoryController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Admin: Create category' })
   @Post('admin')
-  async create(@Body() createCategoryDto: CreateCategoryDto) {
+  async create(
+    @Body(new ZodValidationPipe(createCategorySchema))
+    createCategoryDto: CreateCategoryDto,
+  ) {
     return this.categoryService.create(createCategoryDto);
   }
 
@@ -44,7 +52,8 @@ export class CategoryController {
   @Patch('admin/:id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateCategoryDto: UpdateCategoryDto,
+    @Body(new ZodValidationPipe(updateCategorySchema))
+    updateCategoryDto: UpdateCategoryDto,
   ) {
     return this.categoryService.update(id, updateCategoryDto);
   }
