@@ -12,7 +12,3 @@ export class DriverDeliveriesListQueryDto extends PaginationQueryDto {
   })
   sortOrder?: SortOrder;
 }
-
-export type DriverDeliveriesListQueryDtoType = InstanceType<
-  typeof DriverDeliveriesListQueryDto
->;
