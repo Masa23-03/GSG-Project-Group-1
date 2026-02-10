@@ -17,7 +17,7 @@ import {
   UserStatus,
   VerificationStatus,
 } from '@prisma/client';
-import { ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { adminDriverListQuerySchema } from './schema/driver.query.schema';
 import { AdminDriverListQueryDto } from './dto/query.dto/get-driver-dto';
@@ -29,6 +29,7 @@ import type { authedUserType } from 'src/types/unifiedType.types';
 import { UpdateMyDriverDto } from './dto/request.dto/profile.dto';
 import { updateDriverProfileSchema } from './schema/profile.schema';
 
+@ApiBearerAuth('access-token')
 @Controller('driver')
 export class DriverController {
   constructor(private readonly driverService: DriverService) {}
