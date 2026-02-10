@@ -3,7 +3,7 @@ import { DriverDeliveryDetailsResponseDto } from '../dto/response/details.respon
 import { mapDeliveryListItem } from './list.mapper';
 import { buildMedicineDisplayNameHelper } from 'src/modules/order/util/medicineDisplayName.helper';
 
-const deliveryDetailsSelect = {
+export const deliveryDetailsSelect = {
   id: true,
   orderId: true,
   createdAt: true,
