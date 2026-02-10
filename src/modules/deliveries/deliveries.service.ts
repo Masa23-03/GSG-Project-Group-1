@@ -17,7 +17,12 @@ import {
   mapDeliveryListItem,
 } from './util/list.mapper';
 import { DriverDeliveriesListQueryDto } from './dto/request/query.dto';
-import { SortOrder } from '../order/dto/request.dto/order.query.dto';
+import { SortOrder } from 'src/types/pagination.query';
+import { DriverDeliveryDetailsResponseDto } from './dto/response/details.response.dto';
+import {
+  deliveryDetailsSelect,
+  mapToDeliveryDetails,
+} from './util/deatils.mapper';
 
 @Injectable()
 export class DeliveriesService {
@@ -75,8 +80,43 @@ export class DeliveriesService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} delivery`;
+  async findOne(
+    userId: number,
+    id: number,
+  ): Promise<DriverDeliveryDetailsResponseDto> {
+    const driver = await this.prismaService.driver.findUnique({
+      where: { userId },
+      select: {
+        id: true,
+        availabilityStatus: true,
+      },
+    });
+    if (!driver) throw new NotFoundException('Driver not found');
+    const accessToDelivery = await this.prismaService.delivery.findFirst({
+      where: {
+        id,
+        OR: [
+          {
+            driverId: null,
+            status: DeliveryStatus.PENDING,
+          },
+          { driverId: driver.id },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!accessToDelivery) {
+      if (driver.availabilityStatus !== AvailabilityStatus.ONLINE)
+        throw new ForbiddenException('Driver must be ONLINE');
+      throw new ForbiddenException('Not allowed');
+    }
+    const delivery = await this.prismaService.delivery.findUnique({
+      where: { id },
+      select: deliveryDetailsSelect,
+    });
+    if (!delivery) throw new NotFoundException('Delivery not found');
+    return mapToDeliveryDetails(delivery);
   }
 
   update(id: number, updateDeliveryDto) {
