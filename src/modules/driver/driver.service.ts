@@ -24,6 +24,10 @@ import { mapBaseUserForProfileUpdate } from 'src/utils/util';
 import { UserRole, UserStatus } from '@prisma/client';
 import { UserService } from '../user/user.service';
 import type { RegisterDriverDTO } from '../auth/dto/auth.register.dto';
+import {
+  UpdateDriverAvailabilityDto,
+  UpdateDriverAvailabilityResponseDto,
+} from './dto/request.dto/availability.dto';
 @Injectable()
 export class DriverService {
   constructor(
@@ -61,7 +65,7 @@ export class DriverService {
     }
   }
 
-  //Admin only
+  //! Admin only
   async findAllAdmin(
     query: AdminDriverListQueryDtoT,
   ): Promise<ApiPaginationSuccessResponse<AdminDriverListItemDto>> {
@@ -120,7 +124,7 @@ export class DriverService {
       };
     });
   }
-  //Admin only
+  //! Admin only
   async findOneAdmin(id: number): Promise<AdminDriverDetailsDto> {
     const foundedDriver = await this.prismaService.driver.findUnique({
       where: { id },
@@ -230,10 +234,6 @@ export class DriverService {
     return data;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} driver`;
-  }
-
   async getMyProfile(userId: number): Promise<DriverMeResponseDto> {
     const driver = await this.prismaService.driver.findUnique({
       where: { userId },
@@ -303,5 +303,25 @@ export class DriverService {
   }
   private calculateBusyStatus(activeDeliveriesCount: number): BusyStatus {
     return activeDeliveriesCount > 0 ? BusyStatus.BUSY : BusyStatus.AVAILABLE;
+  }
+  async updateAvailabilityStatus(
+    userId: number,
+    dto: UpdateDriverAvailabilityDto,
+  ): Promise<UpdateDriverAvailabilityResponseDto> {
+    const driver = await this.prismaService.driver.findUnique({
+      where: { userId },
+    });
+    if (!driver) throw new NotFoundException('driver not found');
+
+    const updatedDriver = await this.prismaService.driver.update({
+      where: { userId },
+      data: { availabilityStatus: dto.availabilityStatus },
+      select: { id: true, availabilityStatus: true, updatedAt: true },
+    });
+    return {
+      driverId: updatedDriver.id,
+      availabilityStatus: updatedDriver.availabilityStatus,
+      updatedAt: updatedDriver.updatedAt.toISOString(),
+    };
   }
 }
