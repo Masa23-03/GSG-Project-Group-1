@@ -46,11 +46,7 @@ export class DeliveriesController {
     name: 'sortOrder',
     required: false,
     enum: SortOrder,
-    example: SortOrder.ASC,
-  })
-  @ApiOkResponse({
-    description: 'Paginated list of available deliveries.',
-    type: DriverAvailableDeliveriesListItemDto,
+    example: SortOrder.DESC,
   })
   @Get()
   async getDeliveries(
