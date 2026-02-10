@@ -9,7 +9,6 @@ import {
   CreatePharmacyOrderResponseDto,
   OrderDeliveryAddressSnapshotDto,
 } from './order.response.dto';
-import { PrescriptionFileDto } from 'src/modules/prescription/dto/response/prescriptionfile.response';
 
 export class PatientOrderPharmacySummaryResponseDto {
   @ApiProperty({

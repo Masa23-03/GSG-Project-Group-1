@@ -1,5 +1,11 @@
 ﻿import { Body, Controller, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { IsPublic } from '../../decorators/isPublic.decorator';
 import { ZodValidationPipe } from '../../pipes/zod-validation.pipe';
@@ -100,6 +106,7 @@ export class AuthController {
   @ApiBody({ type: LogoutRequestDto })
   @ApiOperation({ summary: 'Logout (invalidate refresh token)' })
   @ApiResponse({ status: 200, type: LogoutResponseDto })
+  @ApiBearerAuth('access-token')
   logout(
     @AuthedUser() user: authedUserType,
     @Body(new ZodValidationPipe(LogoutSchema)) dto: LogoutDto,

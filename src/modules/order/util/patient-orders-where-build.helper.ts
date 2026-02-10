@@ -2,8 +2,8 @@ import { OrderStatus, Prisma } from '@prisma/client';
 import {
   OrderFilter,
   PatientOrderQueryDto,
-  SortOrder,
 } from '../dto/request.dto/order.query.dto';
+import { buildCreatedAtOrderBy } from 'src/types/pagination.query';
 export const ACTIVE_STATUSES: OrderStatus[] = [
   OrderStatus.ACCEPTED,
   OrderStatus.OUT_FOR_DELIVERY,
@@ -40,10 +40,4 @@ export function buildOrderWhereStatement(
   }
 
   return { AND: and };
-}
-
-export function buildOrderOrderBy(
-  query: PatientOrderQueryDto,
-): Prisma.OrderOrderByWithRelationInput {
-  return { createdAt: query.sortOrder === SortOrder.ASC ? 'asc' : 'desc' };
 }

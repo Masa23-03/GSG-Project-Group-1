@@ -12,13 +12,14 @@ import { UserService } from './user.service';
 
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
-import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { updatePatientProfileSchema } from './schema/profile.schema';
 import { UpdateMyPatientDto } from './dto/request.dto/profile.dto';
 
+@ApiBearerAuth('access-token')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}

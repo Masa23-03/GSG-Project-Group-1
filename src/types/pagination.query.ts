@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Prisma } from '@prisma/client';
 
 export class PaginationQueryDto {
   @ApiPropertyOptional({
@@ -17,4 +18,19 @@ export class PaginationQueryDto {
     description: 'Number of items per page (max 100).',
   })
   limit?: number;
+}
+export enum SortOrder {
+  ASC = 'asc',
+  DESC = 'desc',
+}
+type HasSortOrder = { sortOrder?: SortOrder };
+export function buildCreatedAtOrderBy<T extends HasSortOrder>(
+  query: T,
+): { createdAt: Prisma.SortOrder } {
+  return {
+    createdAt:
+      query.sortOrder === SortOrder.ASC
+        ? Prisma.SortOrder.asc
+        : Prisma.SortOrder.desc,
+  };
 }

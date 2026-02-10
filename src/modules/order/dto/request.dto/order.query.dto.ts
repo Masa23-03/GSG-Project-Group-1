@@ -1,16 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { PaginationQueryDto } from 'src/types/pagination.query';
-
-export enum SortOrder {
-  ASC = 'asc',
-  DESC = 'desc',
-}
+import { PaginationQueryDto, SortOrder } from 'src/types/pagination.query';
 
 export enum OrderFilter {
   ALL = 'ALL',
   ACTIVE = 'ACTIVE',
   DELIVERED = 'DELIVERED',
   CANCELLED = 'CANCELLED',
+}
+export enum PharmacyOrderFilter {
+  ALL = 'ALL',
+  NEW = 'NEW',
+  DELIVERED = 'DELIVERED',
+  PAST = 'PAST',
 }
 
 export class PatientOrderQueryDto extends PaginationQueryDto {
@@ -40,7 +41,32 @@ export class PatientOrderQueryDto extends PaginationQueryDto {
   })
   sortOrder?: SortOrder;
 }
+export class PharmacyOrderQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({
+    enum: PharmacyOrderFilter,
+    example: PharmacyOrderFilter.ALL,
+    description: 'Filter orders. Default: ALL.',
+  })
+  filter?: PharmacyOrderFilter;
 
+  @ApiPropertyOptional({
+    enum: SortOrder,
+    example: SortOrder.DESC,
+    description: 'Sort by createdAt. Default: desc.',
+  })
+  sortOrder?: SortOrder;
+
+  @ApiPropertyOptional({
+    example: 'panadol',
+    description:
+      'Free-text search across: orderId, pharmacyOrderId, patientId, patientName, medicine generic/brand name.',
+  })
+  q?: string;
+}
 export type PatientOrderQueryDtoType = InstanceType<
   typeof PatientOrderQueryDto
+>;
+
+export type PharmacyOrderQueryDtoType = InstanceType<
+  typeof PharmacyOrderQueryDto
 >;
