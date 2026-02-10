@@ -8,6 +8,7 @@ import {
   ApiPaginationSuccessResponse,
 } from 'src/types/unifiedType.types';
 import { PaginationQueryDto } from 'src/types/pagination.query';
+import { removeFields } from 'src/utils/object.util';
 
 @Injectable()
 export class CategoryService {
@@ -28,49 +29,41 @@ export class CategoryService {
   async findAll(
     query: PaginationQueryDto,
   ): Promise<ApiPaginationSuccessResponse<CategoryResponseDto>> {
-    const { page = 1, limit = 10 } = query;
-    const skip = (page - 1) * limit;
+    const pagination = await this.prisma.handleQueryPagination(query);
+
     const [total, categories] = await Promise.all([
       this.prisma.category.count(),
       this.prisma.category.findMany({
-        take: limit,
-        skip: skip,
+        ...removeFields(pagination, ['page']),
         orderBy: { name: 'asc' },
       }),
     ]);
     return {
       success: true,
       data: categories,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: await this.prisma.formatPaginationResponse({
+        count: total,
+        page: pagination.page,
+        limit: pagination.take,
+      }),
     };
   }
 
-  async findOne(id: number): Promise<ApiSuccessResponse<CategoryResponseDto>> {
+  async findOne(id: number): Promise<CategoryResponseDto> {
     const category = await this.prisma.category.findUnique({ where: { id } });
     if (!category)
       throw new NotFoundException(`Category with ID ${id} not found`);
-    return {
-      success: true,
-      data: category!,
-    };
+    return category;
   }
 
   async update(
     id: number,
     updateCategoryDto: UpdateCategoryDto,
-  ): Promise<ApiSuccessResponse<CategoryResponseDto>> {
+  ): Promise<CategoryResponseDto> {
     const updatedCategory = await this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
     });
-    return {
-      success: true,
-      data: updatedCategory,
-    };
+    return updatedCategory;
   }
 }
