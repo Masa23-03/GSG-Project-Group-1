@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { DeliveriesService } from './deliveries.service';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
@@ -19,13 +20,13 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { SortOrder } from '../order/dto/request.dto/order.query.dto';
-import { DriverAvailableDeliveriesListItemDto } from './dto/response/list.response.dto';
 import { UserRole } from '@prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
+import { SortOrder } from 'src/types/pagination.query';
 
 @ApiTags('Driver - Deliveries')
 @ApiBearerAuth('access-token')
@@ -55,5 +56,19 @@ export class DeliveriesController {
     query: DriverDeliveriesListQueryDto,
   ) {
     return this.deliveriesService.getAvailableDeliveries(user.id, query);
+  }
+
+  @ApiOperation({
+    summary: 'Get delivery details',
+    description:
+      'Returns delivery details. Allowed if delivery is unassigned PENDING (driver must be ONLINE) OR assigned to the authenticated driver.',
+  })
+  @ApiParam({ name: 'id', type: Number, example: 3 })
+  @Get(':id')
+  async getDelivery(
+    @AuthedUser() user: authedUserType,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.deliveriesService.findOne(user.id, id);
   }
 }
