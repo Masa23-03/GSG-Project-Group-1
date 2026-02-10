@@ -1,6 +1,15 @@
 import { Medicine } from '@prisma/client';
 
-export function buildMedicineDisplayNameHelper(m: Medicine) {
+export function buildMedicineDisplayNameHelper(
+  m: Pick<
+    Medicine,
+    | 'brandName'
+    | 'strengthUnit'
+    | 'genericName'
+    | 'strengthValue'
+    | 'dosageForm'
+  >,
+) {
   const name = m.brandName?.trim() || m.genericName?.trim() || 'Medicine';
   const parts: string[] = [name];
   if (m.strengthValue != null && m.strengthUnit)
