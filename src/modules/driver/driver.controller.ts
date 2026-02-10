@@ -17,7 +17,14 @@ import {
   UserStatus,
   VerificationStatus,
 } from '@prisma/client';
-import { ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { adminDriverListQuerySchema } from './schema/driver.query.schema';
 import { AdminDriverListQueryDto } from './dto/query.dto/get-driver-dto';
@@ -28,7 +35,11 @@ import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
 import { UpdateMyDriverDto } from './dto/request.dto/profile.dto';
 import { updateDriverProfileSchema } from './schema/profile.schema';
-
+import { RequireVerified } from 'src/decorators/requireVerified.decorator';
+import { availabilitySchema } from './schema/availability.shcema';
+import { UpdateDriverAvailabilityDto } from './dto/request.dto/availability.dto';
+@ApiTags('Driver')
+@ApiBearerAuth('access-token')
 @Controller('driver')
 export class DriverController {
   constructor(private readonly driverService: DriverService) {}
@@ -103,13 +114,21 @@ export class DriverController {
 
   //profile endpoint to view driver profile
   @Roles(UserRole.DRIVER)
+  @ApiOperation({
+    summary: 'Get my driver profile',
+  })
   @Get('me')
   async getMyProfile(@AuthedUser() driver: authedUserType) {
     return await this.driverService.getMyProfile(driver.id);
   }
   //profile endpoint for update driver profile
   @Roles(UserRole.DRIVER)
-  @ApiBody({ type: UpdateMyDriverDto })
+  @ApiOperation({
+    summary: 'Update my driver profile',
+  })
+  @ApiBody({
+    type: UpdateMyDriverDto,
+  })
   @Patch('me')
   async updateMe(
     @AuthedUser() driver: authedUserType,
@@ -117,5 +136,31 @@ export class DriverController {
     updateDriverDto: UpdateMyDriverDto,
   ) {
     return await this.driverService.updateMyProfile(driver.id, updateDriverDto);
+  }
+
+  @Roles(UserRole.DRIVER)
+  @RequireVerified('DRIVER')
+  @ApiOperation({
+    summary: 'Update driver availability',
+    description: 'Set driver availability to ONLINE or OFFLINE.',
+  })
+  @ApiBody({
+    type: UpdateDriverAvailabilityDto,
+    examples: {
+      online: {
+        value: { availabilityStatus: AvailabilityStatus.ONLINE },
+      },
+      offline: {
+        value: { availabilityStatus: AvailabilityStatus.OFFLINE },
+      },
+    },
+  })
+  @Patch('me/availability')
+  async updateAvailabilityStatus(
+    @AuthedUser() user: authedUserType,
+    @Body(new ZodValidationPipe(availabilitySchema))
+    dto: UpdateDriverAvailabilityDto,
+  ) {
+    return this.driverService.updateAvailabilityStatus(user.id, dto);
   }
 }
