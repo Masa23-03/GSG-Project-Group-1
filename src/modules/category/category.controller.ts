@@ -9,7 +9,14 @@ import {
   Query,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
-import { ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IsPublic } from 'src/decorators/isPublic.decorator';
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
@@ -23,25 +30,38 @@ import {
   updateCategorySchema,
 } from './schema/category.schema';
 
+@ApiTags('Categories')
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'List all categories' })
-  @Get('admin')
-  findAllAdmin(@Query(new ZodValidationPipe(PaginationQuerySchema)) query: PaginationQueryDto) {
-    return this.categoryService.findAll(query);
-  }
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get category details' })
-  @Get('admin/:id')
-  findOneAdmin(@Param('id', ParseIntPipe) id: number) {
-    return this.categoryService.findOne(id);
-  }
-
-  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Admin: Create category' })
+  @ApiBody({
+    description: 'Create a new category',
+    schema: {
+      type: 'object',
+      required: ['name'],
+      properties: {
+        name: {
+          type: 'string',
+          example: 'Painkillers',
+          minLength: 2,
+        },
+        description: {
+          type: 'string',
+          nullable: true,
+          example: 'Medicines used to relieve pain',
+        },
+        categoryImageUrl: {
+          type: 'string',
+          nullable: true,
+          example: 'https://cdn.example.com/categories/painkillers.png',
+        },
+      },
+    },
+  })
   @Post('admin')
   async create(
     @Body(new ZodValidationPipe(createCategorySchema))
@@ -51,7 +71,32 @@ export class CategoryController {
   }
 
   @ApiOperation({ summary: 'Admin: Update category' })
+  @ApiBearerAuth('access-token')
+  @ApiParam({ name: 'id', type: Number, example: 3 })
   @Roles(UserRole.ADMIN)
+  @ApiBody({
+    description: 'Update category fields',
+    schema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          example: 'Painkillers',
+          minLength: 2,
+        },
+        description: {
+          type: 'string',
+          nullable: true,
+          example: 'Updated description',
+        },
+        categoryImageUrl: {
+          type: 'string',
+          nullable: true,
+          example: 'https://cdn.example.com/categories/new-image.png',
+        },
+      },
+    },
+  })
   @Patch('admin/:id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -63,6 +108,7 @@ export class CategoryController {
 
   @IsPublic()
   @ApiOperation({ summary: 'Get category details' })
+  @ApiParam({ name: 'id', type: Number, example: 3 })
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.categoryService.findOne(id);
@@ -70,8 +116,13 @@ export class CategoryController {
 
   @IsPublic()
   @ApiOperation({ summary: 'List all categories' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @Get()
-  findAll(@Query(new ZodValidationPipe(PaginationQuerySchema)) query: PaginationQueryDto) {
+  findAll(
+    @Query(new ZodValidationPipe(PaginationQuerySchema))
+    query: PaginationQueryDto,
+  ) {
     return this.categoryService.findAll(query);
   }
 }
