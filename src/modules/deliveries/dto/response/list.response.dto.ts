@@ -31,7 +31,7 @@ export class DriverPharmacyPickupDto {
     nullable: true,
     description: 'Pharmacy address text (if stored).',
   })
-  pharmacyAddressText!: string;
+  pharmacyAddressText?: string | null;
   @ApiProperty({
     example: '+970599123456',
     description: 'Pharmacy phone number.',
