@@ -6,7 +6,12 @@ export const emailSchema = z
   .trim()
   .email()
   .transform((e) => e.toLowerCase());
-export const phoneSchema = z.string().trim().min(6).max(30);
+export const phoneSchema = z
+  .string()
+  .trim()
+  .regex(/^\+(970|972)\d{9}$/, {
+    message: 'Phone number must be +970XXXXXXXXX or +972XXXXXXXXX',
+  });
 export const passwordSchema = z
   .string()
   .min(8, 'Password must be at least 8 characters long')
