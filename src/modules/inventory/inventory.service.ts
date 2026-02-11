@@ -7,7 +7,8 @@ import {
 import { CreateInventoryItemDto } from './dto/request.dto/create-inventory.dto';
 import { UpdateInventoryItemDto } from './dto/request.dto/update-inventory.dto';
 import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
-import { ApiPaginationSuccessResponse, PaginationResult } from 'src/types/unifiedType.types';
+import { PaginationQueryDto } from 'src/types/pagination.query';
+import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
 import { DatabaseService } from '../database/database.service';
 import { InventoryItemResponseDto } from './dto/response.dto/inventory-response.dto';
 import { InventoryMapper } from './util/mapToResponse.helper';
@@ -106,10 +107,7 @@ export class InventoryService {
     if (isAvailable !== undefined) where.isAvailable = isAvailable;
     if (q) {
       where.medicine = {
-        OR: [
-          { genericName: { contains: q} },
-          { brandName: { contains: q } },
-        ],
+        OR: [{ genericName: { contains: q } }, { brandName: { contains: q } }],
       };
     }
     if (lowStock) {
@@ -145,6 +143,34 @@ export class InventoryService {
     });
     if (!item) throw new NotFoundException('Inventory item not found');
     return InventoryMapper.toResponseDto(item);
+  }
+  async findAllForPatient(
+    pharmacyId: number,
+    query: PaginationQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<InventoryItemResponseDto>> {
+    const { page = 1, limit = 10 } = query;
+
+    const where: any = {
+      pharmacyId,
+      isDeleted: false,
+      isAvailable: true,
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.inventoryItem.findMany({
+        where,
+        ...this.includeQuery,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.inventoryItem.count({ where }),
+    ]);
+    return {
+      success: true,
+      data: InventoryMapper.toResponseDtoArray(items),
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async update(
