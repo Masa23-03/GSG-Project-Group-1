@@ -17,7 +17,6 @@ import { CategoryModule } from './modules/category/category.module';
 import { MedicineModule } from './modules/medicine/medicine.module';
 import { CityModule } from './modules/city/city.module';
 import { VerifiedGuard } from './guards/verified.guard';
-import { DeliveriesModule } from './deliveries/deliveries.module';
 import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 
 @Module({

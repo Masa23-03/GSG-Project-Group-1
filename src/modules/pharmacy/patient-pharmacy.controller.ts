@@ -1,6 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { PharmacyService } from './pharmacy.service';
 import {
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -25,6 +26,7 @@ import {
 import { ZodValidationPipe } from 'nestjs-zod';
 import { patientPharmacyListQuerySchema } from './schema/pharmacy.schema';
 
+@ApiBearerAuth('access-token')
 @ApiTags('Patient / Pharmacies')
 @Controller('patient/pharmacies')
 export class PatientPharmacyController {
