@@ -1,9 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import {
-  AdminDriverListQueryDto,
-  AdminDriverListQueryDtoT,
-} from './dto/query.dto/get-driver-dto';
+import { AdminDriverListQueryDtoT } from './dto/query.dto/get-driver-dto';
 import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
 import {
   AdminDriverDetailsDto,
@@ -14,7 +11,7 @@ import {
 import { DatabaseService } from '../database/database.service';
 import { buildAdminDriverWhere } from './util/helper';
 import { removeFields } from 'src/utils/object.util';
-import { AvailabilityStatus, DeliveryStatus, Driver } from '@prisma/client';
+import { DeliveryStatus, Driver } from '@prisma/client';
 import { AdminBaseUpdateVerificationStatusDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { assertVerificationStatusTransition } from 'src/utils/status.helper';
 import { DriverMeResponseDto } from './dto/response.dto/profile.dto';
@@ -24,6 +21,10 @@ import { mapBaseUserForProfileUpdate } from 'src/utils/util';
 import { UserRole, UserStatus } from '@prisma/client';
 import { UserService } from '../user/user.service';
 import type { RegisterDriverDTO } from '../auth/dto/auth.register.dto';
+import {
+  UpdateDriverAvailabilityDto,
+  UpdateDriverAvailabilityResponseDto,
+} from './dto/request.dto/availability.dto';
 @Injectable()
 export class DriverService {
   constructor(
@@ -31,37 +32,7 @@ export class DriverService {
     private readonly userService: UserService,
   ) {}
 
-  async create(payload: RegisterDriverDTO) {
-    try {
-      return await this.prismaService.$transaction(async (tx) => {
-        const user = await this.userService.create(
-          payload,
-          UserRole.DRIVER,
-          UserStatus.ACTIVE,
-          tx,
-        );
-
-        const driver = await tx.driver.create({
-          data: {
-            userId: user.id,
-            vehicleName: payload.vehicleName,
-            vehiclePlate: payload.vehiclePlate,
-            licenseDocumentUrl: payload.licenseDocUrl,
-          },
-        });
-
-        return {
-          user,
-          driver,
-        };
-      });
-    } catch (e) {
-      console.log('driver service error - create() method :', e);
-      throw e;
-    }
-  }
-
-  //Admin only
+  //! Admin only
   async findAllAdmin(
     query: AdminDriverListQueryDtoT,
   ): Promise<ApiPaginationSuccessResponse<AdminDriverListItemDto>> {
@@ -120,7 +91,7 @@ export class DriverService {
       };
     });
   }
-  //Admin only
+  //! Admin only
   async findOneAdmin(id: number): Promise<AdminDriverDetailsDto> {
     const foundedDriver = await this.prismaService.driver.findUnique({
       where: { id },
@@ -167,7 +138,7 @@ export class DriverService {
     };
     return data;
   }
-
+  //!Driver:
   async updateDriverStatus(
     id: number,
     updateDriverDto: AdminBaseUpdateVerificationStatusDto,
@@ -228,10 +199,6 @@ export class DriverService {
       availabilityStatus: updatedDriver.availabilityStatus,
     };
     return data;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} driver`;
   }
 
   async getMyProfile(userId: number): Promise<DriverMeResponseDto> {
@@ -303,5 +270,55 @@ export class DriverService {
   }
   private calculateBusyStatus(activeDeliveriesCount: number): BusyStatus {
     return activeDeliveriesCount > 0 ? BusyStatus.BUSY : BusyStatus.AVAILABLE;
+  }
+  async updateAvailabilityStatus(
+    userId: number,
+    dto: UpdateDriverAvailabilityDto,
+  ): Promise<UpdateDriverAvailabilityResponseDto> {
+    const driver = await this.prismaService.driver.findUnique({
+      where: { userId },
+    });
+    if (!driver) throw new NotFoundException('driver not found');
+
+    const updatedDriver = await this.prismaService.driver.update({
+      where: { userId },
+      data: { availabilityStatus: dto.availabilityStatus },
+      select: { id: true, availabilityStatus: true, updatedAt: true },
+    });
+    return {
+      driverId: updatedDriver.id,
+      availabilityStatus: updatedDriver.availabilityStatus,
+      updatedAt: updatedDriver.updatedAt.toISOString(),
+    };
+  }
+
+  async create(payload: RegisterDriverDTO) {
+    try {
+      return await this.prismaService.$transaction(async (tx) => {
+        const user = await this.userService.create(
+          payload,
+          UserRole.DRIVER,
+          UserStatus.ACTIVE,
+          tx,
+        );
+
+        const driver = await tx.driver.create({
+          data: {
+            userId: user.id,
+            vehicleName: payload.vehicleName,
+            vehiclePlate: payload.vehiclePlate,
+            licenseDocumentUrl: payload.licenseDocUrl,
+          },
+        });
+
+        return {
+          user,
+          driver,
+        };
+      });
+    } catch (e) {
+      console.log('driver service error - create() method :', e);
+      throw e;
+    }
   }
 }
