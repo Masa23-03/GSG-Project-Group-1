@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PatientAddress } from '@prisma/client';
+
 export class CreatePatientAddressDto {
   @ApiProperty({ description: "City ID of the patient's address" })
   cityId!: number;
@@ -11,9 +11,8 @@ export class CreatePatientAddressDto {
   @ApiPropertyOptional({
     example: false,
     description: 'Whether this is the default address for the patient',
-    nullable: true,
   })
-  isDefault?: boolean | null;
+  isDefault?: boolean ;
   @ApiPropertyOptional({
     example: 'Apartment 3B',
     description: 'Secondary address line',
