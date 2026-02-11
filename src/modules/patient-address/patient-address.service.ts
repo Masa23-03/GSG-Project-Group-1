@@ -153,4 +153,41 @@ export class PatientAddressService {
       data: result,
     };
   }
+
+  async remove(userId: number, id: number): Promise<ApiSuccessResponse<null>> {
+    await this.prismaService.$transaction(async (tx) => {
+      const address = await tx.patientAddress.findFirst({
+        where: { id, userId },
+      });
+      if (!address || address.isDeleted) {
+        throw new NotFoundException('Address not found');
+      }
+
+      await tx.patientAddress.update({
+        where: { id },
+        data: {
+          isDeleted: true,
+          isDefault: false,
+        },
+      });
+
+      if (address.isDefault) {
+        const replacement = await tx.patientAddress.findFirst({
+          where: { userId, isDeleted: false, id: { not: id } },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (replacement) {
+          await tx.patientAddress.update({
+            where: { id: replacement.id },
+            data: { isDefault: true },
+          });
+        }
+      }
+    });
+    return {
+      success: true,
+      data: null,
+    };
+  }
 }
