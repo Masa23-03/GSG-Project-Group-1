@@ -7,7 +7,10 @@ import {
 import { CreateInventoryItemDto } from './dto/request.dto/create-inventory.dto';
 import { UpdateInventoryItemDto } from './dto/request.dto/update-inventory.dto';
 import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
-import { ApiPaginationSuccessResponse, PaginationResult } from 'src/types/unifiedType.types';
+import { GetInventoryAdminQueryDto } from './dto/query.dto/get-inventory-admin-query.dto';
+import { InventoryAdminResponseDto } from './dto/response.dto/inventory-admin-response.dto';
+import { PaginationQueryDto } from 'src/types/pagination.query';
+import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
 import { DatabaseService } from '../database/database.service';
 import { InventoryItemResponseDto } from './dto/response.dto/inventory-response.dto';
 import { InventoryMapper } from './util/mapToResponse.helper';
@@ -106,10 +109,7 @@ export class InventoryService {
     if (isAvailable !== undefined) where.isAvailable = isAvailable;
     if (q) {
       where.medicine = {
-        OR: [
-          { genericName: { contains: q} },
-          { brandName: { contains: q } },
-        ],
+        OR: [{ genericName: { contains: q } }, { brandName: { contains: q } }],
       };
     }
     if (lowStock) {
@@ -146,7 +146,91 @@ export class InventoryService {
     if (!item) throw new NotFoundException('Inventory item not found');
     return InventoryMapper.toResponseDto(item);
   }
+  async findAllForPatient(
+    pharmacyId: number,
+    query: PaginationQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<InventoryItemResponseDto>> {
+    const { page = 1, limit = 10 } = query;
+    const pharmacyExists = await this.prisma.pharmacy.findUnique({
+      where: { id: pharmacyId },
+      select: { id: true },
+    });
 
+    if (!pharmacyExists) {
+      throw new NotFoundException(`Pharmacy with ID ${pharmacyId} not found`);
+    }
+    const where: any = {
+      pharmacyId,
+      isDeleted: false,
+      isAvailable: true,
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.inventoryItem.findMany({
+        where,
+        ...this.includeQuery,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.inventoryItem.count({ where }),
+    ]);
+    return {
+      success: true,
+      data: InventoryMapper.toResponseDtoArray(items),
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+async findAllAdmin(
+    query: GetInventoryAdminQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<InventoryAdminResponseDto>> {
+    const { page, limit, pharmacyId, medicineId, isAvailable, includeDeleted } =
+      query;
+    const where: any = {};
+    if (pharmacyId) where.pharmacyId = pharmacyId;
+    if (medicineId) where.medicineId = medicineId;
+    if (isAvailable !== undefined) where.isAvailable = isAvailable;
+    if (!includeDeleted) where.isDeleted = false;
+    const [items, total] = await Promise.all([
+      this.prisma.inventoryItem.findMany({
+        where,
+        include: {
+          medicine: true,
+          pharmacy: true, 
+        },
+        skip: (page! - 1) * limit!,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.inventoryItem.count({ where }),
+    ]);
+    return {
+      success: true,
+      data: items.map((item) => InventoryMapper.toAdminResponseDto(item)),
+      meta: {
+        total,
+        page: page!,
+        limit: limit!,
+        totalPages: Math.ceil(total / limit!),
+      },
+    };
+  }
+
+   async findOneAdmin(id: number): Promise<InventoryAdminResponseDto> {
+    const item = await this.prisma.inventoryItem.findUnique({
+      where: { id },
+      include: {
+        medicine: true,
+        pharmacy: true,
+      },
+    });
+
+    if (!item) throw new NotFoundException('Inventory item not found');
+
+    return InventoryMapper.toAdminResponseDto(item);
+  }
+  
   async update(
     id: number,
     userId: number,

@@ -31,15 +31,19 @@ import {
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
 import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
 import { GetInventoryQuerySchema } from './schema/get-inventory-query.schema';
+import { PaginationQueryDto } from 'src/types/pagination.query';
+import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
+import { GetInventoryAdminQueryDto } from './dto/query.dto/get-inventory-admin-query.dto';
+import { GetInventoryAdminQuerySchema } from './schema/inventory-admin.schema';
 
 @ApiTags('Inventory')
-@RequireVerified('PHARMACY')
-@Roles(UserRole.PHARMACY)
 @ApiBearerAuth('access-token')
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
-
+  // Pharmacy endpoints
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Add a new medicine to pharmacy inventory' })
   @ApiBody({ type: CreateInventoryItemDto })
   @Post()
@@ -51,6 +55,8 @@ export class InventoryController {
     return await this.inventoryService.create(user.id, createDto);
   }
 
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'List pharmacy inventory items' })
   @Get()
   async findAll(
@@ -61,6 +67,8 @@ export class InventoryController {
     return this.inventoryService.findAll(user.id, query);
   }
 
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Get details of a single inventory item' })
   @Get(':id')
   async findOne(
@@ -70,6 +78,8 @@ export class InventoryController {
     return this.inventoryService.findOne(user.id, id);
   }
 
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({
     summary: 'Update inventory item',
   })
@@ -82,6 +92,9 @@ export class InventoryController {
   ) {
     return await this.inventoryService.update(id, user.id, dto);
   }
+
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({
     summary: 'Soft delete inventory item',
     description: 'Marks an item as deleted and sets availability to false.',
@@ -92,5 +105,36 @@ export class InventoryController {
     @AuthedUser() user: authedUserType,
   ) {
     return await this.inventoryService.remove(id, user.id);
+  }
+  // Patient endpoints
+  @Roles(UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'List all available inventory items for a specific medicine',
+  })
+  @Get('patient/:pharmacyId')
+  async findAllForPatient(
+    @Param('pharmacyId', ParseIntPipe) pharmacyId: number,
+    @Query(new ZodValidationPipe(PaginationQuerySchema))
+    query: PaginationQueryDto,
+  ) {
+    return this.inventoryService.findAllForPatient(pharmacyId, query);
+  }
+  // Admin endpoints
+  @ApiOperation({
+    summary: 'Admin: List all inventory items with advanced filters',
+  })
+  @Roles(UserRole.ADMIN)
+  async findAllAdmin(
+    @Query(new ZodValidationPipe(GetInventoryAdminQuerySchema))
+    query: GetInventoryAdminQueryDto,
+  ) {
+    return await this.inventoryService.findAllAdmin(query);
+  }
+
+  @ApiOperation({ summary: 'Admin: View specific inventory item details' })
+  @Roles(UserRole.ADMIN)
+  @Get('admin/:id')
+  async findOneAdmin(@Param('id', ParseIntPipe) id: number) {
+    return await this.inventoryService.findOneAdmin(id);
   }
 }
