@@ -149,7 +149,14 @@ export class InventoryService {
     query: PaginationQueryDto,
   ): Promise<ApiPaginationSuccessResponse<InventoryItemResponseDto>> {
     const { page = 1, limit = 10 } = query;
+    const pharmacyExists = await this.prisma.pharmacy.findUnique({
+      where: { id: pharmacyId },
+      select: { id: true },
+    });
 
+    if (!pharmacyExists) {
+      throw new NotFoundException(`Pharmacy with ID ${pharmacyId} not found`);
+    }
     const where: any = {
       pharmacyId,
       isDeleted: false,
