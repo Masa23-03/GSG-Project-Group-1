@@ -1,8 +1,8 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
-  NotImplementedException,
 } from '@nestjs/common';
 import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
 import { DriverAvailableDeliveriesListItemDto } from './dto/response/list.response.dto';
@@ -10,7 +10,9 @@ import { DatabaseService } from '../database/database.service';
 import {
   AvailabilityStatus,
   DeliveryStatus,
+  OrderStatus,
   PharmacyOrderStatus,
+  Prisma,
 } from '@prisma/client';
 import { removeFields } from 'src/utils/object.util';
 import {
@@ -188,5 +190,155 @@ export class DeliveriesService {
 
       return mapToDeliveryDetails(fullReturn);
     });
+  }
+
+  async confirmPharmacyPickup(
+    userId: number,
+    deliveryId: number,
+    pharmacyOrderId: number,
+  ): Promise<DriverDeliveryDetailsResponseDto> {
+    return await this.prismaService.$transaction(async (prisma) => {
+      const driver = await this.foundDriver(prisma, userId);
+      const delivery = await prisma.delivery.findFirst({
+        where: {
+          id: deliveryId,
+          driverId: driver.id,
+          status: {
+            in: [DeliveryStatus.ASSIGNED, DeliveryStatus.PICKUP_IN_PROGRESS],
+          },
+        },
+        select: { id: true, status: true },
+      });
+      if (!delivery)
+        throw new NotFoundException(
+          'Delivery not found or not assigned to you',
+        );
+      const updated = await prisma.pharmacyOrder.updateMany({
+        where: {
+          id: pharmacyOrderId,
+          deliveryId,
+          status: PharmacyOrderStatus.READY_FOR_PICKUP,
+        },
+        data: {
+          pickedUpAt: new Date(),
+          status: PharmacyOrderStatus.PICKED_UP,
+        },
+      });
+      if (updated.count === 0)
+        throw new BadRequestException(
+          'Pharmacy order is not READY_FOR_PICKUP, not in this delivery, or already picked up',
+        );
+      if (delivery.status === DeliveryStatus.ASSIGNED) {
+        await prisma.delivery.update({
+          where: { id: deliveryId },
+          data: { status: DeliveryStatus.PICKUP_IN_PROGRESS },
+        });
+      }
+
+      const fullReturn = await prisma.delivery.findUnique({
+        where: { id: deliveryId },
+        select: deliveryDetailsSelect,
+      });
+      if (!fullReturn) throw new NotFoundException('Delivery not found');
+
+      return mapToDeliveryDetails(fullReturn);
+    });
+  }
+  async startDelivery(
+    userId: number,
+    deliveryId: number,
+  ): Promise<DriverDeliveryDetailsResponseDto> {
+    return await this.prismaService.$transaction(async (prisma) => {
+      const driver = await this.foundDriver(prisma, userId);
+      const updated = await prisma.delivery.updateMany({
+        where: {
+          id: deliveryId,
+          driverId: driver.id,
+          status: DeliveryStatus.PICKUP_IN_PROGRESS,
+          pharmacyOrders: {
+            every: { status: PharmacyOrderStatus.PICKED_UP },
+          },
+        },
+        data: { status: DeliveryStatus.EN_ROUTE },
+      });
+
+      if (updated.count !== 1) {
+        throw new BadRequestException(
+          'Cannot start delivery. Make sure all pharmacies are picked up and delivery is in PICKUP_IN_PROGRESS.',
+        );
+      }
+
+      const fullReturn = await prisma.delivery.findUniqueOrThrow({
+        where: { id: deliveryId },
+        select: deliveryDetailsSelect,
+      });
+      await prisma.order.update({
+        where: {
+          id: fullReturn?.orderId,
+        },
+        data: {
+          status: OrderStatus.OUT_FOR_DELIVERY,
+        },
+      });
+
+      return mapToDeliveryDetails(fullReturn);
+    });
+  }
+
+  async confirmDelivery(
+    userId: number,
+    deliveryId: number,
+  ): Promise<DriverDeliveryDetailsResponseDto> {
+    return await this.prismaService.$transaction(async (prisma) => {
+      const driver = await this.foundDriver(prisma, userId);
+      const updated = await prisma.delivery.updateMany({
+        where: {
+          id: deliveryId,
+          driverId: driver.id,
+          status: DeliveryStatus.EN_ROUTE,
+        },
+        data: {
+          status: DeliveryStatus.DELIVERED,
+          deliveredAt: new Date(),
+        },
+      });
+      if (updated.count !== 1) {
+        throw new BadRequestException(
+          'Cannot confirm delivery. Delivery must be EN_ROUTE and assigned to you.',
+        );
+      }
+      const fullReturn = await prisma.delivery.findUniqueOrThrow({
+        where: { id: deliveryId },
+        select: deliveryDetailsSelect,
+      });
+      await prisma.order.update({
+        where: {
+          id: fullReturn.orderId,
+        },
+        data: {
+          status: OrderStatus.DELIVERED,
+        },
+      });
+      await prisma.pharmacyOrder.updateMany({
+        where: { deliveryId: deliveryId },
+        data: { status: PharmacyOrderStatus.COMPLETED },
+      });
+
+      return mapToDeliveryDetails(fullReturn);
+    });
+  }
+
+  private async foundDriver(prisma: Prisma.TransactionClient, userId: number) {
+    const driver = await prisma.driver.findUnique({
+      where: { userId },
+      select: { id: true, availabilityStatus: true },
+    });
+
+    if (!driver) throw new NotFoundException('Driver not found');
+    if (driver.availabilityStatus !== AvailabilityStatus.ONLINE) {
+      throw new ForbiddenException('Driver must be ONLINE');
+    }
+
+    return driver;
   }
 }
