@@ -31,15 +31,17 @@ import {
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
 import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
 import { GetInventoryQuerySchema } from './schema/get-inventory-query.schema';
+import { PaginationQueryDto } from 'src/types/pagination.query';
+import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
 
 @ApiTags('Inventory')
-@RequireVerified('PHARMACY')
-@Roles(UserRole.PHARMACY)
 @ApiBearerAuth('access-token')
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
 
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Add a new medicine to pharmacy inventory' })
   @ApiBody({ type: CreateInventoryItemDto })
   @Post()
@@ -51,6 +53,8 @@ export class InventoryController {
     return await this.inventoryService.create(user.id, createDto);
   }
 
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'List pharmacy inventory items' })
   @Get()
   async findAll(
@@ -61,6 +65,8 @@ export class InventoryController {
     return this.inventoryService.findAll(user.id, query);
   }
 
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Get details of a single inventory item' })
   @Get(':id')
   async findOne(
@@ -70,6 +76,8 @@ export class InventoryController {
     return this.inventoryService.findOne(user.id, id);
   }
 
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({
     summary: 'Update inventory item',
   })
@@ -82,6 +90,9 @@ export class InventoryController {
   ) {
     return await this.inventoryService.update(id, user.id, dto);
   }
+
+  @RequireVerified('PHARMACY')
+  @Roles(UserRole.PHARMACY)
   @ApiOperation({
     summary: 'Soft delete inventory item',
     description: 'Marks an item as deleted and sets availability to false.',
@@ -92,5 +103,17 @@ export class InventoryController {
     @AuthedUser() user: authedUserType,
   ) {
     return await this.inventoryService.remove(id, user.id);
+  }
+  @Roles(UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'List all available inventory items for a specific medicine',
+  })
+  @Get('patient/:pharmacyId')
+  async findAllForPatient(
+    @Param('pharmacyId', ParseIntPipe) pharmacyId: number,
+    @Query(new ZodValidationPipe(PaginationQuerySchema))
+    query: PaginationQueryDto,
+  ) {
+    return this.inventoryService.findAllForPatient(pharmacyId, query);
   }
 }
