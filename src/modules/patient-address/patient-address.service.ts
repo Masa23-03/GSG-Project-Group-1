@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { PaginationQueryDto } from 'src/types/pagination.query';
@@ -100,12 +101,9 @@ export class PatientAddressService {
           isDefault,
           userId,
         },
+        select: addressDetailsSelect
       });
-      const address = await tx.patientAddress.findUniqueOrThrow({
-        where: { id: created.id },
-        select: addressDetailsSelect,
-      });
-      return mapPatientAddressDetails(address);
+      return mapPatientAddressDetails(created);
     });
     return {
       success: true,
@@ -137,13 +135,10 @@ export class PatientAddressService {
           data: { isDefault: false },
         });
       }
-      await tx.patientAddress.update({
+     const updated = await tx.patientAddress.update({
         where: { id },
         data: payload,
-      });
-      const updated = await tx.patientAddress.findUniqueOrThrow({
-        where: { id },
-        select: addressDetailsSelect,
+        select: addressDetailsSelect
       });
       return mapPatientAddressDetails(updated);
     });

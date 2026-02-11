@@ -1,6 +1,6 @@
 import { z, ZodType } from 'zod';
 import { CreatePatientAddressDto } from '../dto/request/create-patient-address.dto';
-
+import { UpdatePatientAddressDto } from '../dto/request/update-patient-address.dto';
 
 export const CreatePatientAddressSchema = z
   .object({
@@ -16,10 +16,18 @@ export const CreatePatientAddressSchema = z
   })
   .strict() satisfies ZodType<CreatePatientAddressDto>;
 
-export const UpdatePatientAddressSchema =
-  CreatePatientAddressSchema.partial().refine(
-    (data) => Object.keys(data).length > 0,
-    {
-      message: 'At least one field must be provided',
+export const UpdatePatientAddressSchema = CreatePatientAddressSchema.partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided',
+  })
+  .refine(
+    (data) => {
+      if (data.isDefault === false) return false;
+      return true;
     },
-  );
+    {
+      message:
+        "You cannot unset a default address. Set another address to 'true' instead.",
+      path: ['isDefault'],
+    },
+  ).strict() satisfies ZodType<UpdatePatientAddressDto>;
