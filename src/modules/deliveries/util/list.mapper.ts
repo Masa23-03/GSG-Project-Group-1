@@ -62,6 +62,7 @@ export function mapDeliveryListItem(
     deliveryLatitude: delivery.order.deliveryLatitude?.toNumber() ?? null,
     deliveryLongitude: delivery.order.deliveryLongitude?.toNumber() ?? null,
     pharmacies: delivery.pharmacyOrders.map((p) => ({
+      pharmacyOrderId: p.id,
       pharmacyId: p.pharmacy.id,
       pharmacyName: p.pharmacy.pharmacyName,
       pharmacyLatitude: p.pharmacy.latitude?.toNumber() ?? null,

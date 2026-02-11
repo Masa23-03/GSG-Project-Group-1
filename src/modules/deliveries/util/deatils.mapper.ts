@@ -103,6 +103,7 @@ export function mapToDeliveryDetails(
     },
     deliveryInstructions: delivery.order.notes ?? null,
     pharmacies: delivery.pharmacyOrders.map((p) => ({
+      pharmacyOrderId: p.id,
       phoneNumber: p.pharmacy.user.phoneNumber,
       pharmacyId: p.pharmacy.id,
       pharmacyName: p.pharmacy.pharmacyName,

@@ -2,6 +2,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Currency } from '@prisma/client';
 
 export class DriverPharmacyPickupDto {
+  @ApiProperty({
+    example: 77,
+    description: 'Pharmacy order ID inside this delivery.',
+  })
+  pharmacyOrderId!: number;
   @ApiProperty({ example: 12, description: 'Pharmacy ID.' })
   pharmacyId!: number;
   @ApiProperty({ example: 'Al-Shifa Pharmacy', description: 'Pharmacy name.' })
