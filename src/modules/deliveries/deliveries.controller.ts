@@ -18,6 +18,7 @@ import { DriverDeliveriesListQueryDto } from './dto/request/query.dto';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -27,6 +28,8 @@ import {
 import { UserRole } from '@prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
 import { SortOrder } from 'src/types/pagination.query';
+import { DriverDeliveryDecisionDto } from './dto/request/update-delivery.dto';
+import { driverDeliveryDecisionSchema } from './schema/update.schema';
 
 @ApiTags('Driver - Deliveries')
 @ApiBearerAuth('access-token')
@@ -70,5 +73,69 @@ export class DeliveriesController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.deliveriesService.findOne(user.id, id);
+  }
+
+  @ApiOperation({
+    summary: 'Accept / decline a delivery',
+    description:
+      'ACCEPT assigns the delivery to this driver. DECLINE does nothing (returns details).',
+  })
+  @ApiParam({ name: 'id', type: Number, example: 3 })
+  @ApiBody({ type: DriverDeliveryDecisionDto })
+  @Patch(':id/decision')
+  async decideDelivery(
+    @AuthedUser() user: authedUserType,
+    @Param('id', ParseIntPipe) id: number,
+    @Body(new ZodValidationPipe(driverDeliveryDecisionSchema))
+    dto: DriverDeliveryDecisionDto,
+  ) {
+    return this.deliveriesService.decideDelivery(user.id, id, dto);
+  }
+
+  @ApiOperation({
+    summary: 'Confirm pickup for one pharmacy order inside the delivery',
+    description: 'Moves that PharmacyOrder from READY_FOR_PICKUP -> PICKED_UP.',
+  })
+  @ApiParam({ name: 'id', type: Number, example: 3 })
+  @ApiParam({ name: 'pharmacyOrderId', type: Number, example: 13 })
+  @Patch(':id/pharmacy-orders/:pharmacyOrderId/pickup')
+  async confirmPharmacyPickup(
+    @AuthedUser() user: authedUserType,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('pharmacyOrderId', ParseIntPipe) pharmacyOrderId: number,
+  ) {
+    return this.deliveriesService.confirmPharmacyPickup(
+      user.id,
+      id,
+      pharmacyOrderId,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Start delivery (after all pharmacies picked up)',
+    description:
+      'Moves delivery PICKUP_IN_PROGRESS -> EN_ROUTE and sets order OUT_FOR_DELIVERY.',
+  })
+  @ApiParam({ name: 'id', type: Number, example: 3 })
+  @Patch(':id/start')
+  async startDelivery(
+    @AuthedUser() user: authedUserType,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.deliveriesService.startDelivery(user.id, id);
+  }
+
+  @ApiOperation({
+    summary: 'Confirm delivery completed',
+    description:
+      'Moves delivery EN_ROUTE -> DELIVERED, sets order DELIVERED, and marks all pharmacyOrders in the delivery as COMPLETED.',
+  })
+  @ApiParam({ name: 'id', type: Number, example: 3 })
+  @Patch(':id/confirm')
+  confirmDelivery(
+    @AuthedUser() user: authedUserType,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.deliveriesService.confirmDelivery(user.id, id);
   }
 }
