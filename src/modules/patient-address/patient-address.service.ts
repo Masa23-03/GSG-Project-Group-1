@@ -1,14 +1,26 @@
-import { Injectable, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  PayloadTooLargeException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { PaginationQueryDto } from 'src/types/pagination.query';
-import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
+import {
+  ApiPaginationSuccessResponse,
+  ApiSuccessResponse,
+} from 'src/types/unifiedType.types';
 import { PatientAddressListItemResponseDto } from './dto/response/list.response.dto';
 import { Prisma } from '@prisma/client';
 import { removeFields } from 'src/utils/object.util';
-import { mapPatientAddressListItem } from './util/mapper';
+import {
+  mapPatientAddressListItem,
+  mapPatientAddressDetails,
+} from './util/mapper';
 import { CreatePatientAddressDto } from './dto/request/create-patient-address.dto';
 import { UpdatePatientAddressDto } from './dto/request/update-patient-address.dto';
-import { NotFoundError } from 'rxjs';
+import { addressDetailsSelect } from './util/constant';
+import { map, NotFoundError } from 'rxjs';
+import { PatientAddressDetailsResponseDto } from './dto/response/details.response.dto';
 
 @Injectable()
 export class PatientAddressService {
@@ -58,8 +70,11 @@ export class PatientAddressService {
       }),
     };
   }
-  async create(userId: number, payload: CreatePatientAddressDto) {
-    return this.prismaService.$transaction(async (tx) => {
+  async create(
+    userId: number,
+    payload: CreatePatientAddressDto,
+  ): Promise<ApiSuccessResponse<PatientAddressDetailsResponseDto>> {
+    const result = await this.prismaService.$transaction(async (tx) => {
       const existingCount = await tx.patientAddress.count({
         where: {
           userId,
@@ -81,46 +96,62 @@ export class PatientAddressService {
           data: { isDefault: false },
         });
       }
-      const address = await tx.patientAddress.create({
+      const created = await tx.patientAddress.create({
         data: {
           ...payload,
           isDefault,
           userId,
         },
       });
-
-      return address;
+      const address = await tx.patientAddress.findUniqueOrThrow({
+        where: { id: created.id },
+        select: addressDetailsSelect,
+      });
+      return mapPatientAddressDetails(address);
     });
+    return {
+      success: true,
+      data: result,
+    };
   }
 
-  async update(userId: number, id: number, payload: UpdatePatientAddressDto) {
-  return this.prismaService.$transaction(async (tx) => {
-
-    const address = await tx.patientAddress.findFirst({
-      where: { id, userId },
-    });
-
-    if (!address || address.isDeleted)
-      throw new NotFoundException("Address not found");
-
-    if (payload.isDefault === true) {
-      await tx.patientAddress.updateMany({
-        where: {
-          userId,
-          isDeleted: false,
-          isDefault: true,
-          NOT: { id },
-        },
-        data: { isDefault: false },
+  async update(
+    userId: number,
+    id: number,
+    payload: UpdatePatientAddressDto,
+  ): Promise<ApiSuccessResponse<PatientAddressDetailsResponseDto>> {
+    const result = await this.prismaService.$transaction(async (tx) => {
+      const address = await tx.patientAddress.findFirst({
+        where: { id, userId },
       });
-    }
-    const updated = await tx.patientAddress.update({
-      where: { id },
-      data: payload
+
+      if (!address || address.isDeleted)
+        throw new NotFoundException('Address not found');
+
+      if (payload.isDefault === true) {
+        await tx.patientAddress.updateMany({
+          where: {
+            userId,
+            isDeleted: false,
+            isDefault: true,
+            NOT: { id },
+          },
+          data: { isDefault: false },
+        });
+      }
+      await tx.patientAddress.update({
+        where: { id },
+        data: payload,
+      });
+      const updated = await tx.patientAddress.findUniqueOrThrow({
+        where: { id },
+        select: addressDetailsSelect,
+      });
+      return mapPatientAddressDetails(updated);
     });
-
-    return updated;
-  });
-}
-
+    return {
+      success: true,
+      data: result,
+    };
+  }
 }
