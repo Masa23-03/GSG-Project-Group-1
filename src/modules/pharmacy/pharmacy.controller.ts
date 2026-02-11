@@ -13,7 +13,7 @@ import { PharmacyService } from './pharmacy.service';
 
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole, UserStatus, VerificationStatus } from '@prisma/client';
-import { ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
 import {
   AdminBaseListQueryDto,
   AdminBaseUpdateVerificationStatusDto,
@@ -26,6 +26,7 @@ import type { authedUserType } from 'src/types/unifiedType.types';
 import { UpdateMyPharmacyProfileDto } from './dto/request.dto/profile.dto';
 import { updatePharmacyProfileSchema } from './schema/profile.schema';
 
+@ApiBearerAuth('access-token')
 @Controller('pharmacy')
 export class PharmacyController {
   constructor(private readonly pharmacyService: PharmacyService) {}

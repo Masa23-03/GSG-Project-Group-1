@@ -20,6 +20,7 @@ import {
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
   ApiExtraModels,
@@ -36,13 +37,13 @@ import { patientOrderQuerySchema } from './schema/patient-order-query.schema';
 import {
   OrderFilter,
   PatientOrderQueryDto,
-  SortOrder,
 } from './dto/request.dto/order.query.dto';
 import {
   PatientCancelOrderResponseDto,
   PatientOrderDetailsResponseDto,
   PatientOrderResponseDto,
 } from './dto/response.dto/patient-get-order.response.dto';
+import { SortOrder } from 'src/types/pagination.query';
 
 @ApiTags('Orders')
 @ApiExtraModels(
@@ -51,6 +52,7 @@ import {
   CreatePharmacyOrderItemDto,
 )
 @Controller('order')
+@ApiBearerAuth('access-token')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
@@ -119,11 +121,6 @@ export class OrderController {
   ) {
     return await this.orderService.getOrderDetails(user.id, id);
   }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-  //   return this.orderService.update(+id, updateOrderDto);
-  // }
 
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Cancel my order' })

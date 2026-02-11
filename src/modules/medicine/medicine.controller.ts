@@ -32,6 +32,7 @@ import {
 import { ZodValidationPipe } from 'nestjs-zod';
 import { patientMedicinePharmaciesQueryDtoSchema } from './schema/medicine-pahrmacies.schema';
 
+@ApiBearerAuth('access-token')
 @Controller('medicine')
 export class MedicineController {
   constructor(private readonly medicineService: MedicineService) {}

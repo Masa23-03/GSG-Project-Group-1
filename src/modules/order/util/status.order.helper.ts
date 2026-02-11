@@ -7,7 +7,11 @@ const AllowedInto: Record<PharmacyOrderStatus, PharmacyOrderStatus[]> = {
     PharmacyOrderStatus.REJECTED,
     PharmacyOrderStatus.CANCELLED,
   ],
-  ACCEPTED: [PharmacyOrderStatus.PREPARING, PharmacyOrderStatus.CANCELLED],
+  ACCEPTED: [
+    PharmacyOrderStatus.PREPARING,
+    PharmacyOrderStatus.READY_FOR_PICKUP,
+    PharmacyOrderStatus.CANCELLED,
+  ],
   REJECTED: [],
   PREPARING: [
     PharmacyOrderStatus.READY_FOR_PICKUP,

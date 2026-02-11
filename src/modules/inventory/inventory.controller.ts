@@ -35,6 +35,7 @@ import { GetInventoryQuerySchema } from './schema/get-inventory-query.schema';
 @ApiTags('Inventory')
 @RequireVerified('PHARMACY')
 @Roles(UserRole.PHARMACY)
+@ApiBearerAuth('access-token')
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}

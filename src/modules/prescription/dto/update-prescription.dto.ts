@@ -1,4 +1,9 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreatePrescriptionDto } from './create-prescription.dto';
+import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdatePrescriptionDto extends PartialType(CreatePrescriptionDto) {}
+export class RequestNewPrescriptionDto {
+  @ApiProperty({
+    description: 'Reason the pharmacy is requesting a re-upload.',
+    example: 'Image is blurry.',
+  })
+  reuploadReason!: string;
+}
