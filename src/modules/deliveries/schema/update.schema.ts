@@ -2,7 +2,7 @@ import z, { ZodType } from 'zod';
 import {
   DeliveryDecision,
   driverDeliveryDecisionDtoType,
-} from '../dto/request.dto/update.dto';
+} from '../dto/request/update-delivery.dto';
 
 export const driverDeliveryDecisionSchema = z
   .object({
