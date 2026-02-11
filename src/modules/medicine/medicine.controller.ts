@@ -15,6 +15,7 @@ import { UpdateMedicineDto } from './dto/update-medicine.dto';
 import { UserRole } from '@prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
 import {
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
