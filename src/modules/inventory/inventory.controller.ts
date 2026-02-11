@@ -33,13 +33,15 @@ import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
 import { GetInventoryQuerySchema } from './schema/get-inventory-query.schema';
 import { PaginationQueryDto } from 'src/types/pagination.query';
 import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
+import { GetInventoryAdminQueryDto } from './dto/query.dto/get-inventory-admin-query.dto';
+import { GetInventoryAdminQuerySchema } from './schema/inventory-admin.schema';
 
 @ApiTags('Inventory')
 @ApiBearerAuth('access-token')
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
-
+  // Pharmacy endpoints
   @RequireVerified('PHARMACY')
   @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Add a new medicine to pharmacy inventory' })
@@ -104,6 +106,7 @@ export class InventoryController {
   ) {
     return await this.inventoryService.remove(id, user.id);
   }
+  // Patient endpoints
   @Roles(UserRole.PATIENT)
   @ApiOperation({
     summary: 'List all available inventory items for a specific medicine',
@@ -115,5 +118,23 @@ export class InventoryController {
     query: PaginationQueryDto,
   ) {
     return this.inventoryService.findAllForPatient(pharmacyId, query);
+  }
+  // Admin endpoints
+  @ApiOperation({
+    summary: 'Admin: List all inventory items with advanced filters',
+  })
+  @Roles(UserRole.ADMIN)
+  async findAllAdmin(
+    @Query(new ZodValidationPipe(GetInventoryAdminQuerySchema))
+    query: GetInventoryAdminQueryDto,
+  ) {
+    return await this.inventoryService.findAllAdmin(query);
+  }
+
+  @ApiOperation({ summary: 'Admin: View specific inventory item details' })
+  @Roles(UserRole.ADMIN)
+  @Get('admin/:id')
+  async findOneAdmin(@Param('id', ParseIntPipe) id: number) {
+    return await this.inventoryService.findOneAdmin(id);
   }
 }
