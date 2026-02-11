@@ -4,7 +4,7 @@ import { MedicineImageDto } from './image.medicine.dto';
 
 export class PaginationMetaDto {
     @ApiProperty({ example: 1 }) 
-    age!: number;
+    page!: number;
     @ApiProperty({ example: 10 }) 
     limit!: number;
     @ApiProperty({ example: 42 }) 
@@ -13,8 +13,22 @@ export class PaginationMetaDto {
     totalPages!: number;
 }
 
+export class ErrorFieldDto {
+    @ApiProperty() field!: string;
+    @ApiProperty() message!: string;
+}
 
-export class MedicineResponseDto {
+export class ApiErrorResponseDto {
+    @ApiProperty({ example: false }) success!: boolean;
+    @ApiProperty({ example: 'Validation failed' }) message!: string;
+    @ApiProperty({ example: '2026-02-11T12:34:56.000Z' }) timestamp!: string;
+    @ApiProperty({ example: 400 }) statusCode!: number;
+    @ApiProperty({ example: '/medicines' }) path!: string;
+    @ApiPropertyOptional({ type: [ErrorFieldDto] })
+    fields?: ErrorFieldDto[];
+}
+
+export class MedicineDataDto {
     @ApiProperty() id!: number;
     @ApiProperty() categoryId!: number;
 
@@ -66,14 +80,21 @@ export class MedicineResponseDto {
 
 
 export class MedicineListResponseDto {
-    @ApiProperty({ type: [MedicineResponseDto] })
-    items!: MedicineResponseDto[];
+    @ApiProperty({ example: true })
+    success!: boolean;
+
+    @ApiProperty({ type: [MedicineDataDto] })
+    data!: MedicineDataDto[];
 
     @ApiProperty({ type: PaginationMetaDto })
     meta!: PaginationMetaDto;
 }
 
+export class MedicineResponseDto {
+    @ApiProperty({ example: true })
+    success!: boolean;
 
-
-
+    @ApiProperty({ type: MedicineDataDto })
+    data!: MedicineDataDto;
+}
 
