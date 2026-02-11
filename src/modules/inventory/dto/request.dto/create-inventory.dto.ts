@@ -37,10 +37,10 @@ export class CreateInventoryItemDto {
     description: 'Batch number',
   })
   batchNumber?: string | null;
-
   @ApiPropertyOptional({
     nullable: true,
-    example: '2026-01-01T00:00:00.000Z',
+    example: '2026-01-01',
+    description: 'Expiry date (YYYY-MM-DD)',
   })
   expiryDate?: string | null;
 

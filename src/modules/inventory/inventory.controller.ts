@@ -120,15 +120,16 @@ export class InventoryController {
     return this.inventoryService.findAllForPatient(pharmacyId, query);
   }
   // Admin endpoints
+  @Roles(UserRole.ADMIN)
+  @Get('admin')
   @ApiOperation({
     summary: 'Admin: List all inventory items with advanced filters',
   })
-  @Roles(UserRole.ADMIN)
   async findAllAdmin(
     @Query(new ZodValidationPipe(GetInventoryAdminQuerySchema))
     query: GetInventoryAdminQueryDto,
   ) {
-    return await this.inventoryService.findAllAdmin(query);
+    return this.inventoryService.findAllAdmin(query);
   }
 
   @ApiOperation({ summary: 'Admin: View specific inventory item details' })

@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto } from 'src/types/pagination.query';
+import { StockStatus } from '../response.dto/InventoryListItem.dto';
 
 export class GetInventoryQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
@@ -8,15 +9,16 @@ export class GetInventoryQueryDto extends PaginationQueryDto {
   })
   q?: string;
 
-  @ApiPropertyOptional({ type: 'number' })
+  @ApiPropertyOptional({
+    type: Number,
+    description: 'Filter by a specific medicine',
+  })
   medicineId?: number;
 
-  @ApiPropertyOptional({ type: 'boolean' })
-  isAvailable?: boolean;
-
   @ApiPropertyOptional({
-    type: 'boolean',
-    description: 'Filter items where stockQuantity <= minStock',
+    enum: StockStatus,
+    description:
+      'Filter by stock status (IN_STOCK / LOW_STOCK / OUT_OF_STOCK). If omitted, returns ALL.',
   })
-  lowStock?: boolean;
+  stockStatus?: StockStatus;
 }

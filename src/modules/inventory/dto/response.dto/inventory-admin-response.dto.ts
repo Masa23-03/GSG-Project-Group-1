@@ -2,26 +2,20 @@ import { ApiProperty } from '@nestjs/swagger';
 import { InventoryItemResponseDto } from './inventory-response.dto';
 
 export class PharmacySummaryDto {
-  @ApiProperty()
+  @ApiProperty({ type: Number, example: 12, description: 'Pharmacy ID' })
   id!: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: String,
+    example: 'Al-Shifa Pharmacy',
+    description: 'Pharmacy display name',
+  })
   pharmacyName!: string;
 
-  @ApiProperty()
-  verificationStatus!: string;
-}
-
-export class InventoryAdminResponseDto extends InventoryItemResponseDto {
   @ApiProperty({
-    type: PharmacySummaryDto,
-    description: 'Summary of the pharmacy that owns this inventory item',
+    type: String,
+    example: 'VERIFIED',
+    description: 'Pharmacy verification status',
   })
-  pharmacy!: PharmacySummaryDto;
-
-  @ApiProperty({ 
-    description: 'Indicates if the item has been soft-deleted',
-    example: false 
-  })
-  isDeleted!: boolean;
+  verificationStatus!: string;
 }
