@@ -31,7 +31,7 @@ export type AddressListItemWithCity = Prisma.PatientAddressGetPayload<{
 export type AddressDetailsWithCity = Prisma.PatientAddressGetPayload<{
   select: {
     id: true;
-    abel: true;
+    label: true;
     area: true;
     region: true;
     cityId: true;
