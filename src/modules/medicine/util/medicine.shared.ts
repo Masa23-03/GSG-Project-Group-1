@@ -10,3 +10,7 @@ export const medicineInclude: Prisma.MedicineInclude = {
         orderBy: { sortOrder: 'asc' },
     },
 };
+
+export type MedicineWithImages = Prisma.MedicineGetPayload<{
+    include: typeof medicineInclude;
+}>;
