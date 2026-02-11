@@ -7,6 +7,8 @@ import {
 import { CreateInventoryItemDto } from './dto/request.dto/create-inventory.dto';
 import { UpdateInventoryItemDto } from './dto/request.dto/update-inventory.dto';
 import { GetInventoryQueryDto } from './dto/query.dto/get-inventory-query.dto';
+import { GetInventoryAdminQueryDto } from './dto/query.dto/get-inventory-admin-query.dto';
+import { InventoryAdminResponseDto } from './dto/response.dto/inventory-admin-response.dto';
 import { PaginationQueryDto } from 'src/types/pagination.query';
 import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
 import { DatabaseService } from '../database/database.service';
@@ -180,6 +182,55 @@ export class InventoryService {
     };
   }
 
+async findAllAdmin(
+    query: GetInventoryAdminQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<InventoryAdminResponseDto>> {
+    const { page, limit, pharmacyId, medicineId, isAvailable, includeDeleted } =
+      query;
+    const where: any = {};
+    if (pharmacyId) where.pharmacyId = pharmacyId;
+    if (medicineId) where.medicineId = medicineId;
+    if (isAvailable !== undefined) where.isAvailable = isAvailable;
+    if (!includeDeleted) where.isDeleted = false;
+    const [items, total] = await Promise.all([
+      this.prisma.inventoryItem.findMany({
+        where,
+        include: {
+          medicine: true,
+          pharmacy: true, 
+        },
+        skip: (page! - 1) * limit!,
+        take: limit,
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.inventoryItem.count({ where }),
+    ]);
+    return {
+      success: true,
+      data: items.map((item) => InventoryMapper.toAdminResponseDto(item)),
+      meta: {
+        total,
+        page: page!,
+        limit: limit!,
+        totalPages: Math.ceil(total / limit!),
+      },
+    };
+  }
+
+   async findOneAdmin(id: number): Promise<InventoryAdminResponseDto> {
+    const item = await this.prisma.inventoryItem.findUnique({
+      where: { id },
+      include: {
+        medicine: true,
+        pharmacy: true,
+      },
+    });
+
+    if (!item) throw new NotFoundException('Inventory item not found');
+
+    return InventoryMapper.toAdminResponseDto(item);
+  }
+  
   async update(
     id: number,
     userId: number,
