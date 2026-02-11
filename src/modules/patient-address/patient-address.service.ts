@@ -19,7 +19,6 @@ import {
 import { CreatePatientAddressDto } from './dto/request/create-patient-address.dto';
 import { UpdatePatientAddressDto } from './dto/request/update-patient-address.dto';
 import { addressDetailsSelect } from './util/constant';
-import { map, NotFoundError } from 'rxjs';
 import { PatientAddressDetailsResponseDto } from './dto/response/details.response.dto';
 
 @Injectable()
