@@ -1,6 +1,5 @@
 import { UserStatus, VerificationStatus } from '@prisma/client';
-import { AdminBaseListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
-import z, { ZodType } from 'zod';
+import z from 'zod';
 import { PaginationQuerySchema } from './pagination.schema.util';
 
 //ADMIN: Get pharmacies and drivers schema
