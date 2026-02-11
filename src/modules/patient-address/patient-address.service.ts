@@ -6,6 +6,7 @@ import { PatientAddressListItemResponseDto } from './dto/response/list.response.
 import { Prisma } from '@prisma/client';
 import { removeFields } from 'src/utils/object.util';
 import { mapPatientAddressListItem } from './util/mapper';
+import { CreatePatientAddressDto } from './dto/request/create-patient-address.dto';
 
 @Injectable()
 export class PatientAddressService {
@@ -55,4 +56,6 @@ export class PatientAddressService {
       }),
     };
   }
+  async create(id: number, payload: CreatePatientAddressDto): {
+
 }
