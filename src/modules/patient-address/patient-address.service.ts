@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  PayloadTooLargeException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { PaginationQueryDto } from 'src/types/pagination.query';
