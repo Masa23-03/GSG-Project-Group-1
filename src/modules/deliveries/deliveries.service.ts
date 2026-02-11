@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  NotImplementedException,
 } from '@nestjs/common';
 import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
 import { DriverAvailableDeliveriesListItemDto } from './dto/response/list.response.dto';
@@ -23,6 +24,10 @@ import {
   deliveryDetailsSelect,
   mapToDeliveryDetails,
 } from './util/deatils.mapper';
+import {
+  DeliveryDecision,
+  DriverDeliveryDecisionDto,
+} from './dto/request/update-delivery.dto';
 
 @Injectable()
 export class DeliveriesService {
@@ -119,7 +124,69 @@ export class DeliveriesService {
     return mapToDeliveryDetails(delivery);
   }
 
-  update(id: number, updateDeliveryDto) {
-    return `This action updates a #${id} delivery`;
+  async decideDelivery(
+    userId: number,
+    deliveryId: number,
+    dto: DriverDeliveryDecisionDto,
+  ): Promise<DriverDeliveryDetailsResponseDto> {
+    if (dto.decision === DeliveryDecision.DECLINE) {
+      return this.findOne(userId, deliveryId);
+    }
+    return await this.prismaService.$transaction(async (prisma) => {
+      const driver = await prisma.driver.findUnique({
+        where: { userId },
+        select: { id: true, availabilityStatus: true },
+      });
+      if (!driver) throw new NotFoundException('Driver not found');
+      if (driver.availabilityStatus !== AvailabilityStatus.ONLINE) {
+        throw new ForbiddenException('Driver must be ONLINE');
+      }
+      const activeDelivery = await prisma.delivery.findFirst({
+        where: {
+          driverId: driver.id,
+          status: {
+            in: [
+              DeliveryStatus.ASSIGNED,
+              DeliveryStatus.PICKUP_IN_PROGRESS,
+              DeliveryStatus.EN_ROUTE,
+            ],
+          },
+        },
+        select: { id: true },
+      });
+
+      if (activeDelivery) {
+        throw new ForbiddenException('Driver already has an active delivery');
+      }
+
+      const delivery = await prisma.delivery.updateMany({
+        where: {
+          id: deliveryId,
+          driverId: null,
+          status: DeliveryStatus.PENDING,
+          pharmacyOrders: {
+            every: {
+              status: PharmacyOrderStatus.READY_FOR_PICKUP,
+            },
+          },
+        },
+        data: {
+          driverId: driver.id,
+          acceptedAt: new Date(),
+          status: DeliveryStatus.ASSIGNED,
+        },
+      });
+
+      if (delivery.count !== 1)
+        throw new ForbiddenException('Delivery is no longer available');
+
+      const fullReturn = await prisma.delivery.findUnique({
+        where: { id: deliveryId },
+        select: deliveryDetailsSelect,
+      });
+      if (!fullReturn) throw new NotFoundException('Delivery not found');
+
+      return mapToDeliveryDetails(fullReturn);
+    });
   }
 }
