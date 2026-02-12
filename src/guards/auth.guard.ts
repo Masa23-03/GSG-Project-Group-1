@@ -11,7 +11,6 @@ import { IsPublic } from 'src/decorators/isPublic.decorator';
 import { DatabaseService } from 'src/modules/database/database.service';
 import { Request } from 'express';
 import { JWT_Payload } from 'src/modules/auth/types/auth.types';
-import { JWT_Payload_STAGE } from 'src/modules/auth/types/request-user.types';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -33,23 +32,21 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing Authorization header');
 
     const [type, token] = authHeader.split(' ');
-    if ( !token)
+    if (type?.toLowerCase() !== 'bearer' || !token)
       throw new UnauthorizedException('Invalid Auth Header');
 
     try {
-      const payload = this.jwtService.verify<JWT_Payload_STAGE>(token);
+      const payload = this.jwtService.verify<JWT_Payload>(token);
       const userId = Number(payload.sub);
       if (!Number.isInteger(userId))
         throw new UnauthorizedException('Invalid token');
       const user = await this.prisma.user.findUniqueOrThrow({
         where: { id: userId },
-      select: { id: true, role: true },
       });
-      req.user = { 
+      req.user = {
         id: user.id,
-        role: user.role ,
-        stage: payload.stage, 
-         };
+        role: user.role,
+      };
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
