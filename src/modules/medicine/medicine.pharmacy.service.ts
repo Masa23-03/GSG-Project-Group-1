@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common'
 import { DatabaseService } from '../database/database.service'
 import { MedicineStatus, Prisma, VerificationStatus } from '@prisma/client'
-import { medicineInclude, toMeta } from './util/medicine.shared'
+import { medicineInclude, MedicineWithImages, toMeta } from './util/medicine.shared'
+import {
+    ApiPaginationSuccessResponse,
+    ApiSuccessResponse,
+} from 'src/types/unifiedType.types'
 
 @Injectable()
 export class MedicinePharmacyService {
@@ -41,7 +45,11 @@ export class MedicinePharmacyService {
 
 
 
-    async pharmacyRequestCreate(userId: number, myPharmacyId: number, body: any) {
+    async pharmacyRequestCreate(
+        userId: number,
+        myPharmacyId: number,
+        body: any,
+    ): Promise<ApiSuccessResponse<MedicineWithImages>> {
 
         const genericName = body.genericName.trim()
 
@@ -58,7 +66,7 @@ export class MedicinePharmacyService {
         })
         if (existingApproved) throw new ConflictException('Medicine already exists')
 
-        return await this.prisma.medicine.create({
+        const medicine = await this.prisma.medicine.create({
             data: {
                 categoryId: body.categoryId,
                 genericName,
@@ -86,6 +94,7 @@ export class MedicinePharmacyService {
             },
             include: medicineInclude,
         })
+        return { success: true, data: medicine }
     }
 
 
@@ -97,7 +106,7 @@ export class MedicinePharmacyService {
         status?: MedicineStatus;
         page: number;
         limit: number;
-    }) {
+    }): Promise<ApiPaginationSuccessResponse<MedicineWithImages>> {
         const { myPharmacyId, status, page, limit } = params;
 
         const where: Prisma.MedicineWhereInput = {
@@ -115,27 +124,38 @@ export class MedicinePharmacyService {
             include: medicineInclude,
         });
 
-        return { items, meta: toMeta(page, limit, total) };
+        return {
+            success: true,
+            data: items,
+            meta: toMeta(page, limit, total),
+        };
     }
 
 
 
 
 
-    async pharmacyGetMyRequestById(myPharmacyId: number, id: number) {
+    async pharmacyGetMyRequestById(
+        myPharmacyId: number,
+        id: number,
+    ): Promise<ApiSuccessResponse<MedicineWithImages>> {
         const medicine = await this.prisma.medicine.findFirst({
             where: { id, requestedByPharmacyId: myPharmacyId },
             include: medicineInclude,
         })
         if (!medicine) throw new NotFoundException('Medicine request not found')
-        return medicine
+        return { success: true, data: medicine }
     }
 
 
 
 
 
-    async pharmacyUpdateMyPendingRequest(myPharmacyId: number, id: number, body: any) {
+    async pharmacyUpdateMyPendingRequest(
+        myPharmacyId: number,
+        id: number,
+        body: any,
+    ): Promise<ApiSuccessResponse<MedicineWithImages>> {
         const owned = await this.prisma.medicine.findFirst({
             where: { id, requestedByPharmacyId: myPharmacyId },
             select: { id: true, status: true, genericName: true, categoryId: true },
@@ -175,7 +195,7 @@ export class MedicinePharmacyService {
             }
         }
 
-        return await this.prisma.medicine.update({
+        const medicine = await this.prisma.medicine.update({
             where: { id },
             data: {
                 categoryId: body.categoryId,
@@ -196,5 +216,6 @@ export class MedicinePharmacyService {
             },
             include: medicineInclude,
         })
+        return { success: true, data: medicine }
     }
 }

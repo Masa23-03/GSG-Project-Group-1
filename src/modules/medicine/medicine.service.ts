@@ -1,18 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { MedicineStatus, Prisma } from '@prisma/client';
-import { medicineInclude, toMeta } from './util/medicine.shared';
-
-export type Params = {
-  q?: string
-  status?: MedicineStatus
-  isActive?: boolean
-  categoryId?: number
-  page: number
-  limit: number
-}
-
-
+import { medicineInclude, MedicineWithImages, toMeta } from './util/medicine.shared';
+import {
+  ApiPaginationSuccessResponse,
+  ApiSuccessResponse,
+  Params,
+} from 'src/types/unifiedType.types'
 
 @Injectable()
 export class MedicineService {
@@ -20,7 +14,9 @@ export class MedicineService {
 
 
 
-  async browseMedicines(params: Params) {
+  async browseMedicines(
+    params: Params,
+  ): Promise<ApiPaginationSuccessResponse<MedicineWithImages>> {
     const qTrim = params.q?.trim();
     const { categoryId, page, limit } = params;
 
@@ -48,21 +44,24 @@ export class MedicineService {
     });
 
     return {
-       items,
-       meta: toMeta(page, limit, total)
-       };
+      success: true,
+      data: items,
+      meta: toMeta(page, limit, total),
+    };
   }
 
 
 
 
 
-  async getApprovedActiveById(id: number) {
+  async getApprovedActiveById(
+    id: number,
+  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
     const medicine = await this.prisma.medicine.findFirst({
       where: { id, status: MedicineStatus.APPROVED, isActive: true },
       include: medicineInclude,
     });
     if (!medicine) throw new NotFoundException('Medicine not found');
-    return medicine;
+    return { success: true, data: medicine };
   }
 }

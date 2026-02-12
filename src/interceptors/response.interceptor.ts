@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
 import {
-  ApiPaginationSuccessResponse,
   objectType,
   PaginationResult,
   UnifiedApiResponse,
@@ -22,6 +21,9 @@ export class ResponseInterceptor<
   ): Observable<UnifiedApiResponse<T>> {
     return next.handle().pipe(
       map((data) => {
+        if (isUnifiedResponse<T>(data)) {
+          return data;
+        }
         if (isPaginationResponse<T>(data)) {
           return {
             success: true,
@@ -37,6 +39,16 @@ export class ResponseInterceptor<
     );
   }
 }
+
+const isUnifiedResponse = <T>(data: unknown): data is UnifiedApiResponse<T> => {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as any;
+  if (typeof d.success !== 'boolean') return false;
+  if (d.success === true) {
+    return 'data' in d;
+  }
+  return typeof d.message === 'string' && typeof d.statusCode === 'number';
+};
 
 const isPaginationResponse = <T>(
   data: unknown,

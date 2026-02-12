@@ -1,6 +1,7 @@
-import { z } from 'zod';
+import { z, ZodType } from 'zod';
 import { MedicineStatus } from '@prisma/client';
 import { removeFields } from 'src/utils/object.util';
+import { PaginationQueryType } from 'src/types/unifiedType.types';
 
 // const MedicineStatusWithoutRejected = removeFields( MedicineStatus, ['REJECTED'])
 
@@ -11,23 +12,27 @@ export const IdParamSchema = z.object({
 export const PaginationQuerySchema = z.object({
     page: z.coerce.number().int().positive().optional().default(1),
     limit: z.coerce.number().int().positive().max(100).optional().default(10),
-})
+}).strict() satisfies ZodType<PaginationQueryType>
 
-export const SearchQuerySchema = z.object({
+const BooleanFromStringSchema = z.preprocess(
+    (value) => {
+        if (value === 'true') return true;
+        if (value === 'false') return false;
+        return value;
+    },
+    z.boolean(),
+);
+
+export const SearchQuerySchema = PaginationQuerySchema.extend({
     q: z.string().trim().optional(),
     categoryId: z.coerce.number().int().positive().optional(),
-    page: z.coerce.number().optional(),
-    limit: z.coerce.number().optional(),
 }).strict();
 
 
 //* Admin list query 
 export const AdminListQuerySchema = SearchQuerySchema.extend({
-    status: z.enum(MedicineStatus).optional(),
-    isActive: z
-        .union([z.coerce.boolean(), z.enum(['true', 'false'])])
-        .optional()
-        .transform((v) => (typeof v === 'string' ? v === 'true' : v)),
+    status: z.nativeEnum(MedicineStatus).optional(),
+    isActive: BooleanFromStringSchema.optional(),
 })
 
 //* Pharmacy requests list query 
