@@ -1,5 +1,6 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiResponse,
@@ -24,6 +25,7 @@ import {
 import { MedicineWithImages } from './util/medicine.shared';
 
 @ApiTags('Medicines (Patient)')
+@ApiBearerAuth('access-token')
 @Controller('medicines')
 export class MedicineController {
   constructor(private readonly medicineService: MedicineService) {}

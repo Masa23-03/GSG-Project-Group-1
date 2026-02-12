@@ -50,7 +50,7 @@ import { MedicineWithImages } from './util/medicine.shared';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
 
 @ApiTags('Medicine (Pharmacy)')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(UserRole.PHARMACY)
 @RequireVerified('PHARMACY')

@@ -47,7 +47,7 @@ import {
 import { MedicineWithImages } from './util/medicine.shared';
 
 @ApiTags('Medicine - Admin')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 @Controller('medicines/admin')
