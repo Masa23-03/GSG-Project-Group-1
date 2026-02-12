@@ -173,7 +173,7 @@ export class AuthService {
     return this.issueTokens(stored.userId);
   }
 
-  async logout(dto: LogoutDto) {
+  async logout(userId: number, dto: LogoutDto) {
     const providedHash = hashRefreshToken(dto.refreshToken);
     await this.prisma.refreshToken.updateMany({
       where: { token: providedHash, revokedAt: null },
