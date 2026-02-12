@@ -1,4 +1,4 @@
-import { PatientAddress, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export type addressWithCity = Prisma.PatientAddressGetPayload<{
   select: {
@@ -11,6 +11,19 @@ export type addressWithCity = Prisma.PatientAddressGetPayload<{
     addressLine2: true;
     latitude: true;
     longitude: true;
+    city: { select: { name: true } };
+  };
+}>;
+
+export type AddressListItemWithCity = Prisma.PatientAddressGetPayload<{
+  select: {
+    id: true;
+    label: true;
+    cityId: true;
+    addressLine1: true;
+    latitude: true;
+    longitude: true;
+    isDefault: true;
     city: { select: { name: true } };
   };
 }>;

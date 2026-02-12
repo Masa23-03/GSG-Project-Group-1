@@ -90,6 +90,7 @@ enum PharmacyOrderStatus {
   ACCEPTED
   REJECTED
   PREPARING
+  CANCELLED
   READY_FOR_PICKUP
   //at least one pharmacy status is READY_FOR_PICKUP -> into delivery
   PICKED_UP
@@ -504,6 +505,7 @@ model PharmacyOrder {
   updatedAt            DateTime            @updatedAt @map("updated_at") @db.DateTime(0)
   rejectionReason      String?             @map("rejection_reason") @db.VarChar(255)
   totalAmount          Decimal             @map("total_amount") @db.Decimal(10, 2)
+  stockReleasedAt      DateTime?           @map("stock_released_at") @db.Timestamp()
 
   //! Relations
   order              Order               @relation(fields: [orderId], references: [id])
@@ -551,6 +553,7 @@ model Prescription {
   createdAt           DateTime           @default(now()) @map("created_at") @db.DateTime(0)
   updatedAt           DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
   pharmacyId          Int?               @map("pharmacy_id") @db.UnsignedInt
+  isActive            Boolean            @default(true)
   //! Relations
   pharmacyOrder       PharmacyOrder?     @relation(fields: [pharmacyOrderId], references: [id])
   patient             User               @relation(fields: [patientId], references: [id])

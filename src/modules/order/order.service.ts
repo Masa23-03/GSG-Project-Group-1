@@ -1,10 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import {
   Currency,
   MedicineStatus,
+  OrderStatus,
   PaymentMethod,
   PaymentStatus,
+  PharmacyOrderStatus,
   Prisma,
   UserStatus,
   VerificationStatus,
@@ -24,11 +30,26 @@ import {
   ReqInv,
   UserContactLite,
 } from './util/types.helper.create';
+import { PatientOrderQueryDto } from './dto/request.dto/order.query.dto';
+import {
+  PatientCancelOrderResponseDto,
+  PatientOrderDetailsResponseDto,
+  PatientOrderResponseDto,
+} from './dto/response.dto/patient-get-order.response.dto';
+import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
+import { computeOrderStatus } from './util/compute-order-status.helper';
+import { buildOrderWhereStatement } from './util/patient-orders-where-build.helper';
+import { removeFields } from 'src/utils/object.util';
+import { canTrack } from './util/canTrack.helper';
+import { canCancel, CANCELLABLE } from './util/canCancel.helper';
+import { mapToPatientOrderDetails } from './util/mapToPatientOrderDetails';
+import { buildCreatedAtOrderBy } from 'src/types/pagination.query';
 
 @Injectable()
 export class OrderService {
   constructor(private readonly prismaService: DatabaseService) {}
 
+  //! create order
   async createOrder(
     userId: number,
     dto: CreateOrderDto,
@@ -97,7 +118,7 @@ export class OrderService {
         deliveryFee,
         currency,
       });
-      await this.decrementStock(prisma, dto);
+      await this.reserveStockFromCreateDto(prisma, dto);
       await this.attachPrescriptions(prisma, userId, dto, poIdByPharmacyId);
       const fullOrder = await prisma.order.findUniqueOrThrow({
         where: { id: orderId },
@@ -107,6 +128,184 @@ export class OrderService {
       return mapToOrderResponse(fullOrder);
     });
   }
+  //! get orders
+  async getOrders(
+    userId: number,
+    query: PatientOrderQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<PatientOrderResponseDto>> {
+    const pagination = this.prismaService.handleQueryPagination(query);
+    const whereSt = buildOrderWhereStatement(userId, query);
+    const orderBy = buildCreatedAtOrderBy(query);
+
+    return this.prismaService.$transaction(async (prisma) => {
+      const [orders, count] = await Promise.all([
+        prisma.order.findMany({
+          ...removeFields(pagination, ['page']),
+          where: whereSt,
+          orderBy: orderBy,
+
+          select: {
+            id: true,
+            createdAt: true,
+            status: true,
+            totalAmount: true,
+            itemsCount: true,
+            currency: true,
+            deliveryAddressLine: true,
+            deliveryLatitude: true,
+            deliveryLongitude: true,
+            pharmacyOrders: {
+              select: {
+                status: true,
+                pharmacy: {
+                  select: {
+                    pharmacyName: true,
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        prisma.order.count({
+          where: whereSt,
+        }),
+      ]);
+      const data: PatientOrderResponseDto[] = orders.map((o) => {
+        const pharmacyStatuses = o.pharmacyOrders.map((p) => p.status);
+        const pharmacies = o.pharmacyOrders.map((po) => ({
+          pharmacyId: po.pharmacy.id,
+          pharmacyName: po.pharmacy.pharmacyName,
+        }));
+
+        return {
+          id: o.id,
+          status: o.status,
+          createdAt: o.createdAt.toISOString(),
+          totalAmount: Number(o.totalAmount),
+          itemsCount: o.itemsCount,
+          currency: o.currency,
+          deliveryAddress: {
+            addressText: o.deliveryAddressLine,
+            lat: o.deliveryLatitude ? Number(o.deliveryLatitude) : null,
+            lng: o.deliveryLongitude ? Number(o.deliveryLongitude) : null,
+          },
+          pharmacies: pharmacies,
+          pharmaciesCount: pharmacies.length,
+          canCancel: canCancel(pharmacyStatuses),
+          canTrack: canTrack(o.status),
+          eta: null,
+        };
+      });
+      return {
+        success: true,
+        data,
+        meta: this.prismaService.formatPaginationResponse({
+          count: count,
+          page: pagination.page,
+          limit: pagination.take,
+        }),
+      };
+    });
+  }
+  //! get order details
+  async getOrderDetails(
+    userId: number,
+    orderId: number,
+  ): Promise<PatientOrderDetailsResponseDto> {
+    return this.prismaService.$transaction(async (prisma) => {
+      const order = await prisma.order.findFirst({
+        where: { id: orderId, patientId: userId },
+        include: {
+          ...orderWithRelations,
+          delivery: {
+            select: {
+              id: true,
+              status: true,
+              acceptedAt: true,
+              deliveredAt: true,
+              driver: {
+                select: {
+                  id: true,
+                  user: { select: { name: true, phoneNumber: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!order) throw new NotFoundException('Order not found');
+
+      return mapToPatientOrderDetails(order);
+    });
+  }
+  //! cancel order
+  async cancelOrder(
+    userId: number,
+    orderId: number,
+  ): Promise<PatientCancelOrderResponseDto> {
+    return this.prismaService.$transaction(async (prisma) => {
+      const order = await prisma.order.findFirst({
+        where: { id: orderId, patientId: userId },
+        select: {
+          id: true,
+          status: true,
+          delivery: { select: { status: true } },
+          pharmacyOrders: {
+            select: { id: true, status: true, deliveryId: true },
+          },
+        },
+      });
+      if (!order) throw new NotFoundException('Order not found');
+      if (
+        order.status === OrderStatus.CANCELLED ||
+        order.status === OrderStatus.REJECTED ||
+        order.status === OrderStatus.DELIVERED
+      ) {
+        throw new BadRequestException('Order cannot be cancelled');
+      }
+
+      if (
+        order.delivery ||
+        order.pharmacyOrders.some((po) => po.deliveryId !== null)
+      )
+        throw new BadRequestException(
+          'Order cannot be cancelled after delivery is created',
+        );
+      const statuses = order.pharmacyOrders.map((p) => p.status);
+
+      if (!canCancel(statuses)) {
+        throw new BadRequestException(
+          'Order cannot be cancelled at this stage',
+        );
+      }
+
+      const total = order.pharmacyOrders.length;
+
+      const cancelResult = await prisma.pharmacyOrder.updateMany({
+        where: { orderId: orderId, status: { in: [...CANCELLABLE] } },
+        data: { status: PharmacyOrderStatus.CANCELLED },
+      });
+
+      if (cancelResult.count !== total)
+        throw new BadRequestException(
+          'Order status changed, cannot cancel now',
+        );
+
+      const updated = await prisma.order.update({
+        where: { id: orderId },
+        data: { status: OrderStatus.CANCELLED },
+        select: { id: true, status: true },
+      });
+
+      await this.releaseStockForOrder(prisma, order.id);
+
+      return updated;
+    });
+  }
+
+  //! helpers
   //load pharmacies and do validation on pharmacies
   private async loadAndValidatePharmacies(
     prisma: Prisma.TransactionClient,
@@ -408,7 +607,7 @@ export class OrderService {
     return { orderId: created.id, poIdByPharmacyId };
   }
   //update inventory stock
-  private async decrementStock(
+  private async reserveStockFromCreateDto(
     prisma: Prisma.TransactionClient,
     dto: CreateOrderDto,
   ) {
@@ -435,6 +634,54 @@ export class OrderService {
     }
   }
 
+  //increment inventory stock for the whole order -> in case of cancel
+  async releaseStockForOrder(
+    prisma: Prisma.TransactionClient,
+    orderId: number,
+  ) {
+    const pharmacyOrders = await prisma.pharmacyOrder.findMany({
+      where: { orderId },
+      select: { id: true },
+    });
+
+    for (const po of pharmacyOrders) {
+      await this.releaseStockForPharmacyOrder(prisma, po.id);
+    }
+  }
+
+  //(increment inventory stock ) --> pharmacy order
+  //in case of rejection and cancel
+  async releaseStockForPharmacyOrder(
+    prisma: Prisma.TransactionClient,
+    pharmacyOrderId: number,
+  ) {
+    const locked = await prisma.pharmacyOrder.updateMany({
+      where: {
+        id: pharmacyOrderId,
+        stockReleasedAt: null,
+        status: {
+          in: [PharmacyOrderStatus.CANCELLED, PharmacyOrderStatus.REJECTED],
+        },
+      },
+      data: { stockReleasedAt: new Date() },
+    });
+    if (locked.count !== 1) return;
+
+    const items = await prisma.pharmacyOrderItem.findMany({
+      where: { pharmacyOrderId },
+      select: { inventoryItemId: true, quantity: true },
+    });
+
+    await Promise.all(
+      items.map((i) =>
+        prisma.inventoryItem.update({
+          where: { id: i.inventoryItemId },
+          data: { stockQuantity: { increment: i.quantity } },
+        }),
+      ),
+    );
+  }
+
   //update prescription (attach it)
   private async attachPrescriptions(
     prisma: Prisma.TransactionClient,
@@ -451,6 +698,10 @@ export class OrderService {
           `Missing pharmacy order for ${p.pharmacyId}`,
         );
       }
+      await prisma.prescription.updateMany({
+        where: { pharmacyOrderId, isActive: true },
+        data: { isActive: false },
+      });
 
       const updated = await prisma.prescription.updateMany({
         where: {
@@ -461,6 +712,7 @@ export class OrderService {
         },
         data: {
           pharmacyOrderId,
+          isActive: true,
         },
       });
 
@@ -474,7 +726,6 @@ export class OrderService {
 
   private buildSinglePharmacyOrder({
     pharmacyDto,
-
     inventories,
     currency,
   }: {
@@ -558,5 +809,27 @@ export class OrderService {
       inventoryIds: [...reqByInventoryId.keys()],
       reqByInventoryId,
     };
+  }
+  //update order status and recompute it
+  //used when pharmacy update their order status
+  //when driver update delivery
+  //when patient cancel
+  async syncOrderStatus(prisma: Prisma.TransactionClient, orderId: number) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        pharmacyOrders: { select: { status: true } },
+        delivery: { select: { status: true } },
+      },
+    });
+    if (!order) throw new NotFoundException('Order with this id was not found');
+    const statuses = order.pharmacyOrders.map((p) => p.status);
+    const delivery = order.delivery ? { status: order.delivery.status } : null;
+
+    const newStatus = computeOrderStatus(statuses, delivery);
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: newStatus },
+    });
   }
 }

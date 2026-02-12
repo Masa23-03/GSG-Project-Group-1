@@ -12,12 +12,12 @@ import { FileModule } from './modules/file/file.module';
 import { PatientAddressModule } from './modules/patient-address/patient-address.module';
 import { OrderModule } from './modules/order/order.module';
 import { PrescriptionModule } from './modules/prescription/prescription.module';
-import { PaymentModule } from './modules/payment/payment.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { CategoryModule } from './modules/category/category.module';
 import { MedicineModule } from './modules/medicine/medicine.module';
 import { CityModule } from './modules/city/city.module';
 import { VerifiedGuard } from './guards/verified.guard';
+import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 
 @Module({
   imports: [
@@ -34,11 +34,11 @@ import { VerifiedGuard } from './guards/verified.guard';
     PatientAddressModule,
     OrderModule,
     PrescriptionModule,
-    PaymentModule,
     InventoryModule,
     CategoryModule,
     MedicineModule,
     CityModule,
+    DeliveriesModule,
   ],
   providers: [
     {

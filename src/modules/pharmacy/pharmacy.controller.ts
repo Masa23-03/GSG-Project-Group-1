@@ -13,19 +13,20 @@ import { PharmacyService } from './pharmacy.service';
 
 import { Roles } from 'src/decorators/roles.decorator';
 import { UserRole, UserStatus, VerificationStatus } from '@prisma/client';
-import { ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
 import {
   AdminBaseListQueryDto,
   AdminBaseUpdateVerificationStatusDto,
 } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { ZodValidationPipe } from 'nestjs-zod';
-import { AdminPharmacyListQuerySchema } from './schema/pharmacy.schema';
+import { adminPharmacyListQuerySchema } from './schema/pharmacy.schema';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import { adminBaseUpdateVerificationStatusSchema } from 'src/utils/schema/adminGetPharmacyAndDriverListQuery.schema';
 import type { authedUserType } from 'src/types/unifiedType.types';
 import { UpdateMyPharmacyProfileDto } from './dto/request.dto/profile.dto';
 import { updatePharmacyProfileSchema } from './schema/profile.schema';
 
+@ApiBearerAuth('access-token')
 @Controller('pharmacy')
 export class PharmacyController {
   constructor(private readonly pharmacyService: PharmacyService) {}
@@ -49,7 +50,7 @@ export class PharmacyController {
   })
   @ApiQuery({ name: 'q', required: false, type: String })
   async findAllAdmin(
-    @Query(new ZodValidationPipe(AdminPharmacyListQuerySchema))
+    @Query(new ZodValidationPipe(adminPharmacyListQuerySchema))
     query: AdminBaseListQueryDto,
   ) {
     return await this.pharmacyService.findAllAdmin(query);

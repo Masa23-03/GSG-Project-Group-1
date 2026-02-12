@@ -27,6 +27,7 @@ export const orderWithRelations = {
         },
       },
       prescriptions: {
+        where: { isActive: true },
         select: { id: true, status: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 1,
@@ -34,6 +35,7 @@ export const orderWithRelations = {
     },
   },
 } satisfies Prisma.OrderInclude;
+
 export type PharmacyOrderWithRelations = Prisma.PharmacyOrderGetPayload<{
   include: typeof orderWithRelations.pharmacyOrders.include;
 }>;
