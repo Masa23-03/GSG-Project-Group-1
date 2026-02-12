@@ -37,6 +37,9 @@ export class MedicineController {
     return await this.medicineService.browseMedicines({
       q: query.q,
       categoryId: query.categoryId,
+      requiresPrescription: query.requiresPrescription,
+      minPrice: query.minPrice,
+      maxPrice: query.maxPrice,
       page: query.page ?? 1,
       limit: query.limit ?? 10,
     });
