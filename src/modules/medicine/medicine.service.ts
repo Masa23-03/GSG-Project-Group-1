@@ -4,7 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { MedicineStatus, Prisma } from '@prisma/client';
+import {
+  MedicineStatus,
+  Prisma,
+  UserStatus,
+  VerificationStatus,
+} from '@prisma/client';
 import { medicineInclude, MedicineWithImages } from './util/medicine.shared';
 import {
   ApiPaginationSuccessResponse,
@@ -12,6 +17,14 @@ import {
 } from 'src/types/unifiedType.types';
 import { PatientMedicineListQueryDto } from './swagger/query.medicine.dto';
 import { removeFields } from 'src/utils/object.util';
+import {
+  PatientMedicinePharmaciesQueryDto,
+  PatientMedicinePharmacyItemDto,
+} from './dto/medicine-pahrmacies.dto';
+import {
+  mapToPatientMedicinePharmacyItem,
+  patientMedicinePharmacySelect,
+} from './util/medicine-pharmacy.mapper';
 
 @Injectable()
 export class MedicineService {
@@ -93,7 +106,6 @@ export class MedicineService {
     };
   }
 
- 
   async browseMedicines(
     params: PatientMedicineListQueryDto,
   ): Promise<ApiPaginationSuccessResponse<MedicineWithImages>> {

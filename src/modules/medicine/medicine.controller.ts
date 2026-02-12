@@ -1,14 +1,5 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { z } from 'zod';
 
-import { MedicineService } from './medicine.service';
 import {
   PatientListQuerySchema,
   SearchQuerySchema,
@@ -17,15 +8,30 @@ import {
   MedicineListQueryDto,
   PatientMedicineListQueryDto,
 } from './swagger/query.medicine.dto';
-import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
-import {
-  ApiPaginationSuccessResponse,
-  ApiSuccessResponse,
-} from 'src/types/unifiedType.types';
+import * as unifiedTypeTypes from 'src/types/unifiedType.types';
 import { MedicineWithImages } from './util/medicine.shared';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { ZodValidationPipe } from 'nestjs-zod';
+import { Roles } from 'src/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
+import { MedicineService } from './medicine.service';
+import { AuthedUser } from 'src/decorators/authedUser.decorator';
+import { patientMedicinePharmaciesQueryDtoSchema } from './schema/medicine-pahrmacies.schema';
+import {
+  PatientMedicinePharmaciesQueryDto,
+  PatientMedicinePharmacyItemDto,
+} from './dto/medicine-pahrmacies.dto';
 
 @ApiTags('Medicines (Patient)')
 @ApiBearerAuth('access-token')
+@Roles(UserRole.PATIENT)
 @Controller('medicines')
 export class MedicineController {
   constructor(private readonly medicineService: MedicineService) {}
@@ -35,7 +41,9 @@ export class MedicineController {
   async list(
     @Query(new ZodValidationPipe(PatientListQuerySchema))
     query: PatientMedicineListQueryDto,
-  ): Promise<ApiPaginationSuccessResponse<MedicineWithImages>> {
+  ): Promise<
+    unifiedTypeTypes.ApiPaginationSuccessResponse<MedicineWithImages>
+  > {
     return await this.medicineService.browseMedicines({
       q: query.q,
       categoryId: query.categoryId,
@@ -52,48 +60,9 @@ export class MedicineController {
   async getById(
     @Param('id', ParseIntPipe)
     params: number,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  ): Promise<unifiedTypeTypes.ApiSuccessResponse<MedicineWithImages>> {
     return await this.medicineService.getApprovedActiveById(params);
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
-  Query,
-} from '@nestjs/common';
-import { MedicineService } from './medicine.service';
-import { CreateMedicineDto } from './dto/create-medicine.dto';
-import { UpdateMedicineDto } from './dto/update-medicine.dto';
-import { UserRole } from '@prisma/client';
-import { Roles } from 'src/decorators/roles.decorator';
-import {
-  ApiBearerAuth,
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
-import { AuthedUser } from 'src/decorators/authedUser.decorator';
-import type {
-  ApiPaginationSuccessResponse,
-  authedUserType,
-} from 'src/types/unifiedType.types';
-import {
-  PatientMedicinePharmaciesQueryDto,
-  PatientMedicinePharmacyItemDto,
-} from './dto/medicine-pahrmacies.dto';
-import { ZodValidationPipe } from 'nestjs-zod';
-import { patientMedicinePharmaciesQueryDtoSchema } from './schema/medicine-pahrmacies.schema';
-
-@ApiBearerAuth('access-token')
-@Controller('medicine')
-export class MedicineController {
-  constructor(private readonly medicineService: MedicineService) {}
-
-  @Roles(UserRole.PATIENT)
+  }
   @Get(':id/pharmacies')
   @ApiOperation({
     summary: 'List pharmacies that have this medicine (patient)',
@@ -121,11 +90,13 @@ export class MedicineController {
     },
   })
   async getPharmaciesByMedicine(
-    @AuthedUser() user: authedUserType,
+    @AuthedUser() user: unifiedTypeTypes.authedUserType,
     @Param('medicineId', ParseIntPipe) medicineId: number,
     @Query(new ZodValidationPipe(patientMedicinePharmaciesQueryDtoSchema))
     query: PatientMedicinePharmaciesQueryDto,
-  ): Promise<ApiPaginationSuccessResponse<PatientMedicinePharmacyItemDto>> {
+  ): Promise<
+    unifiedTypeTypes.ApiPaginationSuccessResponse<PatientMedicinePharmacyItemDto>
+  > {
     return this.medicineService.getPharmaciesByMedicine(
       user.id,
       medicineId,
