@@ -7,16 +7,6 @@ export type authedUserType = {
   role: UserRole;
 };
 
-
-export type Params = {
-  q?: string
-  status?: MedicineStatus
-  isActive?: boolean
-  categoryId?: number
-  page: number
-  limit: number
-}
-
 export type PaginationQueryType = {
   page?: number;
   limit?: number;
