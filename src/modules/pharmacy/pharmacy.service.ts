@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ApiPaginationSuccessResponse,
   ApiSuccessResponse,
@@ -62,10 +62,14 @@ export class PharmacyService {
   async create(payload: RegisterPharmacyDTO) {
     try {
       return this.prismaService.$transaction(async (tx) => {
+
+        const city = await tx.city.findUnique({ where: { id: payload.cityId }, select: { id: true } });
+        if (!city) throw new NotFoundException('City not found');
+
         const user = await this.userService.create(
           payload,
           UserRole.PHARMACY,
-          UserStatus.ACTIVE,
+          UserStatus.INACTIVE,
           tx,
         );
 
@@ -84,15 +88,15 @@ export class PharmacyService {
 
         return {
           user,
-          pharmacy,
+          pharmacy
         };
+
       });
     } catch (e) {
       console.log('pharmacy service error - create() method :', e);
       throw e;
     }
   }
-
   //Admin only
   async findAllAdmin(
     query: AdminListQueryDto,

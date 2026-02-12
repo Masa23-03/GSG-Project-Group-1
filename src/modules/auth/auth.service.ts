@@ -28,6 +28,7 @@ import { RefreshTokenDTO } from './dto/refresh-token.dto';
 import { LogoutDto } from './dto/auth.logout.dto';
 import { RequestOtpDTO, VerifyOtpDTO } from './dto/otp.dto';
 import { AuthResponseDto } from './swaggerDTOs/response.swagger.dto';
+import { JWT_Payload } from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -42,22 +43,17 @@ export class AuthService {
 
   async registerPatient(dto: RegisterPatientDTO) {
     const user = await this.userService.create(dto, UserRole.PATIENT);
-    const { accessToken, refreshToken, stage } = await this.issueTokens(
-      user.id,
-    );
+    const { accessToken, refreshToken } = await this.issueTokens(user.id);
     return {
       user,
       accessToken,
       refreshToken,
-      stage,
     };
   }
 
   async registerPharmacy(dto: RegisterPharmacyDTO) {
     const { user, pharmacy } = await this.pharmacyService.create(dto);
-    const { accessToken, refreshToken, stage } = await this.issueTokens(
-      user.id,
-    );
+    const { accessToken, refreshToken } = await this.issueTokens(user.id);
     return {
       user,
       profile: pharmacy,
@@ -70,9 +66,7 @@ export class AuthService {
 
   async registerDriver(dto: RegisterDriverDTO) {
     const { user, driver } = await this.driverService.create(dto);
-    const { accessToken, refreshToken, stage } = await this.issueTokens(
-      user.id,
-    );
+    const { accessToken, refreshToken } = await this.issueTokens(user.id);
     return {
       user,
       profile: driver,
@@ -83,47 +77,28 @@ export class AuthService {
     };
   }
 
-  computeStage(user: any) {
-    if (user.role === 'PATIENT' || user.role === 'ADMIN') return 'FULL';
-    if (user.role === 'PHARMACY') {
-      return user.pharmacy?.verificationStatus === 'VERIFIED'
-        ? 'FULL'
-        : 'LIMITED';
-    }
-    if (user.role === 'DRIVER') {
-      return user.driver?.verificationStatus === 'VERIFIED'
-        ? 'FULL'
-        : 'LIMITED';
-    }
-    return 'LIMITED';
-  }
-
   async issueTokens(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        pharmacy: { select: { verificationStatus: true } },
-        driver: { select: { verificationStatus: true } },
-      },
+      select: { id: true, role: true, status: true },
     });
 
-    if (!user)
-      throw new UnauthorizedException('Invalid session , wait for approval!');
-
-    const stage = this.computeStage(user);
+    if (!user) throw new UnauthorizedException('Invalid session');
+    if (user.status === 'INACTIVE') {
+      throw new UnauthorizedException('Account is inactive');
+    }
     const payload = {
       sub: user.id,
       role: user.role,
-      stage,
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: '15m',
+      expiresIn: '7d',
     });
 
     const refreshToken = generateRefreshToken();
     const refreshHash = hashRefreshToken(refreshToken);
-    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
     await this.prisma.refreshToken.create({
       data: {
@@ -136,12 +111,12 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      stage,
     };
   }
 
   async login(dto: LoginDTO) {
     const email = this.userService.normalizeEmail(dto.email);
+
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
@@ -156,15 +131,12 @@ export class AuthService {
     if (user.status === 'INACTIVE') {
       throw new UnauthorizedException('Account is inactive');
     }
-
     const ok = await verifyPassword(user.password, dto.password);
     if (!ok) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { accessToken, refreshToken, stage } = await this.issueTokens(
-      user.id,
-    );
+    const { accessToken, refreshToken } = await this.issueTokens(user.id);
     const userWithoutPassword = removeFields(user, [
       'password',
       'pharmacy',
@@ -201,10 +173,10 @@ export class AuthService {
     return this.issueTokens(stored.userId);
   }
 
-  async logout(userId: number, dto: LogoutDto) {
+  async logout(dto: LogoutDto) {
     const providedHash = hashRefreshToken(dto.refreshToken);
     await this.prisma.refreshToken.updateMany({
-      where: { token: providedHash, userId, revokedAt: null },
+      where: { token: providedHash, revokedAt: null },
       data: { revokedAt: new Date() },
     });
     return { success: true };

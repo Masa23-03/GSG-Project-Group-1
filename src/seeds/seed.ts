@@ -10,6 +10,20 @@ async function main() {
   try {
     console.log('Seeding admin user...');
     await seedAdmin(prisma);
+    await prisma.city.createMany({
+      data: [{ name: 'Gaza' }, { name: 'Al Nusirat' }, { name: 'Middle' }],
+      skipDuplicates: true,
+    });
+    await prisma.category.createMany({
+      data: [
+        { name: 'Pain Relief' },
+        { name: 'Antibiotics' },
+        { name: 'Vitamins' },
+      ],
+      skipDuplicates: true,
+    });
+
+    
   } finally {
     await prisma.$disconnect();
   }
