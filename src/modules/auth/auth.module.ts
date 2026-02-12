@@ -19,7 +19,7 @@ import { DriverModule } from '../driver/driver.module';
       global: true,
       useFactory: async () => ({
         secret: env.JWT_SECRET,
-        signOptions: { expiresIn: '1d' },
+        signOptions: { expiresIn: '15m' },
       }),
     }),
   ],

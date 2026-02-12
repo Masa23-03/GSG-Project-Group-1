@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { verifyPassword } from './util/crypto.util';
 import { DatabaseService } from '../database/database.service';
 import { UserService } from '../user/user.service';
@@ -8,8 +12,15 @@ import { PharmacyService } from '../pharmacy/pharmacy.service';
 import { DriverService } from '../driver/driver.service';
 // import { OtpService } from './otp/otp.service';
 import { removeFields } from '../../utils/object.util';
-import { generateRefreshToken, hashRefreshToken } from './util/refresh-token.util';
-import { RegisterDriverDTO, RegisterPatientDTO, RegisterPharmacyDTO } from './dto/auth.register.dto';
+import {
+  generateRefreshToken,
+  hashRefreshToken,
+} from './util/refresh-token.util';
+import {
+  RegisterDriverDTO,
+  RegisterPatientDTO,
+  RegisterPharmacyDTO,
+} from './dto/auth.register.dto';
 // import { RegisterResponseDTO } from './dto/auth.response.dto';
 // import { ApiSuccessResponse } from 'src/types/unifiedType.types';
 import { LoginDTO } from './dto/auth.login.dto';
@@ -17,6 +28,7 @@ import { RefreshTokenDTO } from './dto/refresh-token.dto';
 import { LogoutDto } from './dto/auth.logout.dto';
 import { RequestOtpDTO, VerifyOtpDTO } from './dto/otp.dto';
 import { AuthResponseDto } from './swaggerDTOs/response.swagger.dto';
+import { JWT_Payload } from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -27,96 +39,57 @@ export class AuthService {
     private readonly driverService: DriverService,
     // private readonly otpService: OtpService,
     private readonly prisma: DatabaseService,
-  ) { }
-
-
-
-
+  ) {}
 
   async registerPatient(dto: RegisterPatientDTO) {
     const user = await this.userService.create(dto, UserRole.PATIENT);
-    const { accessToken, refreshToken, stage } = await this.issueTokens(user.id);
+    const { accessToken, refreshToken } = await this.issueTokens(user.id);
     return {
       user,
       accessToken,
       refreshToken,
-      stage,
     };
   }
 
-
-
-
-
-
-
   async registerPharmacy(dto: RegisterPharmacyDTO) {
     const { user, pharmacy } = await this.pharmacyService.create(dto);
-    const { accessToken, refreshToken, stage } = await this.issueTokens(user.id);
+    const { accessToken, refreshToken } = await this.issueTokens(user.id);
     return {
       user,
       profile: pharmacy,
       accessToken: accessToken,
       refreshToken: refreshToken,
-      message: 'Registered successfully. Your pharmacy license is under review.'
+      message:
+        'Registered successfully. Your pharmacy license is under review.',
     };
   }
 
-
-
-
-
   async registerDriver(dto: RegisterDriverDTO) {
     const { user, driver } = await this.driverService.create(dto);
-    const { accessToken, refreshToken, stage } = await this.issueTokens(user.id);
+    const { accessToken, refreshToken } = await this.issueTokens(user.id);
     return {
       user,
       profile: driver,
       accessToken: accessToken,
       refreshToken: refreshToken,
-      message: 'Registered successfully. Your pharmacy license is under review.'
+      message:
+        'Registered successfully. Your pharmacy license is under review.',
     };
   }
-
-
-
-
-
-
-  computeStage(user: any) {
-    if (user.role === 'PATIENT' || user.role === 'ADMIN') return 'FULL';
-    if (user.role === 'PHARMACY') {
-      return user.pharmacy?.verificationStatus === 'VERIFIED' ? 'FULL' : 'LIMITED';
-    }
-    if (user.role === 'DRIVER') {
-      return user.driver?.verificationStatus === 'VERIFIED' ? 'FULL' : 'LIMITED';
-    }
-    return 'LIMITED';
-  }
-
-
-
-
-
-
-
 
   async issueTokens(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        pharmacy: { select: { verificationStatus: true } },
-        driver: { select: { verificationStatus: true } },
-      },
+      select: { id: true, role: true, status: true },
     });
 
-    if (!user) throw new UnauthorizedException('Invalid session , wait for approval!');
-
-    const stage = this.computeStage(user);
+    if (!user) throw new UnauthorizedException('Invalid session');
+    if (user.status === 'INACTIVE') {
+      throw new UnauthorizedException('Account is inactive');
+    }
     const payload = {
       sub: user.id,
       role: user.role,
-      stage,
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
@@ -138,45 +111,11 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      stage
     };
   }
 
-
-
-
-
-
-
-
   async login(dto: LoginDTO) {
-
-    const email = this.userService.normalizeEmail(dto.email)
-
-    // ! DEV-ONLY BOOTSTRAP (REMOVE BEFORE PROD)
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      email === process.env.ADMIN_EMAIL &&
-      dto.password === process.env.ADMIN_PASSWORD
-    ) {
-      const admin = await this.prisma.user.findUnique({
-        where: { email },
-      });
-
-      if (!admin) {
-        throw new UnauthorizedException('Admin not seeded');
-      }
-
-      const { accessToken, refreshToken } = await this.issueTokens(admin.id);
-
-      return {
-        user: removeFields(admin, ['password']),
-        accessToken,
-        refreshToken,
-      };
-    }
-    //! -----------------------------------------
-
+    const email = this.userService.normalizeEmail(dto.email);
 
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -189,13 +128,15 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
+    if (user.status === 'INACTIVE') {
+      throw new UnauthorizedException('Account is inactive');
+    }
     const ok = await verifyPassword(user.password, dto.password);
     if (!ok) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { accessToken, refreshToken, stage } = await this.issueTokens(user.id);
+    const { accessToken, refreshToken } = await this.issueTokens(user.id);
     const userWithoutPassword = removeFields(user, [
       'password',
       'pharmacy',
@@ -208,12 +149,6 @@ export class AuthService {
       accessToken,
     };
   }
-
-
-
-
-
-
 
   async refresh(dto: RefreshTokenDTO) {
     const providedHash = hashRefreshToken(dto.refreshToken);
@@ -238,25 +173,14 @@ export class AuthService {
     return this.issueTokens(stored.userId);
   }
 
-
-
-
-
-
   async logout(dto: LogoutDto) {
-    const providedHash = hashRefreshToken(dto.token);
+    const providedHash = hashRefreshToken(dto.refreshToken);
     await this.prisma.refreshToken.updateMany({
       where: { token: providedHash, revokedAt: null },
       data: { revokedAt: new Date() },
     });
     return { success: true };
   }
-
-
-
-
-
-
 
   // async requestOtp(dto: RequestOtpDTO) {
   //     const destination =
@@ -288,12 +212,6 @@ export class AuthService {
   //         message: 'code was sent.',
   //     };
   // }
-
-
-
-
-
-
 
   // async verifyOtp(dto: VerifyOtpDTO) {
   //     try {
@@ -344,8 +262,4 @@ export class AuthService {
   //         throw e;
   //     }
   // }
-
-
-
-
 }
