@@ -1,43 +1,40 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MedicineStatus } from '@prisma/client';
+import { PaginationQueryDto } from 'src/types/pagination.query';
 
-export class PatientMedicineListQueryDto {
-    @ApiPropertyOptional({ example: 'panadol' }) 
-    q?: string;
+export class MedicineListQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ example: 'panadol' })
+  q?: string;
 
-    @ApiPropertyOptional({ example: 1 }) 
-    categoryId?: number;
+  @ApiPropertyOptional({ example: 1 })
+  categoryId?: number;
+}
+export class PatientMedicineListQueryDto extends MedicineListQueryDto {
+  @ApiPropertyOptional({ example: true })
+  requiresPrescription?: boolean;
 
-    @ApiPropertyOptional({ example: 1 }) 
-    page?: number;
+  @ApiPropertyOptional({ example: 5 })
+  minPrice?: number;
 
-    @ApiPropertyOptional({ example: 10 }) 
-    limit?: number;
+  @ApiPropertyOptional({ example: 50 })
+  maxPrice?: number;
+}
+export class AdminMedicineListQueryDto extends MedicineListQueryDto {
+  @ApiPropertyOptional({ enum: MedicineStatus })
+  status?: MedicineStatus;
 
+  @ApiPropertyOptional({ example: true })
+  isActive?: boolean;
 }
 
-export class AdminMedicineListQueryDto extends PatientMedicineListQueryDto {
-    @ApiPropertyOptional({ enum: MedicineStatus }) 
-    status?: MedicineStatus;
+export class PharmacyMedicineListQueryDto extends MedicineListQueryDto {}
 
-    @ApiPropertyOptional({ example: true }) 
-    isActive?: boolean;
+export type PharmacyRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
-}
-
-export class PharmacyMedicineListQueryDto extends PatientMedicineListQueryDto { }
-
-
-export type PharmacyRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
-
-export class PharmacyRequestsListQueryDto {
-    @ApiPropertyOptional({ enum: ['PENDING', 'APPROVED', 'REJECTED'], example: 'PENDING' })
-    status?: PharmacyRequestStatus;
-
-    @ApiPropertyOptional({ example: 1 }) 
-    page?: number;
-
-    @ApiPropertyOptional({ example: 10 }) 
-    limit?: number;
-
+export class PharmacyRequestsListQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({
+    enum: ['PENDING', 'APPROVED', 'REJECTED'],
+    example: 'PENDING',
+  })
+  status?: PharmacyRequestStatus;
 }

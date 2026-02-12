@@ -17,7 +17,20 @@ export const SearchQuerySchema = z
   })
   .merge(PaginationQuerySchema)
   .strict();
-
+export const PatientListQuerySchema = z
+  .object({
+    requiresPrescription: BooleanFromStringSchema.optional(),
+    minPrice: z.coerce.number().nonnegative().optional(),
+    maxPrice: z.coerce.number().nonnegative().optional(),
+  })
+  .strict()
+  .refine(
+    (d) =>
+      d.minPrice === undefined ||
+      d.maxPrice === undefined ||
+      d.minPrice <= d.maxPrice,
+    { message: 'minPrice must be <= maxPrice', path: ['minPrice'] },
+  );
 //* Admin list query
 export const AdminListQuerySchema = SearchQuerySchema.extend({
   status: z.nativeEnum(MedicineStatus).optional(),
