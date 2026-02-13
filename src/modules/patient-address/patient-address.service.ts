@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { PaginationQueryDto } from 'src/types/pagination.query';
 import {
@@ -74,18 +70,17 @@ export class PatientAddressService {
     payload: CreatePatientAddressDto,
   ): Promise<ApiSuccessResponse<PatientAddressDetailsResponseDto>> {
     const result = await this.prismaService.$transaction(async (tx) => {
-      const existingCount = await tx.patientAddress.count({
+      const existing = await tx.patientAddress.findFirst({
         where: {
           userId,
           isDeleted: false,
         },
+        select: { id: true },
       });
-      let isDefault = payload.isDefault ?? false;
-      if (existingCount === 0) {
-        isDefault = true;
-      }
+      const isFirstAddress = !existing;
+      const shouldBeDefault = isFirstAddress || payload.isDefault === true;
 
-      if (isDefault) {
+      if (shouldBeDefault) {
         await tx.patientAddress.updateMany({
           where: {
             userId,
@@ -97,13 +92,82 @@ export class PatientAddressService {
       }
       const created = await tx.patientAddress.create({
         data: {
-          ...payload,
-          isDefault,
           userId,
+          cityId: payload.cityId,
+
+          addressLine1: payload.addressLine1,
+          addressLine2: payload.addressLine2 ?? null,
+          label: payload.label ?? null,
+          region: payload.region ?? null,
+          area: payload.area ?? null,
+          latitude: payload.latitude ?? null,
+          longitude: payload.longitude ?? null,
+          isDefault: shouldBeDefault,
         },
-        select: addressDetailsSelect
+        select: addressDetailsSelect,
       });
-      return mapPatientAddressDetails(created);
+      return created;
+    });
+    return {
+      success: true,
+      data: mapPatientAddressDetails(result),
+    };
+  }
+  async getMyAddress(
+    userId: number,
+    id: number,
+  ): Promise<ApiSuccessResponse<PatientAddressDetailsResponseDto>> {
+    const address = await this.prismaService.patientAddress.findUnique({
+      where: {
+        id: id,
+      },
+      select: addressDetailsSelect,
+    });
+    if (!address || address.userId !== userId || address.isDeleted)
+      throw new NotFoundException('Address not found');
+    return {
+      success: true,
+      data: mapPatientAddressDetails(address),
+    };
+  }
+
+  async setDefault(
+    userId: number,
+    id: number,
+  ): Promise<ApiSuccessResponse<PatientAddressDetailsResponseDto>> {
+    const result = await this.prismaService.$transaction(async (prisma) => {
+      const address = await prisma.patientAddress.findFirst({
+        where: {
+          userId,
+          id: id,
+          isDeleted: false,
+        },
+        select: { id: true, isDefault: true },
+      });
+      if (!address) throw new NotFoundException('Address not found');
+      if (address.isDefault) {
+        const current = await prisma.patientAddress.findFirstOrThrow({
+          where: { userId, id, isDeleted: false },
+          select: addressDetailsSelect,
+        });
+        return mapPatientAddressDetails(current);
+      }
+
+      await prisma.patientAddress.updateMany({
+        where: { userId, isDeleted: false, isDefault: true },
+        data: {
+          isDefault: false,
+        },
+      });
+
+      const updated = await prisma.patientAddress.update({
+        where: { id },
+        data: {
+          isDefault: true,
+        },
+        select: addressDetailsSelect,
+      });
+      return mapPatientAddressDetails(updated);
     });
     return {
       success: true,
@@ -118,27 +182,24 @@ export class PatientAddressService {
   ): Promise<ApiSuccessResponse<PatientAddressDetailsResponseDto>> {
     const result = await this.prismaService.$transaction(async (tx) => {
       const address = await tx.patientAddress.findFirst({
-        where: { id, userId },
+        where: { id, userId, isDeleted: false },
       });
 
-      if (!address || address.isDeleted)
-        throw new NotFoundException('Address not found');
+      if (!address) throw new NotFoundException('Address not found');
 
-      if (payload.isDefault === true) {
-        await tx.patientAddress.updateMany({
-          where: {
-            userId,
-            isDeleted: false,
-            isDefault: true,
-            NOT: { id },
-          },
-          data: { isDefault: false },
-        });
-      }
-     const updated = await tx.patientAddress.update({
+      const updated = await tx.patientAddress.update({
         where: { id },
-        data: payload,
-        select: addressDetailsSelect
+        data: {
+          cityId: payload.cityId,
+          addressLine1: payload.addressLine1,
+          addressLine2: payload.addressLine2,
+          label: payload.label,
+          region: payload.region,
+          area: payload.area,
+          latitude: payload.latitude,
+          longitude: payload.longitude,
+        },
+        select: addressDetailsSelect,
       });
       return mapPatientAddressDetails(updated);
     });
@@ -151,11 +212,9 @@ export class PatientAddressService {
   async remove(userId: number, id: number): Promise<ApiSuccessResponse<null>> {
     await this.prismaService.$transaction(async (tx) => {
       const address = await tx.patientAddress.findFirst({
-        where: { id, userId },
+        where: { id, userId, isDeleted: false },
       });
-      if (!address || address.isDeleted) {
-        throw new NotFoundException('Address not found');
-      }
+      if (!address) throw new NotFoundException('Address not found');
 
       await tx.patientAddress.update({
         where: { id },
