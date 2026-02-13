@@ -1,8 +1,7 @@
 import { z, ZodType } from 'zod';
 import { CreatePatientAddressDto } from '../dto/request/create-patient-address.dto';
 import { UpdatePatientAddressDto } from '../dto/request/update-patient-address.dto';
-
-export const CreatePatientAddressSchema = z
+export const PatientAddressBaseSchema = z
   .object({
     cityId: z.number().int().positive(),
     addressLine1: z.string().trim().min(1).max(255),
@@ -14,22 +13,21 @@ export const CreatePatientAddressSchema = z
     latitude: z.number().min(-90).max(90).optional().nullable(),
     longitude: z.number().min(-180).max(180).optional().nullable(),
   })
-  .refine(
-    (d) =>
-      (d.latitude == null && d.longitude == null) ||
-      (d.latitude != null && d.longitude != null),
-    {
-      message: 'latitude and longitude must be provided together',
-      path: ['latitude'],
-    },
-  )
-  .strict() satisfies ZodType<CreatePatientAddressDto>;
+  .strict();
+export const CreatePatientAddressSchema = PatientAddressBaseSchema.refine(
+  (d) =>
+    (d.latitude == null && d.longitude == null) ||
+    (d.latitude != null && d.longitude != null),
+  {
+    message: 'latitude and longitude must be provided together',
+    path: ['latitude'],
+  },
+);
 
-export const UpdatePatientAddressSchema = CreatePatientAddressSchema.omit({
+export const UpdatePatientAddressSchema = PatientAddressBaseSchema.omit({
   isDefault: true,
 })
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field must be provided',
-  })
-  .strict() satisfies ZodType<UpdatePatientAddressDto>;
+  });
