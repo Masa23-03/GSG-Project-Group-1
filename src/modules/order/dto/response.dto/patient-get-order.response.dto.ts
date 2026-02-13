@@ -96,7 +96,7 @@ export class PatientOrderResponseDto {
   eta!: null;
 }
 
-export class PharmacyOrderDetailsResponseDto extends CreatePharmacyOrderResponseDto {
+export class PatientPharmacyOrderDetailsResponseDto extends CreatePharmacyOrderResponseDto {
   @ApiProperty({
     example: '2026-02-03T10:25:00.000Z',
     format: 'date-time',
@@ -225,10 +225,10 @@ export class PatientOrderDetailsResponseDto {
   deliveryAddress!: OrderDeliveryAddressSnapshotDto;
 
   @ApiProperty({
-    type: [PharmacyOrderDetailsResponseDto],
+    type: [PatientPharmacyOrderDetailsResponseDto],
     description: 'Pharmacy orders generated from the root order.',
   })
-  pharmacyOrders!: PharmacyOrderDetailsResponseDto[];
+  pharmacyOrders!: PatientPharmacyOrderDetailsResponseDto[];
 
   @ApiPropertyOptional({
     type: OrderDeliveryDetailsDto,
