@@ -2,14 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 //! login
 export class LoginRequestDto {
-  // @ApiProperty({  example: 'admin@example.com'})
-  @ApiProperty()
+  @ApiProperty({ example: 'admin@example.com' })
   email!: string;
 
   @ApiProperty({ example: 'Secuerepassword123456789???' })
   password!: string;
 }
-
 export class RefreshTokenRequestDto {
   @ApiProperty({ description: 'Refresh token string' })
   refreshToken!: string;
