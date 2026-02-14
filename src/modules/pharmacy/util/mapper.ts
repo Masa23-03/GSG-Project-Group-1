@@ -44,11 +44,12 @@ export type PatientPharmacyDetailsWithRelations = Prisma.PharmacyGetPayload<{
 
 export function mapToPatientPharmacyList(
   pharmacy: PatientPharmacyWithRelations,
-  query: PatientPharmaciesQueryDto,
+  patientLat?: number,
+  patientLng?: number,
 ): PatientPharmacyListResponseDto {
   const distanceKm = calculateDistanceKMOrNull(
-    query.lat,
-    query.lng,
+    patientLat,
+    patientLng,
     pharmacy.latitude !== null ? Number(pharmacy.latitude) : undefined,
     pharmacy.longitude !== null ? Number(pharmacy.longitude) : undefined,
   );

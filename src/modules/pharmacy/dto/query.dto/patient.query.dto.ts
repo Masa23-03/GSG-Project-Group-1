@@ -20,34 +20,17 @@ export class PatientPharmaciesQueryDto extends PaginationQueryDto {
     minLength: 1,
   })
   q?: string;
-  @ApiPropertyOptional({
-    description:
-      'Patient latitude. Must be provided together with lng. Used only when scope=nearby.',
-    example: 31.5204,
-    minimum: -90,
-    maximum: 90,
-  })
-  lat?: number;
 
   @ApiPropertyOptional({
     description:
-      'Patient longitude. Must be provided together with lat. Used only when scope=nearby.',
-    example: 34.4531,
-    minimum: -180,
-    maximum: 180,
-  })
-  lng?: number;
-
-  @ApiPropertyOptional({
-    description:
-      'Radius filter in KM. Applied only when lat/lng are provided. Must be a positive number.',
+      'Distance filter in KM. Applied only when both patient default address coordinates and pharmacy coordinates exist. If coordinates are missing, this filter will not be applied.',
     example: 5,
     minimum: 0.1,
   })
   radiusKm?: number;
   @ApiPropertyOptional({
     description:
-      'Fallback filter when scope=nearby and lat/lng are not provided. Filters pharmacies by cityId.',
+      'Optional city filter. If provided, pharmacies will be limited to this city. Used especially when distance cannot be computed.',
     example: 2,
     minimum: 1,
   })
