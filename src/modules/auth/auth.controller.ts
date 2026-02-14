@@ -1,4 +1,4 @@
-﻿import { Body, Controller, Post } from '@nestjs/common';
+﻿import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -86,6 +86,7 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'Login' })
   @ApiBody({ type: LoginRequestDto })
+  @HttpCode(HttpStatus.OK)
   @ApiResponse({ status: 200, type: AuthResponseDto })
   login(@Body(new ZodValidationPipe(LoginSchema)) dto: LoginDTO) {
     return this.authService.login(dto);
@@ -95,6 +96,7 @@ export class AuthController {
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh tokens' })
   @ApiBody({ type: RefreshTokenRequestDto })
+  @HttpCode(HttpStatus.OK)
   @ApiResponse({ status: 200, type: AuthResponseDto })
   refresh(
     @Body(new ZodValidationPipe(RefreshTokenSchema)) dto: RefreshTokenDTO,
@@ -104,6 +106,7 @@ export class AuthController {
 
   @Post('logout')
   @ApiBody({ type: LogoutRequestDto })
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout (invalidate refresh token)' })
   @ApiResponse({ status: 200, type: LogoutResponseDto })
   @ApiBearerAuth('access-token')
