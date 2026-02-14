@@ -103,7 +103,7 @@ export function applyRadiusFilter<T extends { distanceKm: number | null }>(
   radiusKm?: number,
 ): T[] {
   if (radiusKm === undefined) return items;
-  return items.filter((x) => x.distanceKm === null || x.distanceKm <= radiusKm);
+  return items.filter((x) => x.distanceKm !== null && x.distanceKm <= radiusKm);
 }
 
 export function buildPatientPharmacyWhere(
@@ -126,4 +126,40 @@ export function buildPatientPharmacyWhere(
   if (query.cityId !== undefined) and.push({ cityId: query.cityId });
 
   return and.length ? { AND: and } : {};
+}
+
+export function sortByCityThenName<
+  T extends { cityId: number; pharmacyName: string },
+>(items: T[], patientCityId: number): T[] {
+  return items.sort((a, b) => {
+    const aInCity = a.cityId === patientCityId ? 0 : 1;
+    const bInCity = b.cityId === patientCityId ? 0 : 1;
+
+    if (aInCity !== bInCity) return aInCity - bInCity;
+    return a.pharmacyName.localeCompare(b.pharmacyName);
+  });
+}
+
+export function sortPharmaciesByPatientLocation<
+  T extends {
+    distanceKm: number | null;
+    pharmacyName: string;
+    cityId: number;
+  },
+>(
+  items: T[],
+  patientLat?: number,
+  patientLng?: number,
+  patientCityId?: number,
+): T[] {
+  const patientHasCoords = patientLat !== undefined && patientLng !== undefined;
+  if (patientHasCoords) {
+    return sortByDistanceThenName(items);
+  }
+
+  if (patientCityId !== undefined) {
+    return sortByCityThenName(items, patientCityId);
+  }
+
+  return items.sort((a, b) => a.pharmacyName.localeCompare(b.pharmacyName));
 }
