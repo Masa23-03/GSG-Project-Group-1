@@ -43,6 +43,10 @@ export class AuthGuard implements CanActivate {
       const user = await this.prisma.user.findUniqueOrThrow({
         where: { id: userId },
       });
+      if (user.status === 'INACTIVE') {
+        throw new UnauthorizedException('Account is inactive');
+      }
+
       req.user = {
         id: user.id,
         role: user.role,

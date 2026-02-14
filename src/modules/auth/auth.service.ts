@@ -46,8 +46,7 @@ export class AuthService {
     const { accessToken, refreshToken } = await this.issueTokens(user.id);
     return {
       user,
-      accessToken,
-      refreshToken,
+      tokens: { accessToken, refreshToken },
     };
   }
 
@@ -57,8 +56,7 @@ export class AuthService {
     return {
       user,
       profile: pharmacy,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
+      tokens: { accessToken, refreshToken },
       message:
         'Registered successfully. Your pharmacy license is under review.',
     };
@@ -70,8 +68,7 @@ export class AuthService {
     return {
       user,
       profile: driver,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
+      tokens: { accessToken, refreshToken },
       message:
         'Registered successfully. Your pharmacy license is under review.',
     };
@@ -88,7 +85,7 @@ export class AuthService {
       throw new UnauthorizedException('Account is inactive');
     }
     const payload = {
-      sub: user.id,
+      sub: String(user.id),
       role: user.role,
     };
 
@@ -145,8 +142,7 @@ export class AuthService {
 
     return {
       user: userWithoutPassword,
-      refreshToken,
-      accessToken,
+      tokens: { accessToken, refreshToken },
     };
   }
 
@@ -170,7 +166,7 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
-    return this.issueTokens(stored.userId);
+    return { tokens: await this.issueTokens(stored.userId) };
   }
 
   async logout(userId: number, dto: LogoutDto) {

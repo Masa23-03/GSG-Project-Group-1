@@ -22,33 +22,26 @@ export class UserService {
     status?: UserStatus,
     tx?: Prisma.TransactionClient,
   ) {
-    const client = tx ?? this.prismaService;
+    const db = tx ?? this.prismaService;
 
     const email = this.normalizeEmail(payload.email);
 
     const phoneNumber = payload.phoneNumber.trim();
-    await this.ensureEmailNotUsed(payload.email, tx);
+
+    await this.ensureEmailNotUsed(email, db);
+    await this.ensurePhoneNotUsed(phoneNumber, db);
     const hashedPassword = await hashPassword(payload.password);
-
-    try {
-      const user = await client.user.create({
-        data: {
-          name: payload.name,
-          email: email,
-          phoneNumber: phoneNumber,
-          password: hashedPassword,
-          role: role ?? UserRole.PATIENT,
-          status: status ?? UserStatus.ACTIVE,
-        },
-      });
-
-      const userWithoutPassword = removeFields(user, ['password']);
-
-      return userWithoutPassword;
-    } catch (e) {
-      console.log('user creation error  :', e);
-      throw e;
-    }
+    const user = await db.user.create({
+      data: {
+        name: payload.name,
+        email,
+        phoneNumber,
+        password: hashedPassword,
+        role: role ?? UserRole.PATIENT,
+        status: status ?? UserStatus.ACTIVE,
+      },
+    });
+    return removeFields(user, ['password']);
   }
 
   normalizeEmail(email: string) {
@@ -60,6 +53,13 @@ export class UserService {
 
     const existing = await db.user.findUnique({ where: { email } });
     if (existing) throw new ConflictException('Email already in use');
+  }
+  private async ensurePhoneNotUsed(phoneNumber: string, client) {
+    const db = client ?? this.prismaService;
+    const existing = await db.user.findUnique({
+      where: { phoneNumber },
+    });
+    if (existing) throw new ConflictException('Phone number already in use');
   }
 
   async findMyProfile(id: number): Promise<UserMeResponseDto> {

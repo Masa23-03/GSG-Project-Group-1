@@ -1,6 +1,11 @@
 import z from 'zod';
 
-export const nameSchema = z.string().trim().min(2).max(100);
+export const nameSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(100)
+  .refine((v) => !/[<>]/.test(v), { message: 'Invalid characters in name' });
 export const emailSchema = z
   .string()
   .trim()
