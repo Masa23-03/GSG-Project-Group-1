@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ApiPaginationSuccessResponse,
   ApiSuccessResponse,
@@ -48,7 +52,9 @@ import {
   applyRadiusFilter,
   buildAdminPharmacyWhere,
   buildPatientPharmacyWhere,
+  sortByCityThenName,
   sortByDistanceThenName,
+  sortPharmaciesByPatientLocation,
   toHHmm,
 } from './util/helper';
 
@@ -62,8 +68,10 @@ export class PharmacyService {
   async create(payload: RegisterPharmacyDTO) {
     try {
       return this.prismaService.$transaction(async (tx) => {
-
-        const city = await tx.city.findUnique({ where: { id: payload.cityId }, select: { id: true } });
+        const city = await tx.city.findUnique({
+          where: { id: payload.cityId },
+          select: { id: true },
+        });
         if (!city) throw new NotFoundException('City not found');
 
         const user = await this.userService.create(
@@ -88,9 +96,8 @@ export class PharmacyService {
 
         return {
           user,
-          pharmacy
+          pharmacy,
         };
-
       });
     } catch (e) {
       console.log('pharmacy service error - create() method :', e);
@@ -192,36 +199,63 @@ export class PharmacyService {
 
   //! Patient
   async findAllPatient(
+    patientId: number,
     query: PatientPharmaciesQueryDto,
   ): Promise<ApiPaginationSuccessResponse<PatientPharmacyListResponseDto>> {
     return this.prismaService.$transaction(async (prisma) => {
       const pagination = await this.prismaService.handleQueryPagination(query);
-      const whereSt = buildPatientPharmacyWhere(query);
-      const willComputeDistanceSort =
-        (query.scope ?? PharmacyScope.nearby) === PharmacyScope.nearby &&
-        query.lat !== undefined &&
-        query.lng !== undefined;
+      const scope = query.scope ?? PharmacyScope.nearby;
+      const defaultAddress = await prisma.patientAddress.findFirst({
+        where: { userId: patientId, isDefault: true, isDeleted: false },
+        select: { latitude: true, longitude: true, cityId: true },
+      });
+      if (scope === PharmacyScope.nearby && !defaultAddress?.cityId) {
+        throw new BadRequestException('Default address city is required.');
+      }
+      const patientLat =
+        defaultAddress?.latitude !== null &&
+        defaultAddress?.latitude !== undefined
+          ? Number(defaultAddress.latitude)
+          : undefined;
 
-      const orderBy: Prisma.PharmacyOrderByWithRelationInput[] = [
-        { pharmacyName: 'asc' },
-      ];
+      const patientLng =
+        defaultAddress?.longitude !== null &&
+        defaultAddress?.longitude !== undefined
+          ? Number(defaultAddress.longitude)
+          : undefined;
+
+      if (
+        query.radiusKm !== undefined &&
+        (patientLat === undefined || patientLng === undefined)
+      ) {
+        throw new BadRequestException(
+          'Distance filter requires default address coordinates (latitude/longitude).',
+        );
+      }
+      const whereSt = buildPatientPharmacyWhere(query);
 
       const [rows, count] = await Promise.all([
         prisma.pharmacy.findMany({
           ...removeFields(pagination, ['page']),
           where: whereSt,
           select: patientPharmacySelect,
-          orderBy: orderBy,
+          orderBy: [{ pharmacyName: 'asc' }],
         }),
         prisma.pharmacy.count({ where: whereSt }),
       ]);
 
-      let items = rows.map((p) => mapToPatientPharmacyList(p, query));
-      if (willComputeDistanceSort) {
+      let items = rows.map((p) =>
+        mapToPatientPharmacyList(p, patientLat, patientLng),
+      );
+      if (scope === PharmacyScope.nearby) {
         items = applyRadiusFilter(items, query.radiusKm);
-        items = sortByDistanceThenName(items);
+        items = sortPharmaciesByPatientLocation(
+          items,
+          patientLat,
+          patientLng,
+          defaultAddress?.cityId,
+        );
       }
-
       return {
         success: true,
         data: items,

@@ -25,6 +25,11 @@ import {
   mapToPatientMedicinePharmacyItem,
   patientMedicinePharmacySelect,
 } from './util/medicine-pharmacy.mapper';
+import {
+  sortByCityThenName,
+  sortByDistanceThenName,
+  sortPharmaciesByPatientLocation,
+} from '../pharmacy/util/helper';
 
 @Injectable()
 export class MedicineService {
@@ -57,26 +62,9 @@ export class MedicineService {
         },
       },
     };
-
-    const [rows, count] = await Promise.all([
-      this.prisma.inventoryItem.findMany({
-        ...removeFields(pagination, ['page']),
-        where,
-        select: patientMedicinePharmacySelect,
-        orderBy: { pharmacy: { pharmacyName: 'asc' } },
-      }),
-      this.prisma.inventoryItem.count({ where }),
-    ]);
     const defaultAddress = await this.prisma.patientAddress.findFirst({
-      where: {
-        userId: patientId,
-        isDefault: true,
-        isDeleted: false,
-      },
-      select: {
-        latitude: true,
-        longitude: true,
-      },
+      where: { userId: patientId, isDefault: true, isDeleted: false },
+      select: { latitude: true, longitude: true, cityId: true },
     });
 
     const patientLat =
@@ -90,9 +78,27 @@ export class MedicineService {
       defaultAddress?.longitude !== undefined
         ? Number(defaultAddress.longitude)
         : undefined;
+    const patientCityId = defaultAddress?.cityId;
+
+    const [rows, count] = await Promise.all([
+      this.prisma.inventoryItem.findMany({
+        ...removeFields(pagination, ['page']),
+        where,
+        select: patientMedicinePharmacySelect,
+        orderBy: { pharmacy: { pharmacyName: 'asc' } },
+      }),
+      this.prisma.inventoryItem.count({ where }),
+    ]);
 
     let items = rows.map((r) =>
       mapToPatientMedicinePharmacyItem(r, patientLat, patientLng),
+    );
+
+    items = sortPharmaciesByPatientLocation(
+      items,
+      patientLat,
+      patientLng,
+      patientCityId,
     );
 
     return {

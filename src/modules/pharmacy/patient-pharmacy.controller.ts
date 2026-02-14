@@ -75,18 +75,17 @@ export class PatientPharmacyController {
       'nearby computes distance when lat/lng exist. all ignores distance logic.',
   })
   @ApiQuery({ name: 'q', required: false, type: String, example: 'Shifa' })
-  @ApiQuery({ name: 'lat', required: false, type: Number, example: 31.5204 })
-  @ApiQuery({ name: 'lng', required: false, type: Number, example: 34.4531 })
   @ApiQuery({ name: 'radiusKm', required: false, type: Number, example: 5 })
   @ApiQuery({ name: 'cityId', required: false, type: Number, example: 2 })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   @Get()
   async findAll(
+    @AuthedUser() user: authedUserType,
     @Query(new ZodValidationPipe(patientPharmacyListQuerySchema))
     query: PatientPharmaciesQueryDto,
   ): Promise<ApiPaginationSuccessResponse<PatientPharmacyListResponseDto>> {
-    return this.pharmacyService.findAllPatient(query);
+    return this.pharmacyService.findAllPatient(user.id, query);
   }
 
   @Roles(UserRole.PATIENT)

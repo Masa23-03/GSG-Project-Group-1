@@ -65,7 +65,7 @@ export class MedicineController {
   }
   @Get(':id/pharmacies')
   @ApiOperation({
-    summary: 'List pharmacies that have this medicine (patient)',
+    summary: 'List pharmacies that have this medicine',
   })
   @ApiParam({
     name: 'medicineId',
