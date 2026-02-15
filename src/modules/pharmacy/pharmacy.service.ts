@@ -77,7 +77,7 @@ export class PharmacyService {
         const user = await this.userService.create(
           payload,
           UserRole.PHARMACY,
-          UserStatus.INACTIVE,
+          UserStatus.ACTIVE,
           tx,
         );
 
