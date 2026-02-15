@@ -1,11 +1,6 @@
 import z from 'zod';
 
-export const nameSchema = z
-  .string()
-  .trim()
-  .min(2)
-  .max(100)
-  .refine((v) => !/[<>]/.test(v), { message: 'Invalid characters in name' });
+export const nameSchema = safeText({ min: 2, max: 100, mode: 'name' });
 export const emailSchema = z
   .string()
   .trim()
@@ -44,3 +39,41 @@ export const urlSchema = z.string().refine(
 export const timeHHmm = z
   .string()
   .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: 'Time must be HH:mm' });
+type SafeTextMode = 'generic' | 'name' | 'title' | 'address';
+
+type SafeTextOptions = {
+  min: number;
+  max: number;
+  mode?: SafeTextMode;
+};
+export function safeText({ min, max, mode = 'generic' }: SafeTextOptions) {
+  return z
+    .string()
+    .trim()
+    .min(min)
+    .max(max)
+    .transform((v) => v.normalize('NFKC'))
+    .refine((v) => !/[\u0000-\u001F\u007F]/.test(v), {
+      message: 'Invalid characters',
+    })
+    .refine((v) => !/[<>]/.test(v), {
+      message: 'HTML tags are not allowed',
+    })
+    .refine(
+      (v) => {
+        if (mode === 'name') {
+          return /^[\p{L}\p{M} .'’-]+$/u.test(v);
+        }
+
+        if (mode === 'title') {
+          return /^[\p{L}\p{M}\p{N} .,'’"()\-\/&]+$/u.test(v);
+        }
+
+        if (mode === 'address') {
+          return /^[\p{L}\p{M}\p{N} .,'’"()\-\/#,:]+$/u.test(v);
+        }
+        return true;
+      },
+      { message: 'Invalid characters' },
+    );
+}

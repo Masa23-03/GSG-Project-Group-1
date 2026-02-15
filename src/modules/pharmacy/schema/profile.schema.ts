@@ -1,5 +1,5 @@
 import { z, type ZodType } from 'zod';
-import { timeHHmm } from 'src/utils/zod.helper';
+import { safeText, timeHHmm } from 'src/utils/zod.helper';
 import { updateBaseUserProfileSchema } from 'src/modules/user/schema/profile.schema';
 import { UpdateMyPharmacyProfileDtoType } from '../dto/request.dto/profile.dto';
 
@@ -32,9 +32,9 @@ export const workingHoursSchema = z
 
 export const updatePharmacyProfileSchema = z
   .object({
-    pharmacyName: z.string().trim().min(1).optional(),
+    pharmacyName: safeText({ min: 2, max: 255, mode: 'title' }),
     workingHours: workingHoursSchema.nullable().optional(),
-    address: z.string().trim().min(1).nullable().optional(),
+    address: safeText({ min: 2, max: 255, mode: 'address' }),
     latitude: z.coerce.number().min(-90).max(90).nullable().optional(),
     longitude: z.coerce.number().min(-180).max(180).nullable().optional(),
   })
