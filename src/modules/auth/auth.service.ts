@@ -165,16 +165,27 @@ export class AuthService {
       where: { id: stored.id },
       data: { revokedAt: new Date() },
     });
+    const { accessToken, refreshToken } = await this.issueTokens(stored.userId);
 
-    return { tokens: await this.issueTokens(stored.userId) };
+    return { tokens: { accessToken, refreshToken } };
   }
 
   async logout(userId: number, dto: LogoutDto) {
     const providedHash = hashRefreshToken(dto.refreshToken);
-    await this.prisma.refreshToken.updateMany({
-      where: { token: providedHash, revokedAt: null },
-      data: { revokedAt: new Date() },
+    const result = await this.prisma.refreshToken.updateMany({
+      where: {
+        userId,
+        token: providedHash,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
     });
+    // if (result.count === 0) {
+    //   throw new UnauthorizedException('Invalid refresh token');
+    // }
+
     return { success: true };
   }
 
