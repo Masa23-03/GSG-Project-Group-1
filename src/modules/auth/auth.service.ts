@@ -7,7 +7,7 @@ import { verifyPassword } from './util/crypto.util';
 import { DatabaseService } from '../database/database.service';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole, OtpPurpose, OtpChannel } from '@prisma/client';
+import { UserRole, OtpPurpose, OtpChannel, UserStatus } from '@prisma/client';
 import { PharmacyService } from '../pharmacy/pharmacy.service';
 import { DriverService } from '../driver/driver.service';
 // import { OtpService } from './otp/otp.service';
@@ -51,26 +51,29 @@ export class AuthService {
   }
 
   async registerPharmacy(dto: RegisterPharmacyDTO) {
-    const { user, pharmacy } = await this.pharmacyService.create(dto);
+    const { user } = await this.pharmacyService.create(dto);
     const { accessToken, refreshToken } = await this.issueTokens(user.id);
+    const { user: safeUser, profile } = await this.buildAuthResponse(user.id);
+
     return {
-      user,
-      profile: pharmacy,
+      user: safeUser,
       tokens: { accessToken, refreshToken },
+      ...(profile ? { profile } : {}),
       message:
         'Registered successfully. Your pharmacy license is under review.',
     };
   }
 
   async registerDriver(dto: RegisterDriverDTO) {
-    const { user, driver } = await this.driverService.create(dto);
+    const { user } = await this.driverService.create(dto);
     const { accessToken, refreshToken } = await this.issueTokens(user.id);
+    const { user: safeUser, profile } = await this.buildAuthResponse(user.id);
+
     return {
-      user,
-      profile: driver,
+      user: safeUser,
       tokens: { accessToken, refreshToken },
-      message:
-        'Registered successfully. Your pharmacy license is under review.',
+      ...(profile ? { profile } : {}),
+      message: 'Registered successfully. Your Driver license is under review.',
     };
   }
 
@@ -81,8 +84,8 @@ export class AuthService {
     });
 
     if (!user) throw new UnauthorizedException('Invalid session');
-    if (user.status === 'INACTIVE') {
-      throw new UnauthorizedException('Account is inactive');
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenException('Account is inactive');
     }
     const payload = {
       sub: String(user.id),
@@ -125,8 +128,8 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    if (user.status === 'INACTIVE') {
-      throw new UnauthorizedException('Account is inactive');
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenException('Account is inactive');
     }
     const ok = await verifyPassword(user.password, dto.password);
     if (!ok) {
@@ -166,8 +169,12 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
     const { accessToken, refreshToken } = await this.issueTokens(stored.userId);
-
-    return { tokens: { accessToken, refreshToken } };
+    const { user, profile } = await this.buildAuthResponse(stored.userId);
+    return {
+      user,
+      tokens: { accessToken, refreshToken },
+      ...(profile ? { profile } : {}),
+    };
   }
 
   async logout(userId: number, dto: LogoutDto) {
@@ -186,7 +193,62 @@ export class AuthService {
     //   throw new UnauthorizedException('Invalid refresh token');
     // }
 
-    return { success: true };
+    return { revoked: true };
+  }
+
+  private async buildAuthResponse(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        pharmacy: { include: { city: { select: { name: true } } } },
+        driver: true,
+      },
+    });
+
+    if (!user) throw new UnauthorizedException('Invalid session');
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenException('Account is inactive');
+    }
+
+    const userWithoutPassword = removeFields(user, [
+      'password',
+      'pharmacy',
+      'driver',
+    ]);
+    let profile: any = undefined;
+
+    if (user.role === UserRole.PHARMACY && user.pharmacy) {
+      profile = {
+        id: user.pharmacy.id,
+        userId: user.pharmacy.userId,
+        pharmacyName: user.pharmacy.pharmacyName,
+        licenseNumber: user.pharmacy.licenseNumber,
+        cityId: user.pharmacy.cityId,
+        cityName: user.pharmacy.city?.name ?? null,
+        address: user.pharmacy.address ?? null,
+        latitude: user.pharmacy.latitude
+          ? user.pharmacy.latitude.toNumber()
+          : null,
+        longitude: user.pharmacy.longitude
+          ? user.pharmacy.longitude.toNumber()
+          : null,
+        verificationStatus: user.pharmacy.verificationStatus,
+      };
+    }
+
+    if (user.role === UserRole.DRIVER && user.driver) {
+      profile = {
+        id: user.driver.id,
+        userId: user.driver.userId,
+        vehicleName: user.driver.vehicleName,
+        vehiclePlate: user.driver.vehiclePlate,
+        availabilityStatus: user.driver.availabilityStatus,
+        verificationStatus: user.driver.verificationStatus,
+      };
+    }
+
+    return { user: userWithoutPassword, profile };
   }
 
   // async requestOtp(dto: RequestOtpDTO) {
