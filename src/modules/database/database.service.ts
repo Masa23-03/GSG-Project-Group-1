@@ -18,7 +18,7 @@ export class DatabaseService
     if (!url) throw new Error('DATABASE_URL is missing');
 
     const cfg = parseDbUrl(env.DATABASE_URL);
-    console.log('[DB CFG]', cfg);
+    // console.log('[DB CFG]', cfg);
 
     const adapter = new PrismaMariaDb({
       host: cfg.host,
