@@ -1,13 +1,13 @@
 import z, { ZodType } from 'zod';
-import { urlSchema } from 'src/utils/zod.helper';
+import { nameSchema, phoneSchema, urlSchema } from 'src/utils/zod.helper';
 import {
   UpdateMyPatientDtoType,
   UpdateMyUserBaseDtoType,
 } from '../dto/request.dto/profile.dto';
 export const updateBaseUserProfileSchema = z
   .object({
-    name: z.string().trim().min(1).nullable().optional(),
-    phoneNumber: z.string().trim().min(1).nullable().optional(),
+    name: nameSchema.optional(),
+    phoneNumber: phoneSchema.optional(),
     profileImageUrl: urlSchema.nullable().optional(),
   })
   .strict() satisfies ZodType<UpdateMyUserBaseDtoType>;
@@ -24,4 +24,7 @@ export const updatePatientProfileSchema = z
       .optional(),
   })
   .merge(updateBaseUserProfileSchema)
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided',
+  })
   .strict() satisfies ZodType<UpdateMyPatientDtoType>;

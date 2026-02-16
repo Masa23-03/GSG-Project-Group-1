@@ -1,54 +1,73 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 
 //default address Dto:
 export class DefaultAddressDto {
-  @ApiProperty()
-  id!: number;
-  @ApiProperty({ required: false, nullable: true })
-  label?: string | null;
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ example: 12 }) id!: number;
+  @ApiPropertyOptional({ example: 'Home', nullable: true }) label?:
+    | string
+    | null;
+
+  @ApiPropertyOptional({ example: 'Al-Rimal', nullable: true })
   area?: string | null;
-  @ApiProperty({ required: false, nullable: true })
+
+  @ApiPropertyOptional({ example: 'Gaza', nullable: true })
   region?: string | null;
-  @ApiProperty()
+
+  @ApiProperty({ example: 'Street 10, Building 3' })
   addressLine1!: string;
-  @ApiProperty({ required: false, nullable: true })
+
+  @ApiPropertyOptional({ example: 'Apartment 5', nullable: true })
   addressLine2?: string | null;
-  @ApiProperty({ required: false, nullable: true })
+
+  @ApiPropertyOptional({ example: 31.5017, nullable: true })
   latitude?: number | null;
-  @ApiProperty({ required: false, nullable: true })
+
+  @ApiPropertyOptional({ example: 34.4668, nullable: true })
   longitude?: number | null;
-  @ApiProperty()
+
+  @ApiProperty({ example: 'Gaza' })
   cityName!: string;
-  @ApiProperty()
+
+  @ApiProperty({ example: 1 })
   cityId!: number;
 }
 //patient profile:
 export class UserMeResponseDto {
-  @ApiProperty()
+  @ApiProperty({ example: 5 })
   id!: number;
-  @ApiProperty({ enum: UserRole })
+
+  @ApiProperty({ enum: UserRole, example: UserRole.PATIENT })
   role!: UserRole;
-  @ApiProperty()
+
+  @ApiProperty({ example: 'shahd@email.com' })
   email!: string;
-  @ApiProperty()
+
+  @ApiProperty({ example: '+970599000000' })
   phoneNumber!: string;
-  @ApiProperty()
+
+  @ApiProperty({ example: 'Shahd' })
   name!: string;
-  @ApiProperty({
-    required: false,
+
+  @ApiPropertyOptional({
+    example: '2002-04-26',
     nullable: true,
     format: 'date',
-    example: '2002-04-26',
   })
   dateOfBirth?: string | null;
-  @ApiProperty({ required: false, nullable: true })
+
+  @ApiPropertyOptional({
+    example: 'https://cdn.example.com/profiles/123.png',
+    nullable: true,
+  })
   profileImageUrl?: string | null;
-  @ApiProperty({ required: false, nullable: true, type: DefaultAddressDto })
+
+  @ApiPropertyOptional({ type: DefaultAddressDto, nullable: true })
   defaultAddress?: DefaultAddressDto | null;
-  @ApiProperty({ type: String, format: 'date-time' })
+
+  @ApiProperty({ example: '2026-02-16T14:12:00.000Z', format: 'date-time' })
   createdAt!: string;
-  @ApiProperty({ type: String, format: 'date-time' })
+
+  @ApiProperty({ example: '2026-02-16T15:01:00.000Z', format: 'date-time' })
   updatedAt!: string;
 }

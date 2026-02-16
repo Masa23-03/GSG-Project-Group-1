@@ -127,19 +127,40 @@ export class UserService {
     const foundedUser = await this.prismaService.user.findUnique({
       where: { id },
     });
-    if (!foundedUser) throw new NotFoundException();
+    if (!foundedUser) throw new NotFoundException(`User with ${id} not found`);
 
-    const insertedData: any = { ...payload };
+    const data: Prisma.UserUncheckedUpdateInput = {};
+
+    if (payload.name !== undefined) {
+      data.name = payload.name;
+    }
+
+    if (payload.phoneNumber !== undefined) {
+      const newPhone = payload.phoneNumber.trim();
+      if (newPhone !== foundedUser.phoneNumber) {
+        const exists = await this.prismaService.user.findUnique({
+          where: { phoneNumber: newPhone },
+          select: { id: true },
+        });
+        if (exists) throw new ConflictException('Phone number already in use');
+
+        data.phoneNumber = newPhone;
+      }
+    }
+
+    if (payload.profileImageUrl !== undefined) {
+      data.profileImageUrl = payload.profileImageUrl;
+    }
 
     if (payload.dateOfBirth !== undefined) {
-      insertedData.dateOfBirth = payload.dateOfBirth
+      data.dateOfBirth = payload.dateOfBirth
         ? new Date(`${payload.dateOfBirth}T00:00:00.000Z`)
         : null;
     }
 
     await this.prismaService.user.update({
       where: { id },
-      data: insertedData,
+      data,
     });
 
     return this.findMyProfile(id);
