@@ -26,7 +26,7 @@ import {
 } from './schema/patient-address.schema';
 
 @ApiBearerAuth('access-token')
-@ApiTags('Addresses: Patient')
+@ApiTags('Patient Addresses')
 @Roles(UserRole.PATIENT)
 @Controller('addresses')
 export class PatientAddressController {
