@@ -23,6 +23,7 @@ export class CreatePatientAddressDto {
     example: 'Apartment 3B',
     description: 'Secondary address line',
     nullable: true,
+    minLength: 1,
     maxLength: 500,
   })
   addressLine2?: string | null;
@@ -30,6 +31,7 @@ export class CreatePatientAddressDto {
     example: 'Home',
     description: 'Optional label for the address',
     nullable: true,
+    minLength: 1,
     maxLength: 100,
   })
   label?: string | null;
@@ -37,6 +39,7 @@ export class CreatePatientAddressDto {
     example: 'North District',
     description: 'Region of the address',
     nullable: true,
+    minLength: 1,
     maxLength: 100,
   })
   region?: string | null;
@@ -44,6 +47,7 @@ export class CreatePatientAddressDto {
     example: 'Al Remal',
     description: 'Area of the address',
     nullable: true,
+    minLength: 1,
     maxLength: 100,
   })
   area?: string | null;
