@@ -20,6 +20,7 @@ export class CreatePatientAddressDto {
   })
   isDefault?: boolean;
   @ApiPropertyOptional({
+    type: String,
     example: 'Apartment 3B',
     description: 'Secondary address line',
     nullable: true,
@@ -28,6 +29,7 @@ export class CreatePatientAddressDto {
   })
   addressLine2?: string | null;
   @ApiPropertyOptional({
+    type: String,
     example: 'Home',
     description: 'Optional label for the address',
     nullable: true,
@@ -36,6 +38,7 @@ export class CreatePatientAddressDto {
   })
   label?: string | null;
   @ApiPropertyOptional({
+    type: String,
     example: 'North District',
     description: 'Region of the address',
     nullable: true,
@@ -44,6 +47,7 @@ export class CreatePatientAddressDto {
   })
   region?: string | null;
   @ApiPropertyOptional({
+    type: String,
     example: 'Al Remal',
     description: 'Area of the address',
     nullable: true,
