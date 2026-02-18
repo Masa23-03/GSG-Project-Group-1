@@ -1,15 +1,18 @@
 import { z, ZodType } from 'zod';
 import { CreatePatientAddressDto } from '../dto/request/create-patient-address.dto';
 import { UpdatePatientAddressDto } from '../dto/request/update-patient-address.dto';
+import { safeText } from 'src/utils/zod.helper';
 export const PatientAddressBaseSchema = z
   .object({
     cityId: z.number().int().positive(),
-    addressLine1: z.string().trim().min(1).max(255),
+    addressLine1: safeText({ min: 1, max: 500, mode: 'address' }),
     isDefault: z.boolean().optional(),
-    addressLine2: z.string().trim().max(255).optional().nullable(),
-    label: z.string().trim().max(100).optional().nullable(),
-    region: z.string().trim().max(100).optional().nullable(),
-    area: z.string().trim().max(100).optional().nullable(),
+    addressLine2: safeText({ min: 1, max: 500, mode: 'address' })
+      .optional()
+      .nullable(),
+    label: safeText({ min: 1, max: 100, mode: 'title' }).optional().nullable(),
+    region: safeText({ min: 1, max: 100, mode: 'title' }).optional().nullable(),
+    area: safeText({ min: 1, max: 100, mode: 'title' }).optional().nullable(),
     latitude: z.number().min(-90).max(90).optional().nullable(),
     longitude: z.number().min(-180).max(180).optional().nullable(),
   })

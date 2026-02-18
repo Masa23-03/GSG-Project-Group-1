@@ -70,6 +70,11 @@ export class PatientAddressService {
     payload: CreatePatientAddressDto,
   ): Promise<ApiSuccessResponse<PatientAddressDetailsResponseDto>> {
     const result = await this.prismaService.$transaction(async (tx) => {
+      const city = await tx.city.findFirst({
+        where: { id: payload.cityId },
+        select: { id: true },
+      });
+      if (!city) throw new NotFoundException('City not found');
       const existing = await tx.patientAddress.findFirst({
         where: {
           userId,
@@ -90,6 +95,7 @@ export class PatientAddressService {
           data: { isDefault: false },
         });
       }
+
       const created = await tx.patientAddress.create({
         data: {
           userId,
@@ -106,8 +112,10 @@ export class PatientAddressService {
         },
         select: addressDetailsSelect,
       });
+
       return created;
     });
+
     return {
       success: true,
       data: mapPatientAddressDetails(result),
@@ -117,14 +125,16 @@ export class PatientAddressService {
     userId: number,
     id: number,
   ): Promise<ApiSuccessResponse<PatientAddressDetailsResponseDto>> {
-    const address = await this.prismaService.patientAddress.findUnique({
+    const address = await this.prismaService.patientAddress.findFirst({
       where: {
         id: id,
+        userId,
+        isDeleted: false,
       },
       select: addressDetailsSelect,
     });
-    if (!address || address.userId !== userId || address.isDeleted)
-      throw new NotFoundException('Address not found');
+    if (!address) throw new NotFoundException('Address not found');
+
     return {
       success: true,
       data: mapPatientAddressDetails(address),
@@ -186,7 +196,13 @@ export class PatientAddressService {
       });
 
       if (!address) throw new NotFoundException('Address not found');
-
+      if (payload.cityId != null) {
+        const city = await tx.city.findFirst({
+          where: { id: payload.cityId },
+          select: { id: true },
+        });
+        if (!city) throw new NotFoundException('City not found');
+      }
       const updated = await tx.patientAddress.update({
         where: { id },
         data: {

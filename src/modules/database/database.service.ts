@@ -48,10 +48,18 @@ export class DatabaseService
 
   //handle query pagination
   handleQueryPagination(query: PaginationQueryType) {
-    const page = Number(query.page ?? 1);
-    const limit = Number(query.limit ?? 10);
+    const pageRaw = Number(query.page ?? 1);
+    const limitRaw = Number(query.limit ?? 10);
+    const page = Number.isFinite(pageRaw) ? Math.trunc(pageRaw) : 1;
+    const limit = Number.isFinite(limitRaw) ? Math.trunc(limitRaw) : 10;
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(100, Math.max(1, limit));
 
-    return { skip: (page - 1) * limit, take: limit, page };
+    return {
+      skip: (safePage - 1) * safeLimit,
+      take: safeLimit,
+      page: safePage,
+    };
   }
   //format pagination response
   formatPaginationResponse(args: {
