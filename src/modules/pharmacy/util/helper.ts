@@ -27,12 +27,12 @@ export function buildAdminPharmacyWhere(
 
 export function toHHmm(value: Date | null): string | null {
   if (!value) return null;
-  const hour = value.getHours().toString().padStart(2, '0');
-  const minute = value.getMinutes().toString().padStart(2, '0');
+  const hour = value.getUTCHours().toString().padStart(2, '0');
+  const minute = value.getUTCMinutes().toString().padStart(2, '0');
   return `${hour}:${minute}`;
 }
 function calculateMinutesSinceMidnight(date: Date) {
-  return date.getHours() * 60 + date.getMinutes();
+  return date.getUTCHours() * 60 + date.getUTCMinutes();
 }
 
 export function isPharmacyOpenNow(
