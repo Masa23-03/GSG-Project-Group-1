@@ -2,11 +2,10 @@ import { Module } from '@nestjs/common';
 import { PharmacyService } from './pharmacy.service';
 import { PharmacyController } from './pharmacy.controller';
 import { UserModule } from '../user/user.module';
-import { PatientPharmacyController } from './patient-pharmacy.controller';
 
 @Module({
   imports: [UserModule],
-  controllers: [PharmacyController, PatientPharmacyController],
+  controllers: [PharmacyController],
   providers: [PharmacyService],
   exports: [PharmacyService],
 })
