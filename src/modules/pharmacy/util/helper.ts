@@ -1,5 +1,5 @@
 import { Prisma, UserStatus, VerificationStatus } from '@prisma/client';
-import { buildAdminBaseWhere, extractId } from 'src/utils/util';
+import { buildAdminBaseWhere } from 'src/utils/util';
 import { AdminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { PatientPharmaciesQueryDto } from '../dto/query.dto/patient.query.dto';
 

@@ -1,5 +1,4 @@
 import { Prisma } from '@prisma/client';
-import { PatientPharmaciesQueryDto } from '../dto/query.dto/patient.query.dto';
 import {
   PatientPharmacyDetailsDto,
   PatientPharmacyListResponseDto,

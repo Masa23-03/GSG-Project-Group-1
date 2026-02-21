@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   Query,
   ParseIntPipe,
 } from '@nestjs/common';
@@ -184,7 +183,7 @@ export class PharmacyController {
   //profile endpoint to view pharmacy profile
   @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Pharmacy: get my profile' })
-  @Get('pharmacy/me')
+  @Get('me')
   async getMe(@AuthedUser() pharmacy: authedUserType) {
     return this.pharmacyService.findMyProfile(pharmacy.id);
   }
@@ -192,7 +191,7 @@ export class PharmacyController {
   @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Pharmacy: update my profile' })
   @ApiBody({ type: UpdateMyPharmacyProfileDto })
-  @Patch('pharmacy/me')
+  @Patch('me')
   async updateMe(
     @AuthedUser() pharmacy: authedUserType,
     @Body(new ZodValidationPipe(updatePharmacyProfileSchema))

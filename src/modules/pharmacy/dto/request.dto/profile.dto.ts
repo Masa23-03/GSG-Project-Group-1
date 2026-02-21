@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UpdateMyUserBaseDto } from 'src/modules/user/dto/request.dto/profile.dto';
 import { WorkingHoursDto } from '../response.dto/profile.dto';
-import { PharmacyLocationDto } from '../response.dto/admin-pharmacy.response.dto';
 
 export class UpdateMyPharmacyProfileDto extends UpdateMyUserBaseDto {
   @ApiProperty({ required: false })

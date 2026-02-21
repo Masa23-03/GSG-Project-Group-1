@@ -52,8 +52,6 @@ import {
   applyRadiusFilter,
   buildAdminPharmacyWhere,
   buildPatientPharmacyWhere,
-  sortByCityThenName,
-  sortByDistanceThenName,
   sortPharmaciesByPatientLocation,
   toHHmm,
 } from './util/helper';
@@ -138,7 +136,7 @@ export class PharmacyService {
         id: p.id,
         pharmacyName: p.pharmacyName,
         phoneNumber: p.user.phoneNumber,
-        address: p.address ?? null,
+        addressLine: p.address ?? null,
         latitude: p.latitude?.toNumber() ?? null,
         longitude: p.longitude?.toNumber() ?? null,
         cityName: p.city.name,
