@@ -263,11 +263,15 @@ export class PharmacyService {
         mapToPatientPharmacyList(p, patientLat, patientLng),
       );
       items = applyRadiusFilter(items, query.radiusKm);
+      const patientCityIdForSorting =
+        query.cityId !== undefined
+          ? undefined
+          : (defaultAddress?.cityId ?? undefined);
       items = sortPharmaciesByPatientLocation(
         items,
         patientLat,
         patientLng,
-        defaultAddress?.cityId ?? undefined,
+        patientCityIdForSorting,
       );
       const total = items.length;
       const start = (pagination.page - 1) * pagination.take;

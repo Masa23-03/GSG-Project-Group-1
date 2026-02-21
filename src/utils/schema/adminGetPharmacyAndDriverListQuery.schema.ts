@@ -11,8 +11,11 @@ export const adminBaseListQuerySchema = z
 
     q: z.string().trim().min(1).optional(),
   })
-  .merge(PaginationQuerySchema);
+  .merge(PaginationQuerySchema)
+  .strict();
 
-export const adminBaseUpdateVerificationStatusSchema = z.object({
-  verificationStatus: z.nativeEnum(VerificationStatus),
-});
+export const adminBaseUpdateVerificationStatusSchema = z
+  .object({
+    verificationStatus: z.nativeEnum(VerificationStatus),
+  })
+  .strict();

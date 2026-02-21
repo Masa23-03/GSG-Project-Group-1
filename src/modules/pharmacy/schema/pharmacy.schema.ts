@@ -23,6 +23,5 @@ export const patientPharmacyListQuerySchema = z
     radiusKm: z.coerce.number().positive().optional(),
     cityId: z.coerce.number().int().positive().optional(),
   })
-  .merge(
-    PaginationQuerySchema,
-  ) satisfies ZodType<PatientPharmaciesQueryDtoType>;
+  .merge(PaginationQuerySchema)
+  .strict() satisfies ZodType<PatientPharmaciesQueryDtoType>;
