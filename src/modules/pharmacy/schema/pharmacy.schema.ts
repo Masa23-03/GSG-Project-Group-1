@@ -17,6 +17,7 @@ export const patientPharmacyListQuerySchema = z
       .string()
       .trim()
       .min(1)
+      .max(100)
       .optional()
       .transform((v) => (v === '' ? undefined : v)),
 
