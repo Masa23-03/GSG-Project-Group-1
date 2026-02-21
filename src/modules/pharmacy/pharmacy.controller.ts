@@ -53,66 +53,6 @@ import {
 export class PharmacyController {
   constructor(private readonly pharmacyService: PharmacyService) {}
 
-  //!Patient
-  @Roles(UserRole.PATIENT)
-  @ApiOperation({ summary: 'List pharmacies (paginated)' })
-  @ApiQuery({
-    name: 'scope',
-    required: false,
-    enum: PharmacyScope,
-    example: PharmacyScope.nearby,
-  })
-  @ApiQuery({ name: 'q', required: false, type: String, example: 'Shifa' })
-  @ApiQuery({ name: 'radiusKm', required: false, type: Number, example: 5 })
-  @ApiQuery({ name: 'cityId', required: false, type: Number, example: 2 })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @Get()
-  async findAllPatient(
-    @AuthedUser() user: authedUserType,
-    @Query(new ZodValidationPipe(patientPharmacyListQuerySchema))
-    query: PatientPharmaciesQueryDto,
-  ): Promise<ApiPaginationSuccessResponse<PatientPharmacyListResponseDto>> {
-    return this.pharmacyService.findAllPatient(user.id, query);
-  }
-
-  @Roles(UserRole.PATIENT)
-  @ApiOperation({ summary: 'Get pharmacy details' })
-  @ApiOkResponse({
-    schema: {
-      example: {
-        success: true,
-        data: {
-          id: 12,
-          pharmacyName: 'Al-Shifa Pharmacy',
-          cityId: 2,
-          cityName: 'Deir al-Balah',
-          address: {
-            addressLine: 'Main street',
-            latitude: 31.5204,
-            longitude: 34.4531,
-          },
-          distanceKm: null,
-          eta: null,
-          deliveryFee: 10,
-          coverImageUrl: null,
-          profileImageUrl: null,
-          isOpenNow: true,
-          workOpenTime: '08:00',
-          workCloseTime: '23:00',
-          phoneNumber: '+970599000000',
-        },
-      },
-    },
-  })
-  @ApiParam({ name: 'id', type: Number, example: 12 })
-  @Get(':id')
-  async findOnePatient(
-    @AuthedUser() user: authedUserType,
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<PatientPharmacyDetailsDto> {
-    return this.pharmacyService.findPatientOnePharmacy(user.id, id);
-  }
   //!Admin
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Admin: list pharmacies (paginated)' })
@@ -198,5 +138,66 @@ export class PharmacyController {
     updatePharmacyDto: UpdateMyPharmacyProfileDto,
   ) {
     return this.pharmacyService.updateMyProfile(pharmacy.id, updatePharmacyDto);
+  }
+
+  //!Patient
+  @Roles(UserRole.PATIENT)
+  @ApiOperation({ summary: 'List pharmacies (paginated)' })
+  @ApiQuery({
+    name: 'scope',
+    required: false,
+    enum: PharmacyScope,
+    example: PharmacyScope.nearby,
+  })
+  @ApiQuery({ name: 'q', required: false, type: String, example: 'Shifa' })
+  @ApiQuery({ name: 'radiusKm', required: false, type: Number, example: 5 })
+  @ApiQuery({ name: 'cityId', required: false, type: Number, example: 2 })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @Get()
+  async findAllPatient(
+    @AuthedUser() user: authedUserType,
+    @Query(new ZodValidationPipe(patientPharmacyListQuerySchema))
+    query: PatientPharmaciesQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<PatientPharmacyListResponseDto>> {
+    return this.pharmacyService.findAllPatient(user.id, query);
+  }
+
+  @Roles(UserRole.PATIENT)
+  @ApiOperation({ summary: 'Get pharmacy details' })
+  @ApiOkResponse({
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: 12,
+          pharmacyName: 'Al-Shifa Pharmacy',
+          cityId: 2,
+          cityName: 'Deir al-Balah',
+          address: {
+            addressLine: 'Main street',
+            latitude: 31.5204,
+            longitude: 34.4531,
+          },
+          distanceKm: null,
+          eta: null,
+          deliveryFee: 10,
+          coverImageUrl: null,
+          profileImageUrl: null,
+          isOpenNow: true,
+          workOpenTime: '08:00',
+          workCloseTime: '23:00',
+          phoneNumber: '+970599000000',
+        },
+      },
+    },
+  })
+  @ApiParam({ name: 'id', type: Number, example: 12 })
+  @Get(':id')
+  async findOnePatient(
+    @AuthedUser() user: authedUserType,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<PatientPharmacyDetailsDto> {
+    return this.pharmacyService.findPatientOnePharmacy(user.id, id);
   }
 }
