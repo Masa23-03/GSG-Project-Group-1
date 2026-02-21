@@ -209,18 +209,13 @@ export class PharmacyService {
         where: { userId: patientId, isDefault: true, isDeleted: false },
         select: { latitude: true, longitude: true, cityId: true },
       });
-      if (scope === PharmacyScope.nearby && !defaultAddress?.cityId) {
-        throw new BadRequestException('Default address city is required.');
-      }
       const patientLat =
-        defaultAddress?.latitude !== null &&
-        defaultAddress?.latitude !== undefined
+        defaultAddress?.latitude != null
           ? Number(defaultAddress.latitude)
           : undefined;
 
       const patientLng =
-        defaultAddress?.longitude !== null &&
-        defaultAddress?.longitude !== undefined
+        defaultAddress?.longitude != null
           ? Number(defaultAddress.longitude)
           : undefined;
 
@@ -233,34 +228,55 @@ export class PharmacyService {
         );
       }
       const whereSt = buildPatientPharmacyWhere(query);
+      //!scope=all
+      if (scope === PharmacyScope.all) {
+        const [rows, count] = await Promise.all([
+          prisma.pharmacy.findMany({
+            ...removeFields(pagination, ['page']),
+            where: whereSt,
+            select: patientPharmacySelect,
+            orderBy: [{ pharmacyName: 'asc' }],
+          }),
+          prisma.pharmacy.count({ where: whereSt }),
+        ]);
 
-      const [rows, count] = await Promise.all([
-        prisma.pharmacy.findMany({
-          ...removeFields(pagination, ['page']),
-          where: whereSt,
-          select: patientPharmacySelect,
-          orderBy: [{ pharmacyName: 'asc' }],
-        }),
-        prisma.pharmacy.count({ where: whereSt }),
-      ]);
+        const items = rows.map((p) =>
+          mapToPatientPharmacyList(p, patientLat, patientLng),
+        );
 
+        return {
+          success: true,
+          data: items,
+          meta: this.prismaService.formatPaginationResponse({
+            count,
+            page: pagination.page,
+            limit: pagination.take,
+          }),
+        };
+      }
+      const rows = await prisma.pharmacy.findMany({
+        where: whereSt,
+        select: patientPharmacySelect,
+        orderBy: [{ pharmacyName: 'asc' }],
+      });
       let items = rows.map((p) =>
         mapToPatientPharmacyList(p, patientLat, patientLng),
       );
-      if (scope === PharmacyScope.nearby) {
-        items = applyRadiusFilter(items, query.radiusKm);
-        items = sortPharmaciesByPatientLocation(
-          items,
-          patientLat,
-          patientLng,
-          defaultAddress?.cityId,
-        );
-      }
+      items = applyRadiusFilter(items, query.radiusKm);
+      items = sortPharmaciesByPatientLocation(
+        items,
+        patientLat,
+        patientLng,
+        defaultAddress?.cityId ?? undefined,
+      );
+      const total = items.length;
+      const start = (pagination.page - 1) * pagination.take;
+      const paged = items.slice(start, start + pagination.take);
       return {
         success: true,
-        data: items,
+        data: paged,
         meta: this.prismaService.formatPaginationResponse({
-          count: count,
+          count: total,
           page: pagination.page,
           limit: pagination.take,
         }),
