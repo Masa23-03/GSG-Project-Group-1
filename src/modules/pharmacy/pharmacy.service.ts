@@ -182,7 +182,7 @@ export class PharmacyService {
       const data: AdminPharmacyDetailsDto = {
         id: pharmacy.id,
         pharmacyName: pharmacy.pharmacyName,
-        address: pharmacy.address ?? null,
+        addressLine: pharmacy.address ?? null,
         latitude: pharmacy.latitude?.toNumber() ?? null,
 
         longitude: pharmacy.longitude?.toNumber() ?? null,
@@ -412,7 +412,7 @@ export class PharmacyService {
       updatedAt: pharmacy.updatedAt.toISOString(),
       role: pharmacy.user.role,
       pharmacyName: pharmacy.pharmacyName,
-      address: pharmacy.address ?? null,
+      addressLine: pharmacy.address ?? null,
       latitude: pharmacy.latitude?.toNumber() ?? null,
       longitude: pharmacy.longitude?.toNumber() ?? null,
       workingHours,

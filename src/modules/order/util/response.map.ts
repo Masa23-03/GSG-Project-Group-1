@@ -111,7 +111,7 @@ export const mapPharmacyOrder = (
     prescriptionId: currentPrescription?.id ?? null,
     prescriptionStatus: currentPrescription?.status ?? null,
     pharmacyLocation: {
-      address: o.pharmacy.address ?? null,
+      addressLine: o.pharmacy.address ?? null,
       latitude: o.pharmacy.latitude?.toNumber() ?? null,
       longitude: o.pharmacy.longitude?.toNumber() ?? null,
     },

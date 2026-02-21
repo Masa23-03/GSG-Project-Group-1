@@ -89,7 +89,7 @@ export class PharmacyController {
           cityId: 2,
           cityName: 'Deir al-Balah',
           address: {
-            address: 'Main street',
+            addressLine: 'Main street',
             latitude: 31.5204,
             longitude: 34.4531,
           },

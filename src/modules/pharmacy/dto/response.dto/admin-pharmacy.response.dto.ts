@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { VerificationStatus } from '@prisma/client';
 export class PharmacyLocationDto {
   @ApiProperty({ required: false })
-  address?: string | null;
+  addressLine?: string | null;
 
   @ApiProperty({ required: false })
   latitude?: number | null;

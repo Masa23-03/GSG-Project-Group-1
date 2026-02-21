@@ -66,7 +66,7 @@ export function mapToPatientPharmacyList(
     cityName: pharmacy.city.name,
 
     address: {
-      address: pharmacy.address ?? null,
+      addressLine: pharmacy.address ?? null,
       latitude: pharmacy.latitude !== null ? Number(pharmacy.latitude) : null,
       longitude:
         pharmacy.longitude !== null ? Number(pharmacy.longitude) : null,
@@ -106,7 +106,7 @@ export function mapToPatientPharmacyDetails(
     cityName: pharmacy.city.name,
 
     address: {
-      address: pharmacy.address ?? null,
+      addressLine: pharmacy.address ?? null,
       latitude: pharmacy.latitude !== null ? Number(pharmacy.latitude) : null,
       longitude:
         pharmacy.longitude !== null ? Number(pharmacy.longitude) : null,

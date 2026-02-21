@@ -58,7 +58,7 @@ export function mapToPatientMedicinePharmacyItem(
     cityName: p.city.name,
 
     address: {
-      address: p.address ?? null,
+      addressLine: p.address ?? null,
       latitude: p.latitude !== null ? Number(p.latitude) : null,
       longitude: p.longitude !== null ? Number(p.longitude) : null,
     },
