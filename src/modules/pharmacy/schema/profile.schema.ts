@@ -32,9 +32,9 @@ export const workingHoursSchema = z
 
 export const updatePharmacyProfileSchema = z
   .object({
-    pharmacyName: safeText({ min: 2, max: 255, mode: 'title' }),
+    pharmacyName: safeText({ min: 2, max: 255, mode: 'title' }).optional(),
     workingHours: workingHoursSchema.nullable().optional(),
-    address: safeText({ min: 2, max: 255, mode: 'address' }),
+    address: safeText({ min: 2, max: 255, mode: 'address' }).optional(),
     latitude: z.coerce.number().min(-90).max(90).nullable().optional(),
     longitude: z.coerce.number().min(-180).max(180).nullable().optional(),
   })
