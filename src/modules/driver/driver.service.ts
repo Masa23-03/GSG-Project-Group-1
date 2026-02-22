@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { AdminDriverListQueryDtoT } from './dto/query.dto/get-driver-dto';
 import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
@@ -11,7 +16,7 @@ import {
 import { DatabaseService } from '../database/database.service';
 import { buildAdminDriverWhere } from './util/helper';
 import { removeFields } from 'src/utils/object.util';
-import { DeliveryStatus, Driver } from '@prisma/client';
+import { DeliveryStatus, Driver, Prisma } from '@prisma/client';
 import { AdminBaseUpdateVerificationStatusDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { assertVerificationStatusTransition } from 'src/utils/status.helper';
 import { DriverMeResponseDto } from './dto/response.dto/profile.dto';
@@ -38,7 +43,7 @@ export class DriverService {
   ): Promise<ApiPaginationSuccessResponse<AdminDriverListItemDto>> {
     return this.prismaService.$transaction(async (prisma) => {
       const whereStatement = buildAdminDriverWhere(query);
-      const pagination = this.prismaService.handleQueryPagination(query);
+      const pagination = await this.prismaService.handleQueryPagination(query);
 
       const foundedDrivers = await prisma.driver.findMany({
         ...removeFields(pagination, ['page']),
@@ -83,7 +88,7 @@ export class DriverService {
       return {
         success: true,
         data,
-        meta: this.prismaService.formatPaginationResponse({
+        meta: await this.prismaService.formatPaginationResponse({
           count: count,
           page: pagination.page,
           limit: pagination.take,
@@ -237,30 +242,37 @@ export class DriverService {
     userId: number,
     payload: UpdateMyDriverDto,
   ): Promise<DriverMeResponseDto> {
-    const foundedDriver = await this.prismaService.driver.findUnique({
+    const existingDriver = await this.prismaService.driver.findUnique({
       where: { userId },
       select: { id: true },
     });
-    if (!foundedDriver) throw new NotFoundException();
+
+    if (!existingDriver) throw new NotFoundException('Driver not found');
+    const userData: Prisma.UserUpdateInput = {};
+    if (payload.name !== undefined) userData.name = payload.name;
+    if (payload.phoneNumber !== undefined)
+      userData.phoneNumber = payload.phoneNumber.trim();
+    if (payload.profileImageUrl !== undefined)
+      userData.profileImageUrl = payload.profileImageUrl;
+
+    const driverData: Prisma.DriverUpdateInput = {};
+    if (payload.vehicleName !== undefined)
+      driverData.vehicleName = payload.vehicleName.trim();
+
+    if (payload.vehiclePlate !== undefined)
+      driverData.vehiclePlate = payload.vehiclePlate.trim();
+
     await this.prismaService.$transaction(async (prisma) => {
-      const userData = mapBaseUserForProfileUpdate(payload);
-      if (userData) {
+      if (Object.keys(userData).length > 0) {
         await prisma.user.update({
           where: { id: userId },
           data: userData,
         });
       }
-      const driverData: any = {};
-      if (payload.vehicleName !== undefined)
-        driverData.vehicleName = payload.vehicleName;
-      if (payload.vehiclePlate !== undefined)
-        driverData.vehiclePlate = payload.vehiclePlate;
 
       if (Object.keys(driverData).length > 0) {
         await prisma.driver.update({
-          where: {
-            id: foundedDriver.id,
-          },
+          where: { userId },
           data: driverData,
         });
       }
@@ -293,32 +305,27 @@ export class DriverService {
   }
 
   async create(payload: RegisterDriverDTO) {
-    try {
-      return await this.prismaService.$transaction(async (tx) => {
-        const user = await this.userService.create(
-          payload,
-          UserRole.DRIVER,
-          UserStatus.ACTIVE,
-          tx,
-        );
+    return await this.prismaService.$transaction(async (tx) => {
+      const user = await this.userService.create(
+        payload,
+        UserRole.DRIVER,
+        UserStatus.ACTIVE,
+        tx,
+      );
 
-        const driver = await tx.driver.create({
-          data: {
-            userId: user.id,
-            vehicleName: payload.vehicleName,
-            vehiclePlate: payload.vehiclePlate,
-            licenseDocumentUrl: payload.licenseDocUrl,
-          },
-        });
-
-        return {
-          user,
-          driver,
-        };
+      const driver = await tx.driver.create({
+        data: {
+          userId: user.id,
+          vehicleName: payload.vehicleName,
+          vehiclePlate: payload.vehiclePlate,
+          licenseDocumentUrl: payload.licenseDocUrl,
+        },
       });
-    } catch (e) {
-      console.log('driver service error - create() method :', e);
-      throw e;
-    }
+
+      return {
+        user,
+        driver,
+      };
+    });
   }
 }

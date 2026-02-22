@@ -11,7 +11,7 @@ export function extractId(q?: string): number | null {
 }
 
 export function buildAdminBaseWhere(query: AdminListQueryDto) {
-  const and: Prisma.PharmacyWhereInput[] = [];
+  const and: any = [];
   if (query.verificationStatus) {
     and.push({ verificationStatus: query.verificationStatus });
   }
@@ -25,7 +25,7 @@ export function mapBaseUserForProfileUpdate(payload: UpdateMyUserBaseDto) {
   const userData: any = {};
   if (payload.name !== undefined) userData.name = payload.name;
   if (payload.phoneNumber !== undefined)
-    userData.phoneNumber = payload.phoneNumber;
+    userData.phoneNumber = payload.phoneNumber.trim();
   if (payload.profileImageUrl !== undefined)
     userData.profileImageUrl = payload.profileImageUrl;
   if (Object.keys(userData).length > 0) return userData;

@@ -26,7 +26,7 @@ export class DriverMeResponseDto {
   @ApiProperty()
   vehicleName!: string;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ required: false })
   vehiclePlate?: string | null;
   @ApiProperty({ enum: VerificationStatus })
   verificationStatus!: VerificationStatus;

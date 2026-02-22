@@ -30,7 +30,6 @@ import { adminDriverListQuerySchema } from './schema/driver.query.schema';
 import { AdminDriverListQueryDto } from './dto/query.dto/get-driver-dto';
 import { AdminBaseUpdateVerificationStatusDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { adminBaseUpdateVerificationStatusSchema } from 'src/utils/schema/adminGetPharmacyAndDriverListQuery.schema';
-import { AuthController } from '../auth/auth.controller';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
 import { UpdateMyDriverDto } from './dto/request.dto/profile.dto';
@@ -38,9 +37,9 @@ import { updateDriverProfileSchema } from './schema/profile.schema';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
 import { availabilitySchema } from './schema/availability.shcema';
 import { UpdateDriverAvailabilityDto } from './dto/request.dto/availability.dto';
-@ApiTags('Driver')
+@ApiTags('Drivers')
 @ApiBearerAuth('access-token')
-@Controller('driver')
+@Controller('drivers')
 export class DriverController {
   constructor(private readonly driverService: DriverService) {}
 

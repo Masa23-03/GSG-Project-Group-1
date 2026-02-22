@@ -7,8 +7,8 @@ export function buildAdminDriverWhere(
 ): Prisma.DriverWhereInput {
   const { and, q, extractedId } = buildAdminBaseWhere(query);
   const driverAnd: Prisma.DriverWhereInput[] = and as any;
-  if (query.availability)
-    driverAnd.push({ availabilityStatus: query.availability });
+  if (query.availabilityStatus)
+    driverAnd.push({ availabilityStatus: query.availabilityStatus });
   if (q) {
     driverAnd.push({
       OR: [
