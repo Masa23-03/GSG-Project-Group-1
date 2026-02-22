@@ -218,6 +218,7 @@ export class PharmacyService {
           : undefined;
 
       if (
+        scope === PharmacyScope.nearby &&
         query.radiusKm !== undefined &&
         (patientLat === undefined || patientLng === undefined)
       ) {
