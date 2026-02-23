@@ -90,7 +90,7 @@ export class MedicinePharmacyController {
     @AuthedUser() pharmacyUser: authedUserType,
     @Body(new ZodValidationPipe(CreateMedicinePharmacyRequestSchema))
     body: CreateMedicinePharmacyRequestDto,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  ) {
     const myPharmacyId =
       await this.pharmacyMedicneService.verifiedPharmacyIdOrThrow(
         pharmacyUser.id,
@@ -157,7 +157,7 @@ export class MedicinePharmacyController {
     @Param('id', ParseIntPipe) params: { id: number },
     @Body(new ZodValidationPipe(UpdateMedicinePharmacyRequestSchema))
     body: UpdateMedicineDto,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  ) {
     const myPharmacyId =
       await this.pharmacyMedicneService.verifiedPharmacyIdOrThrow(
         pharmacyUser.id,

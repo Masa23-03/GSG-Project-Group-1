@@ -17,6 +17,7 @@ import {
 import { AdminListQueryDto } from 'src/types/adminGetPharmacyAndDriverListQuery.dto';
 import { AdminMedicineListQueryDto } from './swagger/query.medicine.dto';
 import { removeFields } from 'src/utils/object.util';
+import { normalizeMedicineName } from 'src/utils/zod.helper';
 
 @Injectable()
 export class MedicineAdminService {
@@ -87,14 +88,26 @@ export class MedicineAdminService {
     payload: CreateMedicineAdminDto,
   ): Promise<ApiSuccessResponse<MedicineWithImages>> {
     const genericName = payload.genericName.trim();
-
+    const normalizedIncoming = normalizeMedicineName(payload.genericName);
     await this.CategoryExists(payload.categoryId);
 
-    const dup = await this.prisma.medicine.findFirst({
-      where: { genericName, categoryId: payload.categoryId },
-      select: { id: true },
+    const candidates = await this.prisma.medicine.findMany({
+      where: {
+        categoryId: payload.categoryId,
+      },
+      select: {
+        id: true,
+        genericName: true,
+      },
     });
-    if (dup) throw new ConflictException('Medicine already exists');
+
+    const duplicate = candidates.find(
+      (m) => normalizeMedicineName(m.genericName) === normalizedIncoming,
+    );
+
+    if (duplicate) {
+      throw new ConflictException('Medicine already exists in this category.');
+    }
 
     if (Number(payload.minPrice) > Number(payload.maxPrice)) {
       throw new ConflictException('minPrice must be <= maxPrice');
@@ -145,10 +158,16 @@ export class MedicineAdminService {
   async updateMedicineAdmin(
     id: number,
     payload: UpdateMedicineDto,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  ): Promise<MedicineWithImages> {
     const existing = await this.prisma.medicine.findUnique({
       where: { id },
-      select: { id: true, minPrice: true, maxPrice: true },
+      select: {
+        id: true,
+        categoryId: true,
+        genericName: true,
+        minPrice: true,
+        maxPrice: true,
+      },
     });
     if (!existing) throw new NotFoundException('Medicine not found');
 
@@ -156,14 +175,40 @@ export class MedicineAdminService {
       payload.minPrice !== undefined
         ? new Prisma.Decimal(payload.minPrice)
         : (existing.minPrice ?? null);
+
     const nextMax =
       payload.maxPrice !== undefined
         ? new Prisma.Decimal(payload.maxPrice)
         : (existing.maxPrice ?? null);
 
     if (nextMin !== null && nextMax !== null) {
-      if (Number(nextMin.toString()) > Number(nextMax.toString())) {
+      if (nextMin.greaterThan(nextMax)) {
         throw new ConflictException('minPrice must be <= maxPrice');
+      }
+    }
+
+    if (payload.genericName !== undefined || payload.categoryId !== undefined) {
+      const nextCategoryId = payload.categoryId ?? existing.categoryId;
+      const nextGenericName = payload.genericName ?? existing.genericName;
+
+      const normalizedIncoming = normalizeMedicineName(nextGenericName);
+
+      const candidates = await this.prisma.medicine.findMany({
+        where: {
+          categoryId: nextCategoryId,
+          id: { not: id },
+        },
+        select: { genericName: true },
+      });
+
+      const duplicate = candidates.find(
+        (m) => normalizeMedicineName(m.genericName) === normalizedIncoming,
+      );
+
+      if (duplicate) {
+        throw new ConflictException(
+          'Medicine already exists in this category.',
+        );
       }
     }
 
@@ -198,7 +243,8 @@ export class MedicineAdminService {
       },
       include: medicineInclude,
     });
-    return { success: true, data: medicine };
+
+    return medicine;
   }
 
   // ! the new update here is for :
@@ -208,48 +254,24 @@ export class MedicineAdminService {
   async activateMedicineAdmin(
     id: number,
     isActive: boolean,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
-    // const exists = await this.prisma.medicine.findUnique({
-    //     where: { id },
-    //     select: { id: true },
-    // });
-    // if (!exists) throw new NotFoundException('Medicine not found');
-
-    // const medicine = await this.prisma.medicine.update({
-    //     where: { id },
-    //     data: { isActive },
-    //     include: medicineInclude,
-    // });
-    // return {
-    // success: true,
-    //  data: medicine
-    // };
-
+  ): Promise<MedicineWithImages> {
     try {
-      const [medicine] = await this.prisma.$transaction([
-        this.prisma.medicine.update({
-          where: { id },
-          data: { isActive },
-          include: medicineInclude,
-        }),
+      const medicine = await this.prisma.medicine.update({
+        where: { id },
+        data: { isActive },
+        include: medicineInclude,
+      });
 
-        this.prisma.inventoryItem.updateMany({
+      if (!isActive) {
+        await this.prisma.inventoryItem.updateMany({
           where: {
             medicineId: id,
             isDeleted: false,
-            ...(isActive
-              ? {
-                  stockQuantity: { gt: 0 },
-                }
-              : {}),
           },
-          data: { isAvailable: isActive },
-        }),
-      ]);
-      return {
-        success: true,
-        data: medicine,
-      };
+          data: { isAvailable: false },
+        });
+      }
+      return medicine;
     } catch (error: any) {
       if (error?.code === 'P2025') {
         throw new NotFoundException('Medicine not found');
@@ -257,7 +279,6 @@ export class MedicineAdminService {
       throw error;
     }
   }
-
   async adminReview(
     adminId: number,
     id: number,

@@ -12,6 +12,7 @@ import {
   ApiSuccessResponse,
 } from 'src/types/unifiedType.types';
 import { removeFields } from 'src/utils/object.util';
+import { normalizeMedicineName } from 'src/utils/zod.helper';
 
 @Injectable()
 export class MedicinePharmacyService {
@@ -42,42 +43,46 @@ export class MedicinePharmacyService {
     userId: number,
     myPharmacyId: number,
     body: any,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
-    const genericName = body.genericName.trim();
-
+  ): Promise<MedicineWithImages> {
     await this.CategoryExists(body.categoryId);
-    const existingPending = await this.prisma.medicine.findFirst({
+    const normalizedIncoming = normalizeMedicineName(body.genericName);
+    const pendingCandidates = await this.prisma.medicine.findMany({
       where: {
         requestedByPharmacyId: myPharmacyId,
         status: MedicineStatus.PENDING,
         categoryId: body.categoryId,
-        genericName: { equals: genericName },
       },
-      select: { id: true },
+      select: { id: true, genericName: true },
     });
+    const pendingDup = pendingCandidates.find(
+      (m) => normalizeMedicineName(m.genericName) === normalizedIncoming,
+    );
 
-    if (existingPending) {
+    if (pendingDup) {
       throw new ConflictException(
         'You already have a pending request for this medicine',
       );
     }
-
-    const existingApproved = await this.prisma.medicine.findFirst({
+    const approvedCandidates = await this.prisma.medicine.findMany({
       where: {
         status: MedicineStatus.APPROVED,
-        isActive: true,
-        genericName,
         categoryId: body.categoryId,
       },
-      select: { id: true },
+      select: { id: true, genericName: true },
     });
-    if (existingApproved)
-      throw new ConflictException('Medicine already exists');
+
+    const approvedDup = approvedCandidates.find(
+      (m) => normalizeMedicineName(m.genericName) === normalizedIncoming,
+    );
+
+    if (approvedDup) {
+      throw new ConflictException('Medicine already exists in this category.');
+    }
 
     const medicine = await this.prisma.medicine.create({
       data: {
         categoryId: body.categoryId,
-        genericName,
+        genericName: body.genericName?.trim(),
         brandName: body.brandName?.trim(),
         manufacturer: body.manufacturer?.trim(),
         dosageForm: body.dosageForm?.trim(),
@@ -109,7 +114,7 @@ export class MedicinePharmacyService {
       },
       include: medicineInclude,
     });
-    return { success: true, data: medicine };
+    return medicine;
   }
 
   async pharmacyListMyRequests(params: {
@@ -163,7 +168,7 @@ export class MedicinePharmacyService {
     myPharmacyId: number,
     id: number,
     body: any,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  ): Promise<MedicineWithImages> {
     const owned = await this.prisma.medicine.findFirst({
       where: { id, requestedByPharmacyId: myPharmacyId },
       select: { id: true, status: true, genericName: true, categoryId: true },
@@ -178,20 +183,29 @@ export class MedicinePharmacyService {
     const nextCategoryId = body.categoryId ?? owned.categoryId;
 
     if (body.genericName !== undefined || body.categoryId !== undefined) {
-      const approvedDup = await this.prisma.medicine.findFirst({
+      const normalizedIncoming = normalizeMedicineName(nextGenericName);
+      const approvedCandidates = await this.prisma.medicine.findMany({
         where: {
           status: MedicineStatus.APPROVED,
-          isActive: true,
-          genericName: nextGenericName,
+
           categoryId: nextCategoryId,
         },
-        select: { id: true },
+        select: { id: true, genericName: true },
       });
-      if (approvedDup) throw new ConflictException('Medicine already exists');
+      const approvedDup = approvedCandidates.find(
+        (m) => normalizeMedicineName(m.genericName) === normalizedIncoming,
+      );
+
+      if (approvedDup) {
+        throw new ConflictException(
+          'Medicine already exists in this category.',
+        );
+      }
     }
 
     if (body.images !== undefined) {
       await this.prisma.medicineImage.deleteMany({ where: { medicineId: id } });
+
       if (body.images?.length) {
         await this.prisma.medicineImage.createMany({
           data: body.images.map((img: any) => ({
@@ -226,6 +240,6 @@ export class MedicinePharmacyService {
       },
       include: medicineInclude,
     });
-    return { success: true, data: medicine };
+    return medicine;
   }
 }

@@ -110,7 +110,7 @@ export class MedicineAdminController {
     @Param('id', ParseIntPipe) params: { id: number },
     @Body(new ZodValidationPipe(UpdateMedicineAdminSchema))
     payload: UpdateMedicineDto,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  ) {
     console.log('PATCH payload:', payload);
     return await this.adminMedicineService.updateMedicineAdmin(
       params.id,
@@ -125,7 +125,7 @@ export class MedicineAdminController {
   async toggleActive(
     @Param('id', ParseIntPipe) params: { id: number },
     @Body(new ZodValidationPipe(ToggleActiveSchema)) payload: ToggleActiveDto,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  ) {
     return await this.adminMedicineService.activateMedicineAdmin(
       params.id,
       payload.isActive,

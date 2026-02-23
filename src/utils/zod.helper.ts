@@ -77,3 +77,7 @@ export function safeText({ min, max, mode = 'generic' }: SafeTextOptions) {
       { message: 'Invalid characters' },
     );
 }
+
+export function normalizeMedicineName(input: string): string {
+  return input.normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ');
+}
