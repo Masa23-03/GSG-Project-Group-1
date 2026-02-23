@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -202,44 +203,65 @@ export class MedicinePharmacyService {
         );
       }
     }
+    const medicine = await this.prisma.$transaction(async (tx) => {
+      if (body.images !== undefined) {
+        const images = Array.isArray(body.images) ? body.images : [];
 
-    if (body.images !== undefined) {
-      await this.prisma.medicineImage.deleteMany({ where: { medicineId: id } });
+        for (const img of images) {
+          const n = Number(img?.sortOrder);
+          if (!Number.isInteger(n) || n < 0) {
+            throw new BadRequestException(
+              'images.sortOrder must be an integer >= 0',
+            );
+          }
+          if (typeof img?.url !== 'string' || !img.url.trim()) {
+            throw new BadRequestException('images.url is required');
+          }
+        }
 
-      if (body.images?.length) {
-        await this.prisma.medicineImage.createMany({
-          data: body.images.map((img: any) => ({
-            medicineId: id,
-            url: img.url.trim(),
-            sortOrder: img.sortOrder,
-          })),
-        });
+        const orders = images.map((i) => Number(i.sortOrder));
+        if (new Set(orders).size !== orders.length) {
+          throw new BadRequestException('images.sortOrder must be unique');
+        }
+
+        await tx.medicineImage.deleteMany({ where: { medicineId: id } });
+
+        if (images.length) {
+          await tx.medicineImage.createMany({
+            data: images.map((img: any) => ({
+              medicineId: id,
+              url: img.url.trim(),
+              sortOrder: Number(img.sortOrder),
+            })),
+          });
+        }
       }
-    }
 
-    const medicine = await this.prisma.medicine.update({
-      where: { id },
-      data: {
-        categoryId: body.categoryId,
-        genericName: body.genericName?.trim(),
-        brandName: body.brandName?.trim(),
-        manufacturer: body.manufacturer?.trim(),
-        dosageForm: body.dosageForm?.trim(),
-        strengthValue: body.strengthValue
-          ? new Prisma.Decimal(body.strengthValue)
-          : undefined,
-        strengthUnit: body.strengthUnit?.trim(),
-        packSize: body.packSize,
-        packUnit: body.packUnit?.trim(),
-        requiresPrescription: body.requiresPrescription,
-        activeIngredients: body.activeIngredients?.trim(),
-        dosageInstructions: body.dosageInstructions?.trim(),
-        storageInstructions: body.storageInstructions?.trim(),
-        warnings: body.warnings?.trim(),
-        description: body.description?.trim(),
-      },
-      include: medicineInclude,
+      return tx.medicine.update({
+        where: { id },
+        data: {
+          categoryId: body.categoryId,
+          genericName: body.genericName?.trim(),
+          brandName: body.brandName?.trim(),
+          manufacturer: body.manufacturer?.trim(),
+          dosageForm: body.dosageForm?.trim(),
+          strengthValue: body.strengthValue
+            ? new Prisma.Decimal(body.strengthValue)
+            : undefined,
+          strengthUnit: body.strengthUnit?.trim(),
+          packSize: body.packSize,
+          packUnit: body.packUnit?.trim(),
+          requiresPrescription: body.requiresPrescription,
+          activeIngredients: body.activeIngredients?.trim(),
+          dosageInstructions: body.dosageInstructions?.trim(),
+          storageInstructions: body.storageInstructions?.trim(),
+          warnings: body.warnings?.trim(),
+          description: body.description?.trim(),
+        },
+        include: medicineInclude,
+      });
     });
+
     return medicine;
   }
 }

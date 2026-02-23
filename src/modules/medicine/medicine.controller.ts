@@ -59,9 +59,9 @@ export class MedicineController {
   @ApiOperation({ summary: 'Medicine details (APPROVED + active only)' })
   async getById(
     @Param('id', ParseIntPipe)
-    params: number,
+    id: number,
   ): Promise<unifiedTypeTypes.ApiSuccessResponse<MedicineWithImages>> {
-    return await this.medicineService.getApprovedActiveById(params);
+    return await this.medicineService.getApprovedActiveById(id);
   }
   @Get(':medicineId/pharmacies')
   @ApiOperation({
@@ -94,9 +94,7 @@ export class MedicineController {
     @Param('medicineId', ParseIntPipe) medicineId: number,
     @Query(new ZodValidationPipe(patientMedicinePharmaciesQueryDtoSchema))
     query: PatientMedicinePharmaciesQueryDto,
-  ): Promise<
-    unifiedTypeTypes.ApiPaginationSuccessResponse<PatientMedicinePharmacyItemDto>
-  > {
+  ) {
     return this.medicineService.getPharmaciesByMedicine(
       user.id,
       medicineId,
