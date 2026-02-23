@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DecimalLike, NonNegativeDecimalLike } from './decimal.medicine.schema';
+import { NonNegativeDecimalLike } from './decimal.medicine.schema';
 import { MedicineImagesInputSchema } from './image.medicine.schema';
 
 //* ADMIN create

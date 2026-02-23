@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MedicineStatus } from '@prisma/client';
 import { MedicineImageDto } from './image.medicine.dto';
-import { PaginationResponseType } from 'src/types/unifiedType.types';
 
 export class MedicineDataDto {
   @ApiProperty({ example: 12 })

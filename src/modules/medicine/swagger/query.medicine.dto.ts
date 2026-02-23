@@ -12,6 +12,8 @@ export class MedicineListQueryDto extends PaginationQueryDto {
 export class PatientMedicineListQueryDto extends MedicineListQueryDto {
   @ApiPropertyOptional({ example: true })
   requiresPrescription?: boolean;
+  @ApiPropertyOptional({ example: true, default: false })
+  onlyAvailable?: boolean;
 
   @ApiPropertyOptional({ example: 5 })
   minPrice?: number;

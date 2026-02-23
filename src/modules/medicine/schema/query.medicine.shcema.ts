@@ -19,10 +19,17 @@ export const SearchQuerySchema = z
   .strict();
 export const PatientListQuerySchema = z
   .object({
+    q: z.string().trim().optional(),
+    categoryId: z.coerce.number().int().positive().optional(),
+
     requiresPrescription: BooleanFromStringSchema.optional(),
+    onlyAvailable: BooleanFromStringSchema.optional().default(false),
+
     minPrice: z.coerce.number().nonnegative().optional(),
     maxPrice: z.coerce.number().nonnegative().optional(),
   })
+  .merge(PaginationQuerySchema)
+
   .strict()
   .refine(
     (d) =>
@@ -31,6 +38,7 @@ export const PatientListQuerySchema = z
       d.minPrice <= d.maxPrice,
     { message: 'minPrice must be <= maxPrice', path: ['minPrice'] },
   );
+
 //* Admin list query
 export const AdminListQuerySchema = SearchQuerySchema.extend({
   status: z.nativeEnum(MedicineStatus).optional(),

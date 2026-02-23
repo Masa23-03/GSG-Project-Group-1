@@ -1,7 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MedicineStatus } from '@prisma/client';
-// TODO
-// import { IsEnum, IsOptional, IsString, ValidateIf, Matches } from 'class-validator';
 
 export class ToggleActiveDto {
   @ApiProperty({ example: true })

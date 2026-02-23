@@ -118,22 +118,47 @@ export class MedicineService {
     const pagination = await this.prisma.handleQueryPagination(params);
     const qTrim = params.q?.trim();
     const and: Prisma.MedicineWhereInput[] = [];
+    if (params.onlyAvailable === true) {
+      and.push({
+        inventoryItems: {
+          some: {
+            isDeleted: false,
+            isAvailable: true,
+            stockQuantity: { gt: 0 },
+            pharmacy: {
+              verificationStatus: VerificationStatus.VERIFIED,
+              user: { status: UserStatus.ACTIVE },
+            },
+          },
+        },
+      });
+    }
     if (params.minPrice !== undefined || params.maxPrice !== undefined) {
       const min =
         params.minPrice !== undefined
           ? new Prisma.Decimal(params.minPrice)
-          : null;
+          : undefined;
+
       const max =
         params.maxPrice !== undefined
           ? new Prisma.Decimal(params.maxPrice)
-          : null;
+          : undefined;
 
-      if (min !== null && max !== null && min.greaterThan(max)) {
+      if (min && max && min.greaterThan(max)) {
         throw new BadRequestException('minPrice must be <= maxPrice');
       }
 
-      if (min !== null) and.push({ minPrice: { gte: min } });
-      if (max !== null) and.push({ maxPrice: { lte: max } });
+      if (min !== undefined) {
+        and.push({
+          maxPrice: { gte: min },
+        });
+      }
+
+      if (max !== undefined) {
+        and.push({
+          minPrice: { lte: max },
+        });
+      }
     }
 
     const where: Prisma.MedicineWhereInput = {

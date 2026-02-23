@@ -63,7 +63,7 @@ export class MedicineController {
   ): Promise<unifiedTypeTypes.ApiSuccessResponse<MedicineWithImages>> {
     return await this.medicineService.getApprovedActiveById(params);
   }
-  @Get(':id/pharmacies')
+  @Get(':medicineId/pharmacies')
   @ApiOperation({
     summary: 'List pharmacies that have this medicine',
   })
