@@ -51,22 +51,31 @@ export class DriverController {
     name: 'userStatus',
     required: false,
     enum: UserStatus,
+    description: 'Filter drivers by user account status.',
     example: UserStatus.ACTIVE,
   })
   @ApiQuery({
     name: 'verificationStatus',
     required: false,
-    default: VerificationStatus.UNDER_REVIEW,
     enum: VerificationStatus,
+    description: 'Filter drivers by verification status.',
     example: VerificationStatus.UNDER_REVIEW,
   })
   @ApiQuery({
     name: 'availabilityStatus',
     required: false,
     enum: AvailabilityStatus,
+    description: 'Filter drivers by availability status (ONLINE or OFFLINE).',
     example: AvailabilityStatus.OFFLINE,
   })
-  @ApiQuery({ name: 'q', required: false, type: String })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    type: String,
+    description:
+      'Free-text search across: driverId, userId (if q has digits), user.name, user.email, user.phoneNumber, vehicleName, vehiclePlate, licenseNumber.',
+    example: 'ABC-1234',
+  })
   async findAll(
     @Query(new ZodValidationPipe(adminDriverListQuerySchema))
     query: AdminDriverListQueryDto,
