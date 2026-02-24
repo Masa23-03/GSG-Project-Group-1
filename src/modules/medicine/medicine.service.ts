@@ -30,6 +30,8 @@ import {
   sortByDistanceThenName,
   sortPharmaciesByPatientLocation,
 } from '../pharmacy/util/helper';
+import { mapToPatientMedicine } from './util/medicine.patient.mapper';
+import { PatientMedicineListItemDto } from './dto/patient-medicine-list.dto';
 
 @Injectable()
 export class MedicineService {
@@ -79,17 +81,11 @@ export class MedicineService {
         ? Number(defaultAddress.longitude)
         : undefined;
     const patientCityId = defaultAddress?.cityId;
-
-    const [rows, count] = await Promise.all([
-      this.prisma.inventoryItem.findMany({
-        ...removeFields(pagination, ['page']),
-        where,
-        select: patientMedicinePharmacySelect,
-        orderBy: { pharmacy: { pharmacyName: 'asc' } },
-      }),
-      this.prisma.inventoryItem.count({ where }),
-    ]);
-
+    const rows = await this.prisma.inventoryItem.findMany({
+      where,
+      select: patientMedicinePharmacySelect,
+      orderBy: { pharmacy: { pharmacyName: 'asc' } },
+    });
     let items = rows.map((r) =>
       mapToPatientMedicinePharmacyItem(r, patientLat, patientLng),
     );
@@ -101,11 +97,15 @@ export class MedicineService {
       patientCityId,
     );
 
+    const total = items.length;
+    const start = (pagination.page - 1) * pagination.take;
+    const paged = items.slice(start, start + pagination.take);
+
     return {
       success: true,
-      data: items,
+      data: paged,
       meta: await this.prisma.formatPaginationResponse({
-        count: count,
+        count: total,
         page: pagination.page,
         limit: pagination.take,
       }),
@@ -114,9 +114,9 @@ export class MedicineService {
 
   async browseMedicines(
     params: PatientMedicineListQueryDto,
-  ): Promise<ApiPaginationSuccessResponse<MedicineWithImages>> {
+  ): Promise<ApiPaginationSuccessResponse<PatientMedicineListItemDto>> {
     const pagination = await this.prisma.handleQueryPagination(params);
-    const qTrim = params.q?.trim();
+    const q = params.q;
     const and: Prisma.MedicineWhereInput[] = [];
     if (params.onlyAvailable === true) {
       and.push({
@@ -159,11 +159,11 @@ export class MedicineService {
       ...(typeof params.requiresPrescription === 'boolean'
         ? { requiresPrescription: params.requiresPrescription }
         : {}),
-      ...(qTrim
+      ...(q
         ? {
             OR: [
-              { genericName: { contains: qTrim } },
-              { brandName: { contains: qTrim } },
+              { genericName: { contains: q } },
+              { brandName: { contains: q } },
             ],
           }
         : {}),
@@ -179,9 +179,11 @@ export class MedicineService {
       include: medicineInclude,
     });
 
+    const mapped = items.map(mapToPatientMedicine);
+
     return {
       success: true,
-      data: items,
+      data: mapped,
       meta: await this.prisma.formatPaginationResponse({
         count: total,
         page: pagination.page,
@@ -190,14 +192,14 @@ export class MedicineService {
     };
   }
 
-  async getApprovedActiveById(
-    id: number,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  async getApprovedActiveById(id: number): Promise<PatientMedicineListItemDto> {
     const medicine = await this.prisma.medicine.findFirst({
       where: { id, status: MedicineStatus.APPROVED, isActive: true },
       include: medicineInclude,
     });
+
     if (!medicine) throw new NotFoundException('Medicine not found');
-    return { success: true, data: medicine };
+
+    return mapToPatientMedicine(medicine);
   }
 }

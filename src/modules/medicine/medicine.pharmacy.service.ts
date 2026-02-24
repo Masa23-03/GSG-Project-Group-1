@@ -14,6 +14,8 @@ import {
 } from 'src/types/unifiedType.types';
 import { removeFields } from 'src/utils/object.util';
 import { normalizeMedicineName } from 'src/utils/zod.helper';
+import { CreateMedicinePharmacyRequestDto } from './swagger/create.medicine.dto';
+import { UpdateMedicineDto } from './swagger/update.medicine.dto';
 
 @Injectable()
 export class MedicinePharmacyService {
@@ -43,18 +45,21 @@ export class MedicinePharmacyService {
   async pharmacyRequestCreate(
     userId: number,
     myPharmacyId: number,
-    body: any,
+    body: CreateMedicinePharmacyRequestDto,
   ): Promise<MedicineWithImages> {
     await this.CategoryExists(body.categoryId);
+
     const normalizedIncoming = normalizeMedicineName(body.genericName);
+
     const pendingCandidates = await this.prisma.medicine.findMany({
       where: {
         requestedByPharmacyId: myPharmacyId,
         status: MedicineStatus.PENDING,
         categoryId: body.categoryId,
       },
-      select: { id: true, genericName: true },
+      select: { genericName: true },
     });
+
     const pendingDup = pendingCandidates.find(
       (m) => normalizeMedicineName(m.genericName) === normalizedIncoming,
     );
@@ -64,12 +69,13 @@ export class MedicinePharmacyService {
         'You already have a pending request for this medicine',
       );
     }
+
     const approvedCandidates = await this.prisma.medicine.findMany({
       where: {
         status: MedicineStatus.APPROVED,
         categoryId: body.categoryId,
       },
-      select: { id: true, genericName: true },
+      select: { genericName: true },
     });
 
     const approvedDup = approvedCandidates.find(
@@ -80,25 +86,27 @@ export class MedicinePharmacyService {
       throw new ConflictException('Medicine already exists in this category.');
     }
 
-    const medicine = await this.prisma.medicine.create({
+    return this.prisma.medicine.create({
       data: {
         categoryId: body.categoryId,
-        genericName: body.genericName?.trim(),
-        brandName: body.brandName?.trim(),
-        manufacturer: body.manufacturer?.trim(),
-        dosageForm: body.dosageForm?.trim(),
-        strengthValue: body.strengthValue
-          ? new Prisma.Decimal(body.strengthValue)
-          : undefined,
-        strengthUnit: body.strengthUnit?.trim(),
-        packSize: body.packSize,
-        packUnit: body.packUnit?.trim(),
+        genericName: body.genericName,
+        brandName: body.brandName ?? null,
+        manufacturer: body.manufacturer ?? null,
+        dosageForm: body.dosageForm ?? null,
+        strengthValue:
+          body.strengthValue != null
+            ? new Prisma.Decimal(body.strengthValue)
+            : null,
+        strengthUnit: body.strengthUnit ?? null,
+        packSize: body.packSize ?? null,
+        packUnit: body.packUnit ?? null,
         requiresPrescription: body.requiresPrescription ?? false,
-        activeIngredients: body.activeIngredients?.trim(),
-        dosageInstructions: body.dosageInstructions?.trim(),
-        storageInstructions: body.storageInstructions?.trim(),
-        warnings: body.warnings?.trim(),
-        description: body.description.trim(),
+
+        activeIngredients: body.activeIngredients ?? null,
+        dosageInstructions: body.dosageInstructions ?? null,
+        storageInstructions: body.storageInstructions ?? null,
+        warnings: body.warnings ?? null,
+        description: body.description,
 
         status: MedicineStatus.PENDING,
         isActive: false,
@@ -106,8 +114,8 @@ export class MedicinePharmacyService {
 
         medicineImages: body.images?.length
           ? {
-              create: body.images.map((img: any) => ({
-                url: img.url.trim(),
+              create: body.images.map((img) => ({
+                url: img.url,
                 sortOrder: img.sortOrder,
               })),
             }
@@ -115,9 +123,7 @@ export class MedicinePharmacyService {
       },
       include: medicineInclude,
     });
-    return medicine;
   }
-
   async pharmacyListMyRequests(params: {
     myPharmacyId: number;
     status?: MedicineStatus;
@@ -168,31 +174,35 @@ export class MedicinePharmacyService {
   async pharmacyUpdateMyPendingRequest(
     myPharmacyId: number,
     id: number,
-    body: any,
+    body: UpdateMedicineDto,
   ): Promise<MedicineWithImages> {
     const owned = await this.prisma.medicine.findFirst({
       where: { id, requestedByPharmacyId: myPharmacyId },
-      select: { id: true, status: true, genericName: true, categoryId: true },
+      select: {
+        id: true,
+        status: true,
+        genericName: true,
+        categoryId: true,
+      },
     });
-    if (!owned) throw new NotFoundException('Medicine request not found');
 
+    if (!owned) throw new NotFoundException('Medicine request not found');
     if (owned.status !== MedicineStatus.PENDING) {
       throw new ConflictException('Only PENDING requests can be updated');
     }
-
-    const nextGenericName = (body.genericName ?? owned.genericName)?.trim();
-    const nextCategoryId = body.categoryId ?? owned.categoryId;
-
     if (body.genericName !== undefined || body.categoryId !== undefined) {
+      const nextCategoryId = body.categoryId ?? owned.categoryId;
+      const nextGenericName = body.genericName ?? owned.genericName;
       const normalizedIncoming = normalizeMedicineName(nextGenericName);
+
       const approvedCandidates = await this.prisma.medicine.findMany({
         where: {
           status: MedicineStatus.APPROVED,
-
           categoryId: nextCategoryId,
         },
         select: { id: true, genericName: true },
       });
+
       const approvedDup = approvedCandidates.find(
         (m) => normalizeMedicineName(m.genericName) === normalizedIncoming,
       );
@@ -202,36 +212,40 @@ export class MedicinePharmacyService {
           'Medicine already exists in this category.',
         );
       }
+
+      const pendingCandidates = await this.prisma.medicine.findMany({
+        where: {
+          requestedByPharmacyId: myPharmacyId,
+          status: MedicineStatus.PENDING,
+          categoryId: nextCategoryId,
+          id: { not: id },
+        },
+        select: { id: true, genericName: true },
+      });
+
+      const pendingDup = pendingCandidates.find(
+        (m) => normalizeMedicineName(m.genericName) === normalizedIncoming,
+      );
+
+      if (pendingDup) {
+        throw new ConflictException(
+          'You already have another pending request for this medicine in this category.',
+        );
+      }
     }
-    const medicine = await this.prisma.$transaction(async (tx) => {
+
+    return this.prisma.$transaction(async (tx) => {
       if (body.images !== undefined) {
-        const images = Array.isArray(body.images) ? body.images : [];
+        await tx.medicineImage.deleteMany({
+          where: { medicineId: id },
+        });
 
-        for (const img of images) {
-          const n = Number(img?.sortOrder);
-          if (!Number.isInteger(n) || n < 0) {
-            throw new BadRequestException(
-              'images.sortOrder must be an integer >= 0',
-            );
-          }
-          if (typeof img?.url !== 'string' || !img.url.trim()) {
-            throw new BadRequestException('images.url is required');
-          }
-        }
-
-        const orders = images.map((i) => Number(i.sortOrder));
-        if (new Set(orders).size !== orders.length) {
-          throw new BadRequestException('images.sortOrder must be unique');
-        }
-
-        await tx.medicineImage.deleteMany({ where: { medicineId: id } });
-
-        if (images.length) {
+        if (body.images.length) {
           await tx.medicineImage.createMany({
-            data: images.map((img: any) => ({
+            data: body.images.map((img) => ({
               medicineId: id,
-              url: img.url.trim(),
-              sortOrder: Number(img.sortOrder),
+              url: img.url,
+              sortOrder: img.sortOrder,
             })),
           });
         }
@@ -241,27 +255,26 @@ export class MedicinePharmacyService {
         where: { id },
         data: {
           categoryId: body.categoryId,
-          genericName: body.genericName?.trim(),
-          brandName: body.brandName?.trim(),
-          manufacturer: body.manufacturer?.trim(),
-          dosageForm: body.dosageForm?.trim(),
-          strengthValue: body.strengthValue
-            ? new Prisma.Decimal(body.strengthValue)
-            : undefined,
-          strengthUnit: body.strengthUnit?.trim(),
+          genericName: body.genericName,
+          brandName: body.brandName,
+          manufacturer: body.manufacturer,
+          dosageForm: body.dosageForm,
+          strengthValue:
+            body.strengthValue != null
+              ? new Prisma.Decimal(body.strengthValue)
+              : undefined,
+          strengthUnit: body.strengthUnit,
           packSize: body.packSize,
-          packUnit: body.packUnit?.trim(),
+          packUnit: body.packUnit,
           requiresPrescription: body.requiresPrescription,
-          activeIngredients: body.activeIngredients?.trim(),
-          dosageInstructions: body.dosageInstructions?.trim(),
-          storageInstructions: body.storageInstructions?.trim(),
-          warnings: body.warnings?.trim(),
-          description: body.description?.trim(),
+          activeIngredients: body.activeIngredients,
+          dosageInstructions: body.dosageInstructions,
+          storageInstructions: body.storageInstructions,
+          warnings: body.warnings,
+          description: body.description,
         },
         include: medicineInclude,
       });
     });
-
-    return medicine;
   }
 }
