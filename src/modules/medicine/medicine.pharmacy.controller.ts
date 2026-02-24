@@ -72,7 +72,7 @@ export class MedicinePharmacyController {
   async browse(
     @Query(new ZodValidationPipe(SearchQuerySchema))
     query: PharmacyMedicineListQueryDto,
-  ): Promise<ApiPaginationSuccessResponse<MedicineWithImages>> {
+  ) {
     return await this.medicineService.browseMedicines({
       q: query.q,
       categoryId: query.categoryId,

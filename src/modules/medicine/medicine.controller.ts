@@ -41,9 +41,7 @@ export class MedicineController {
   async list(
     @Query(new ZodValidationPipe(PatientListQuerySchema))
     query: PatientMedicineListQueryDto,
-  ): Promise<
-    unifiedTypeTypes.ApiPaginationSuccessResponse<MedicineWithImages>
-  > {
+  ) {
     return await this.medicineService.browseMedicines({
       q: query.q,
       categoryId: query.categoryId,
@@ -60,7 +58,7 @@ export class MedicineController {
   async getById(
     @Param('id', ParseIntPipe)
     id: number,
-  ): Promise<unifiedTypeTypes.ApiSuccessResponse<MedicineWithImages>> {
+  ) {
     return await this.medicineService.getApprovedActiveById(id);
   }
   @Get(':medicineId/pharmacies')
