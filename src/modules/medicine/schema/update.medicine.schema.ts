@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { DecimalLike, NonNegativeDecimalLike } from './decimal.medicine.schema';
 import { MedicineImagesInputSchema } from './image.medicine.schema';
 import {
-  imagesSchema,
   medicineNameSchema,
   medicineTextSchema,
   optionalNameSchema,
@@ -28,6 +27,7 @@ export const UpdateMedicineAdminSchema = z
     description: medicineTextSchema,
     minPrice: priceSchema.optional(),
     maxPrice: priceSchema.optional(),
+    images: MedicineImagesInputSchema,
   })
   .strict();
 

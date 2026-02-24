@@ -6,8 +6,11 @@ import { safeText } from 'src/utils/zod.helper';
 // const MedicineStatusWithoutRejected = removeFields( MedicineStatus, ['REJECTED'])
 
 const BooleanFromStringSchema = z.preprocess((value) => {
-  if (value === 'true') return true;
-  if (value === 'false') return false;
+  if (typeof value === 'string') {
+    const v = value.trim().toLowerCase();
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+  }
   return value;
 }, z.boolean());
 const qSchema = safeText({ min: 0, max: 100, mode: 'generic' })

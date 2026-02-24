@@ -30,7 +30,7 @@ const CreateMedicineBaseSchema = z
     minPrice: priceSchema,
     maxPrice: priceSchema,
 
-    images: imagesSchema,
+    images: MedicineImagesInputSchema.default([]),
   })
   .strict();
 //* ADMIN create

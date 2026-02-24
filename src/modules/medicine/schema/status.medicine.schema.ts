@@ -26,18 +26,30 @@ export const AdminReviewSchema = z
           path: ['rejectionReason'],
         });
       }
-    }
-    if (data.status === 'APPROVED') {
-      if (data.minPrice === undefined || data.maxPrice === undefined) {
+      if (data.minPrice !== undefined || data.maxPrice !== undefined) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'minPrice and maxPrice are required when status is APPROVED',
+          message: 'minPrice/maxPrice must not be sent when status is REJECTED',
           path: ['minPrice'],
         });
-        return;
       }
+      return;
     }
-
+    if (data.rejectionReason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'rejectionReason must not be sent when status is APPROVED',
+        path: ['rejectionReason'],
+      });
+    }
+    if (data.minPrice === undefined || data.maxPrice === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'minPrice and maxPrice are required when status is APPROVED',
+        path: ['minPrice'],
+      });
+      return;
+    }
     if (Number(data.minPrice) > Number(data.maxPrice)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
