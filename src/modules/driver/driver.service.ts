@@ -305,27 +305,32 @@ export class DriverService {
   }
 
   async create(payload: RegisterDriverDTO) {
-    return await this.prismaService.$transaction(async (tx) => {
-      const user = await this.userService.create(
-        payload,
-        UserRole.DRIVER,
-        UserStatus.ACTIVE,
-        tx,
-      );
+    try {
+      return await this.prismaService.$transaction(async (tx) => {
+        const user = await this.userService.create(
+          payload,
+          UserRole.DRIVER,
+          UserStatus.ACTIVE,
+          tx,
+        );
 
-      const driver = await tx.driver.create({
-        data: {
-          userId: user.id,
-          vehicleName: payload.vehicleName,
-          vehiclePlate: payload.vehiclePlate,
-          licenseDocumentUrl: payload.licenseDocUrl,
-        },
+        const driver = await tx.driver.create({
+          data: {
+            userId: user.id,
+            vehicleName: payload.vehicleName,
+            vehiclePlate: payload.vehiclePlate,
+            licenseDocumentUrl: payload.licenseDocUrl,
+          },
+        });
+
+        return {
+          user,
+          driver,
+        };
       });
-
-      return {
-        user,
-        driver,
-      };
-    });
+    } catch (e) {
+      console.log('driver service error - create() method :', e);
+      throw e;
+    }
   }
 }
