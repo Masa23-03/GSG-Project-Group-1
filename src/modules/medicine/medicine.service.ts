@@ -138,26 +138,17 @@ export class MedicineService {
         params.minPrice !== undefined
           ? new Prisma.Decimal(params.minPrice)
           : undefined;
-
       const max =
         params.maxPrice !== undefined
           ? new Prisma.Decimal(params.maxPrice)
           : undefined;
 
-      if (min && max && min.greaterThan(max)) {
-        throw new BadRequestException('minPrice must be <= maxPrice');
-      }
-
       if (min !== undefined) {
-        and.push({
-          maxPrice: { gte: min },
-        });
+        and.push({ maxPrice: { gte: min } });
       }
 
       if (max !== undefined) {
-        and.push({
-          minPrice: { lte: max },
-        });
+        and.push({ minPrice: { lte: max } });
       }
     }
 

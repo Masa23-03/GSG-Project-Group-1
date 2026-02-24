@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseBoolPipe,
   ParseIntPipe,
   Patch,
   Post,
@@ -15,7 +16,6 @@ import {
   ApiOperation,
   ApiParam,
   ApiQuery,
-  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
@@ -34,17 +34,14 @@ import type { authedUserType } from 'src/types/unifiedType.types';
 import { MedicineAdminService } from './medicine.admin.service';
 import { AdminMedicineListQueryDto } from './swagger/query.medicine.dto';
 
-import { ToggleActiveDto, AdminReviewDto } from './swagger/status.medicine.dto';
+import { AdminReviewDto } from './swagger/status.medicine.dto';
 import { CreateMedicineAdminDto } from './swagger/create.medicine.dto';
 import { AdminListQuerySchema } from './schema/query.medicine.shcema';
 import { UpdateMedicineAdminSchema } from './schema/update.medicine.schema';
 import { CreateMedicineAdminSchema } from './schema/create.medicine.schema';
 import { UpdateMedicineDto } from './swagger/update.medicine.dto';
-import {
-  AdminReviewSchema,
-  ToggleActiveSchema,
-} from './schema/status.medicine.schema';
 import { MedicineWithImages } from './util/medicine.shared';
+import { AdminReviewSchema } from './schema/status.medicine.schema';
 
 @ApiTags('Medicine - Admin')
 @ApiBearerAuth('access-token')
@@ -98,53 +95,61 @@ export class MedicineAdminController {
     @AuthedUser() admin: authedUserType,
     @Body(new ZodValidationPipe(CreateMedicineAdminSchema))
     payload: CreateMedicineAdminDto,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  ) {
     return await this.adminMedicineService.adminCreate(admin.id, payload);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Admin update core fields' })
   @ApiParam({ name: 'id', type: Number })
-  @ApiBody({ type: CreateMedicineAdminDto })
+  @ApiBody({ type: UpdateMedicineDto })
   async update(
     @Param('id', ParseIntPipe) params: { id: number },
     @Body(new ZodValidationPipe(UpdateMedicineAdminSchema))
     payload: UpdateMedicineDto,
   ) {
-    console.log('PATCH payload:', payload);
     return await this.adminMedicineService.updateMedicineAdmin(
       params.id,
       payload,
     );
   }
-
-  @Patch(':id/active')
-  @ApiOperation({ summary: 'Admin toggle isActive' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiBody({ type: ToggleActiveDto })
-  async toggleActive(
-    @Param('id', ParseIntPipe) params: { id: number },
-    @Body(new ZodValidationPipe(ToggleActiveSchema)) payload: ToggleActiveDto,
+  @Patch(':id/activation')
+  @ApiOperation({ summary: 'Activate / deactivate an APPROVED medicine' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 15,
+    description: 'Medicine id',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { isActive: { type: 'boolean', example: true } },
+      required: ['isActive'],
+    },
+  })
+  async activation(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('isActive', ParseBoolPipe) isActive: boolean,
   ) {
-    return await this.adminMedicineService.activateMedicineAdmin(
-      params.id,
-      payload.isActive,
-    );
+    return this.adminMedicineService.activateMedicineAdmin(id, isActive);
   }
-
-  @Patch(':id/status')
-  @ApiOperation({ summary: 'Admin approve/reject (review)' })
-  @ApiParam({ name: 'id', type: Number })
+  @Patch(':id/review')
+  @ApiOperation({
+    summary: 'Review a pharmacy-requested medicine (PENDING only)',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 15,
+    description: 'Medicine id',
+  })
   @ApiBody({ type: AdminReviewDto })
   async review(
-    @AuthedUser() admin: authedUserType,
-    @Param('id', ParseIntPipe) params: { id: number },
+    @AuthedUser() admin: { id: number },
+    @Param('id', ParseIntPipe) id: number,
     @Body(new ZodValidationPipe(AdminReviewSchema)) payload: AdminReviewDto,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
-    return await this.adminMedicineService.adminReview(
-      admin.id,
-      params.id,
-      payload,
-    );
+  ) {
+    return this.adminMedicineService.adminReview(admin.id, id, payload);
   }
 }

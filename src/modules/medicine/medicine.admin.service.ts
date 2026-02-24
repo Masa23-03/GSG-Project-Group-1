@@ -255,52 +255,70 @@ export class MedicineAdminService {
     id: number,
     isActive: boolean,
   ): Promise<MedicineWithImages> {
-    try {
-      const medicine = await this.prisma.medicine.update({
+    const existing = await this.prisma.medicine.findUnique({
+      where: { id },
+      select: { id: true, status: true },
+    });
+
+    if (!existing) throw new NotFoundException('Medicine not found');
+
+    if (existing.status !== MedicineStatus.APPROVED) {
+      throw new ConflictException(
+        'Only APPROVED medicines can be activated/deactivated',
+      );
+    }
+
+    const medicine = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.medicine.update({
         where: { id },
         data: { isActive },
         include: medicineInclude,
       });
 
       if (!isActive) {
-        await this.prisma.inventoryItem.updateMany({
-          where: {
-            medicineId: id,
-            isDeleted: false,
-          },
+        await tx.inventoryItem.updateMany({
+          where: { medicineId: id, isDeleted: false },
           data: { isAvailable: false },
         });
       }
-      return medicine;
-    } catch (error: any) {
-      if (error?.code === 'P2025') {
-        throw new NotFoundException('Medicine not found');
-      }
-      throw error;
-    }
+
+      return updated;
+    });
+
+    return medicine;
   }
   async adminReview(
     adminId: number,
     id: number,
     payload: AdminReviewDto,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
-    const existingMedicine = await this.prisma.medicine.findUnique({
+  ): Promise<MedicineWithImages> {
+    const existing = await this.prisma.medicine.findUnique({
       where: { id },
-      select: { id: true, minPrice: true, maxPrice: true },
+      select: {
+        id: true,
+        status: true,
+        requestedByPharmacyId: true,
+        minPrice: true,
+        maxPrice: true,
+      },
     });
-
-    if (!existingMedicine) throw new NotFoundException('Medicine not found');
-
+    if (!existing) throw new NotFoundException('Medicine not found');
+    if (existing.requestedByPharmacyId == null) {
+      throw new ConflictException('This medicine is not a pharmacy request');
+    }
+    if (existing.status !== MedicineStatus.PENDING) {
+      throw new ConflictException('Only PENDING requests can be reviewed');
+    }
     if (payload.status === 'APPROVED') {
       const finalMin =
         payload.minPrice !== undefined
           ? new Prisma.Decimal(payload.minPrice)
-          : existingMedicine.minPrice;
+          : existing.minPrice;
 
       const finalMax =
         payload.maxPrice !== undefined
           ? new Prisma.Decimal(payload.maxPrice)
-          : existingMedicine.maxPrice;
+          : existing.maxPrice;
 
       if (finalMin == null || finalMax == null) {
         throw new ConflictException(
@@ -332,7 +350,7 @@ export class MedicineAdminService {
         include: medicineInclude,
       });
 
-      return { success: true, data: updatedMedicineApproved };
+      return updatedMedicineApproved;
     }
 
     if (payload.status === 'REJECTED') {
@@ -349,12 +367,12 @@ export class MedicineAdminService {
           isActive: false,
           reviewedBy: adminId,
           reviewedAt: new Date(),
-          rejectionReason: payload.rejectionReason?.trim() ?? null,
+          rejectionReason: reason,
         },
         include: medicineInclude,
       });
 
-      return { success: true, data: updatedMedicineRejected };
+      return updatedMedicineRejected;
     }
 
     throw new BadRequestException(`Invalid status: ${payload.status}`);
