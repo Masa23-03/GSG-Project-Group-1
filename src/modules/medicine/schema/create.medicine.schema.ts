@@ -9,9 +9,7 @@ import {
   priceSchema,
 } from './medicine.schema.fields';
 import { safeText } from 'src/utils/zod.helper';
-
-//* ADMIN create
-export const CreateMedicineAdminSchema = z
+const CreateMedicineBaseSchema = z
   .object({
     categoryId: z.coerce.number().int().positive(),
     genericName: medicineNameSchema,
@@ -34,15 +32,19 @@ export const CreateMedicineAdminSchema = z
 
     images: imagesSchema,
   })
-  .strict()
-  .refine((b) => Number(b.minPrice) <= Number(b.maxPrice), {
+  .strict();
+//* ADMIN create
+export const CreateMedicineAdminSchema = CreateMedicineBaseSchema.refine(
+  (b) => Number(b.minPrice) <= Number(b.maxPrice),
+  {
     message: 'minPrice must be <= maxPrice',
     path: ['minPrice'],
-  });
+  },
+);
 
 //* PHARMACY request
 export const CreateMedicinePharmacyRequestSchema =
-  CreateMedicineAdminSchema.omit({
+  CreateMedicineBaseSchema.omit({
     minPrice: true,
     maxPrice: true,
   }).strict();
