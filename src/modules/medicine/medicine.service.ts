@@ -133,25 +133,15 @@ export class MedicineService {
         },
       });
     }
-    if (params.minPrice !== undefined || params.maxPrice !== undefined) {
-      const min =
-        params.minPrice !== undefined
-          ? new Prisma.Decimal(params.minPrice)
-          : undefined;
-      const max =
-        params.maxPrice !== undefined
-          ? new Prisma.Decimal(params.maxPrice)
-          : undefined;
-
-      if (min !== undefined) {
-        and.push({ maxPrice: { gte: min } });
-      }
-
-      if (max !== undefined) {
-        and.push({ minPrice: { lte: max } });
-      }
+    if (params.minPrice !== undefined) {
+      const min = new Prisma.Decimal(params.minPrice);
+      and.push({ minPrice: { gte: min } });
     }
 
+    if (params.maxPrice !== undefined) {
+      const max = new Prisma.Decimal(params.maxPrice);
+      and.push({ maxPrice: { lte: max } });
+    }
     const where: Prisma.MedicineWhereInput = {
       status: MedicineStatus.APPROVED,
       isActive: true,

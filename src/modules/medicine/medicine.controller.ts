@@ -46,6 +46,7 @@ export class MedicineController {
       q: query.q,
       categoryId: query.categoryId,
       requiresPrescription: query.requiresPrescription,
+      onlyAvailable: query.onlyAvailable,
       minPrice: query.minPrice,
       maxPrice: query.maxPrice,
       page: query.page ?? 1,

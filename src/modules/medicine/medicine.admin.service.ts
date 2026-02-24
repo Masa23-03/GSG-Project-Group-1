@@ -205,37 +205,53 @@ export class MedicineAdminService {
       }
     }
 
-    return this.prisma.medicine.update({
-      where: { id },
-      data: {
-        categoryId: payload.categoryId,
-        genericName: payload.genericName,
-        brandName: payload.brandName,
-        manufacturer: payload.manufacturer,
-        dosageForm: payload.dosageForm,
-        strengthValue:
-          payload.strengthValue != null
-            ? new Prisma.Decimal(payload.strengthValue)
-            : undefined,
-        strengthUnit: payload.strengthUnit,
-        packSize: payload.packSize,
-        packUnit: payload.packUnit,
-        requiresPrescription: payload.requiresPrescription,
-        activeIngredients: payload.activeIngredients,
-        dosageInstructions: payload.dosageInstructions,
-        storageInstructions: payload.storageInstructions,
-        warnings: payload.warnings,
-        description: payload.description,
-        minPrice:
-          payload.minPrice !== undefined
-            ? new Prisma.Decimal(payload.minPrice)
-            : undefined,
-        maxPrice:
-          payload.maxPrice !== undefined
-            ? new Prisma.Decimal(payload.maxPrice)
-            : undefined,
-      },
-      include: medicineInclude,
+    return this.prisma.$transaction(async (tx) => {
+      if (payload.images !== undefined) {
+        await tx.medicineImage.deleteMany({ where: { medicineId: id } });
+
+        if (payload.images.length) {
+          await tx.medicineImage.createMany({
+            data: payload.images.map((img) => ({
+              medicineId: id,
+              url: img.url,
+              sortOrder: img.sortOrder,
+            })),
+          });
+        }
+      }
+
+      return tx.medicine.update({
+        where: { id },
+        data: {
+          categoryId: payload.categoryId,
+          genericName: payload.genericName,
+          brandName: payload.brandName,
+          manufacturer: payload.manufacturer,
+          dosageForm: payload.dosageForm,
+          strengthValue:
+            payload.strengthValue != null
+              ? new Prisma.Decimal(payload.strengthValue)
+              : undefined,
+          strengthUnit: payload.strengthUnit,
+          packSize: payload.packSize,
+          packUnit: payload.packUnit,
+          requiresPrescription: payload.requiresPrescription,
+          activeIngredients: payload.activeIngredients,
+          dosageInstructions: payload.dosageInstructions,
+          storageInstructions: payload.storageInstructions,
+          warnings: payload.warnings,
+          description: payload.description,
+          minPrice:
+            payload.minPrice !== undefined
+              ? new Prisma.Decimal(payload.minPrice)
+              : undefined,
+          maxPrice:
+            payload.maxPrice !== undefined
+              ? new Prisma.Decimal(payload.maxPrice)
+              : undefined,
+        },
+        include: medicineInclude,
+      });
     });
   }
 
