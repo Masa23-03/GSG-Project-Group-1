@@ -8,6 +8,7 @@ export const MedicineImagesInputSchema = z
       sortOrder: z.coerce.number().int().min(0).max(127),
     }),
   )
+
   .max(20)
   .optional()
   .refine(

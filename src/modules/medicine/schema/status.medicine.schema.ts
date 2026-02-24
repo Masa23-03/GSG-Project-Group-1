@@ -1,15 +1,18 @@
 import z from 'zod';
 import { DecimalLike, NonNegativeDecimalLike } from './decimal.medicine.schema';
+import { safeText } from 'src/utils/zod.helper';
 
-export const ToggleActiveSchema = z.object({
-  isActive: z.coerce.boolean(),
-});
+export const ToggleActiveSchema = z
+  .object({
+    isActive: z.coerce.boolean(),
+  })
+  .strict();
 
 //* ADMIN approve/reject
 export const AdminReviewSchema = z
   .object({
     status: z.enum(['APPROVED', 'REJECTED']),
-    rejectionReason: z.string().trim().min(2).optional(),
+    rejectionReason: safeText({ min: 2, max: 500 }).optional().nullable(),
     minPrice: NonNegativeDecimalLike.optional(),
     maxPrice: NonNegativeDecimalLike.optional(),
   })
