@@ -34,7 +34,7 @@ export class MedicineAdminService {
   async adminList(
     params: AdminMedicineListQueryDto,
   ): Promise<ApiPaginationSuccessResponse<MedicineWithImages>> {
-    const qTrim = params.q?.trim();
+    const q = params.q;
     const pagination = await this.prisma.handleQueryPagination(params);
     const { status, isActive, categoryId } = params;
 
@@ -42,11 +42,11 @@ export class MedicineAdminService {
       ...(status ? { status } : {}),
       ...(typeof isActive === 'boolean' ? { isActive } : {}),
       ...(categoryId ? { categoryId } : {}),
-      ...(qTrim
+      ...(q
         ? {
             OR: [
-              { genericName: { contains: qTrim } },
-              { brandName: { contains: qTrim } },
+              { genericName: { contains: q } },
+              { brandName: { contains: q } },
             ],
           }
         : {}),
@@ -82,23 +82,17 @@ export class MedicineAdminService {
     if (!medicine) throw new NotFoundException('Medicine not found');
     return { success: true, data: medicine };
   }
-
   async adminCreate(
     adminId: number,
     payload: CreateMedicineAdminDto,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
-    const genericName = payload.genericName.trim();
-    const normalizedIncoming = normalizeMedicineName(payload.genericName);
+  ): Promise<MedicineWithImages> {
     await this.CategoryExists(payload.categoryId);
 
+    const normalizedIncoming = normalizeMedicineName(payload.genericName);
+
     const candidates = await this.prisma.medicine.findMany({
-      where: {
-        categoryId: payload.categoryId,
-      },
-      select: {
-        id: true,
-        genericName: true,
-      },
+      where: { categoryId: payload.categoryId },
+      select: { id: true, genericName: true },
     });
 
     const duplicate = candidates.find(
@@ -109,29 +103,31 @@ export class MedicineAdminService {
       throw new ConflictException('Medicine already exists in this category.');
     }
 
-    if (Number(payload.minPrice) > Number(payload.maxPrice)) {
+    if (payload.minPrice > payload.maxPrice) {
       throw new ConflictException('minPrice must be <= maxPrice');
     }
 
     const medicine = await this.prisma.medicine.create({
       data: {
         categoryId: payload.categoryId,
-        genericName,
-        brandName: payload.brandName?.trim(),
-        manufacturer: payload.manufacturer?.trim(),
-        dosageForm: payload.dosageForm?.trim(),
-        strengthValue: payload.strengthValue
-          ? new Prisma.Decimal(payload.strengthValue)
-          : undefined,
-        strengthUnit: payload.strengthUnit?.trim(),
-        packSize: payload.packSize,
-        packUnit: payload.packUnit?.trim(),
+        genericName: payload.genericName,
+        brandName: payload.brandName ?? null,
+        manufacturer: payload.manufacturer ?? null,
+        dosageForm: payload.dosageForm ?? null,
+        strengthValue:
+          payload.strengthValue != null
+            ? new Prisma.Decimal(payload.strengthValue)
+            : null,
+        strengthUnit: payload.strengthUnit ?? null,
+        packSize: payload.packSize ?? null,
+        packUnit: payload.packUnit ?? null,
         requiresPrescription: payload.requiresPrescription ?? false,
-        activeIngredients: payload.activeIngredients?.trim(),
-        dosageInstructions: payload.dosageInstructions?.trim(),
-        storageInstructions: payload.storageInstructions?.trim(),
-        warnings: payload.warnings?.trim(),
-        description: payload.description.trim(),
+
+        activeIngredients: payload.activeIngredients ?? null,
+        dosageInstructions: payload.dosageInstructions ?? null,
+        storageInstructions: payload.storageInstructions ?? null,
+        warnings: payload.warnings ?? null,
+        description: payload.description,
 
         status: MedicineStatus.APPROVED,
         isActive: true,
@@ -143,8 +139,8 @@ export class MedicineAdminService {
 
         medicineImages: payload.images?.length
           ? {
-              create: payload.images.map((img: any) => ({
-                url: img.url.trim(),
+              create: payload.images.map((img) => ({
+                url: img.url,
                 sortOrder: img.sortOrder,
               })),
             }
@@ -152,9 +148,9 @@ export class MedicineAdminService {
       },
       include: medicineInclude,
     });
-    return { success: true, data: medicine };
-  }
 
+    return medicine;
+  }
   async updateMedicineAdmin(
     id: number,
     payload: UpdateMedicineDto,
@@ -169,22 +165,21 @@ export class MedicineAdminService {
         maxPrice: true,
       },
     });
+
     if (!existing) throw new NotFoundException('Medicine not found');
 
     const nextMin =
       payload.minPrice !== undefined
         ? new Prisma.Decimal(payload.minPrice)
-        : (existing.minPrice ?? null);
+        : existing.minPrice;
 
     const nextMax =
       payload.maxPrice !== undefined
         ? new Prisma.Decimal(payload.maxPrice)
-        : (existing.maxPrice ?? null);
+        : existing.maxPrice;
 
-    if (nextMin !== null && nextMax !== null) {
-      if (nextMin.greaterThan(nextMax)) {
-        throw new ConflictException('minPrice must be <= maxPrice');
-      }
+    if (nextMin && nextMax && nextMin.greaterThan(nextMax)) {
+      throw new ConflictException('minPrice must be <= maxPrice');
     }
 
     if (payload.genericName !== undefined || payload.categoryId !== undefined) {
@@ -212,26 +207,27 @@ export class MedicineAdminService {
       }
     }
 
-    const medicine = await this.prisma.medicine.update({
+    return this.prisma.medicine.update({
       where: { id },
       data: {
         categoryId: payload.categoryId,
-        genericName: payload.genericName?.trim(),
-        brandName: payload.brandName?.trim(),
-        manufacturer: payload.manufacturer?.trim(),
-        dosageForm: payload.dosageForm?.trim(),
-        strengthValue: payload.strengthValue
-          ? new Prisma.Decimal(payload.strengthValue)
-          : undefined,
-        strengthUnit: payload.strengthUnit?.trim(),
+        genericName: payload.genericName,
+        brandName: payload.brandName,
+        manufacturer: payload.manufacturer,
+        dosageForm: payload.dosageForm,
+        strengthValue:
+          payload.strengthValue != null
+            ? new Prisma.Decimal(payload.strengthValue)
+            : undefined,
+        strengthUnit: payload.strengthUnit,
         packSize: payload.packSize,
-        packUnit: payload.packUnit?.trim(),
+        packUnit: payload.packUnit,
         requiresPrescription: payload.requiresPrescription,
-        activeIngredients: payload.activeIngredients?.trim(),
-        dosageInstructions: payload.dosageInstructions?.trim(),
-        storageInstructions: payload.storageInstructions?.trim(),
-        warnings: payload.warnings?.trim(),
-        description: payload.description?.trim(),
+        activeIngredients: payload.activeIngredients,
+        dosageInstructions: payload.dosageInstructions,
+        storageInstructions: payload.storageInstructions,
+        warnings: payload.warnings,
+        description: payload.description,
         minPrice:
           payload.minPrice !== undefined
             ? new Prisma.Decimal(payload.minPrice)
@@ -243,8 +239,6 @@ export class MedicineAdminService {
       },
       include: medicineInclude,
     });
-
-    return medicine;
   }
 
   // ! the new update here is for :
@@ -287,6 +281,7 @@ export class MedicineAdminService {
 
     return medicine;
   }
+
   async adminReview(
     adminId: number,
     id: number,
@@ -302,6 +297,7 @@ export class MedicineAdminService {
         maxPrice: true,
       },
     });
+
     if (!existing) throw new NotFoundException('Medicine not found');
     if (existing.requestedByPharmacyId == null) {
       throw new ConflictException('This medicine is not a pharmacy request');
@@ -309,6 +305,7 @@ export class MedicineAdminService {
     if (existing.status !== MedicineStatus.PENDING) {
       throw new ConflictException('Only PENDING requests can be reviewed');
     }
+
     if (payload.status === 'APPROVED') {
       const finalMin =
         payload.minPrice !== undefined
@@ -320,7 +317,7 @@ export class MedicineAdminService {
           ? new Prisma.Decimal(payload.maxPrice)
           : existing.maxPrice;
 
-      if (finalMin == null || finalMax == null) {
+      if (!finalMin || !finalMax) {
         throw new ConflictException(
           'minPrice and maxPrice must be set to approve',
         );
@@ -330,7 +327,7 @@ export class MedicineAdminService {
         throw new ConflictException('minPrice must be <= maxPrice');
       }
 
-      const updatedMedicineApproved = await this.prisma.medicine.update({
+      return this.prisma.medicine.update({
         where: { id },
         data: {
           status: MedicineStatus.APPROVED,
@@ -349,30 +346,26 @@ export class MedicineAdminService {
         },
         include: medicineInclude,
       });
-
-      return updatedMedicineApproved;
     }
 
     if (payload.status === 'REJECTED') {
-      const reason = payload.rejectionReason?.trim();
-      if (!reason)
+      if (!payload.rejectionReason) {
         throw new BadRequestException(
           'rejectionReason is required when rejecting',
         );
+      }
 
-      const updatedMedicineRejected = await this.prisma.medicine.update({
+      return this.prisma.medicine.update({
         where: { id },
         data: {
           status: MedicineStatus.REJECTED,
           isActive: false,
           reviewedBy: adminId,
           reviewedAt: new Date(),
-          rejectionReason: reason,
+          rejectionReason: payload.rejectionReason,
         },
         include: medicineInclude,
       });
-
-      return updatedMedicineRejected;
     }
 
     throw new BadRequestException(`Invalid status: ${payload.status}`);
