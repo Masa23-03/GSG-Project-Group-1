@@ -2,7 +2,12 @@ import { z } from 'zod';
 import { CreateCategoryDto } from '../dto/request.dto/create-category.dto';
 import { UpdateCategoryDto } from '../dto/request.dto/update-category.dto';
 import { safeText, urlSchema } from 'src/utils/zod.helper';
-const categoryNameSchema = safeText({ min: 2, max: 255, mode: 'title' });
+const englishOnly = /^[A-Za-z0-9 .,'’"()\-\/&]+$/;
+
+const categoryNameSchema = safeText({ min: 2, max: 255, mode: 'title' }).refine(
+  (v) => englishOnly.test(v),
+  { message: 'Category name must be English characters only' },
+);
 const categoryDescriptionSchema = safeText({
   min: 1,
   max: 2000,
