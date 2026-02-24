@@ -1,12 +1,21 @@
 import { z } from 'zod';
 import { CreateCategoryDto } from '../dto/request.dto/create-category.dto';
 import { UpdateCategoryDto } from '../dto/request.dto/update-category.dto';
-import { urlSchema } from 'src/utils/zod.helper';
+import { safeText, urlSchema } from 'src/utils/zod.helper';
+const categoryNameSchema = safeText({ min: 2, max: 255, mode: 'title' });
+const categoryDescriptionSchema = safeText({
+  min: 1,
+  max: 2000,
+  mode: 'generic',
+}).refine((v) => v.length > 0, { message: 'Description cannot be empty' });
+
+const categoryImageUrlSchema = urlSchema.max(255, 'Image URL is too long');
+
 export const createCategorySchema = z
   .object({
-    name: z.string().trim().min(2, 'Name must be at least 2 characters long'),
-    description: z.string().nullable().optional(),
-    categoryImageUrl: urlSchema.nullable().optional(),
+    name: categoryNameSchema,
+    description: categoryDescriptionSchema.nullable().optional(),
+    categoryImageUrl: categoryImageUrlSchema.nullable().optional(),
   })
   .strict() satisfies z.ZodType<CreateCategoryDto>;
 

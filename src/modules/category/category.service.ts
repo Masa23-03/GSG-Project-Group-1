@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from 'src/modules/database/database.service';
 import { CreateCategoryDto } from './dto/request.dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/request.dto/update-category.dto';
@@ -9,6 +13,7 @@ import {
 } from 'src/types/unifiedType.types';
 import { PaginationQueryDto } from 'src/types/pagination.query';
 import { removeFields } from 'src/utils/object.util';
+import { normalizeCategoryName } from './util/category-normalize.util';
 
 @Injectable()
 export class CategoryService {
@@ -16,14 +21,27 @@ export class CategoryService {
 
   async create(
     createCategoryDto: CreateCategoryDto,
-  ): Promise<ApiSuccessResponse<CategoryResponseDto>> {
+  ): Promise<CategoryResponseDto> {
+    const normalizedName = normalizeCategoryName(createCategoryDto.name);
+    createCategoryDto.name = normalizedName;
+
+    const existing = await this.prisma.category.findFirst({
+      where: { name: normalizedName },
+      select: { id: true },
+    });
+
+    if (existing) {
+      throw new ConflictException('Category name already exists');
+    }
+    console.log({
+      before: createCategoryDto.name,
+      normalized: normalizeCategoryName(createCategoryDto.name),
+    });
+
     const createdCategory = await this.prisma.category.create({
       data: createCategoryDto,
     });
-    return {
-      success: true,
-      data: createdCategory,
-    };
+    return createdCategory;
   }
 
   async findAll(
@@ -60,6 +78,23 @@ export class CategoryService {
     id: number,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<CategoryResponseDto> {
+    if (updateCategoryDto.name) {
+      const normalizedName = normalizeCategoryName(updateCategoryDto.name);
+      updateCategoryDto.name = normalizedName;
+
+      const existing = await this.prisma.category.findFirst({
+        where: {
+          name: normalizedName,
+          NOT: { id },
+        },
+        select: { id: true },
+      });
+
+      if (existing) {
+        throw new ConflictException('Category name already exists');
+      }
+    }
+
     const updatedCategory = await this.prisma.category.update({
       where: { id },
       data: updateCategoryDto,
