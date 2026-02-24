@@ -47,11 +47,11 @@ export class CreateMedicineAdminDto {
   @ApiProperty({ example: 'Pain relief medicine...' })
   description!: string;
 
-  @ApiProperty({ description: 'Decimal string', example: '10.50' })
-  minPrice!: string;
+  @ApiProperty({ description: 'Price (>= 0)', example: 10.5 })
+  minPrice!: number;
 
-  @ApiProperty({ description: 'Decimal string', example: '12.50' })
-  maxPrice!: string;
+  @ApiProperty({ description: 'Price (>= 0)', example: 12.5 })
+  maxPrice!: number;
 
   @ApiPropertyOptional({
     type: [MedicineImageInputDto],

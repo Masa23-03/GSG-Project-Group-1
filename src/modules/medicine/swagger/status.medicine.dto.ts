@@ -25,18 +25,18 @@ export class AdminReviewDto {
   rejectionReason?: string;
 
   @ApiPropertyOptional({
-    description: 'Decimal string (>= 0)',
+    description: 'Price (>= 0)',
     example: '10.50',
     nullable: true,
   })
-  minPrice?: string;
+  minPrice?: number;
 
   @ApiPropertyOptional({
-    description: 'Decimal string (>= 0)',
+    description: 'Price (>= 0)',
     example: '12.50',
     nullable: true,
   })
-  maxPrice?: string;
+  maxPrice?: number;
 
   //TODO : add require prescription
 }
