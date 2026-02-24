@@ -31,7 +31,7 @@ import {
 } from './schema/category.schema';
 
 @ApiTags('Categories')
-@Controller('category')
+@Controller('categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
