@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MedicineStatus } from '@prisma/client';
 import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
+import { safeText } from 'src/utils/zod.helper';
 
 // const MedicineStatusWithoutRejected = removeFields( MedicineStatus, ['REJECTED'])
 
@@ -9,17 +10,23 @@ const BooleanFromStringSchema = z.preprocess((value) => {
   if (value === 'false') return false;
   return value;
 }, z.boolean());
-
+const qSchema = safeText({ min: 0, max: 100, mode: 'generic' })
+  .optional()
+  .transform((v) => {
+    if (v == null) return undefined;
+    const s = v.trim();
+    return s.length ? s : undefined;
+  });
 export const SearchQuerySchema = z
   .object({
-    q: z.string().trim().optional(),
+    q: qSchema,
     categoryId: z.coerce.number().int().positive().optional(),
   })
   .merge(PaginationQuerySchema)
   .strict();
 export const PatientListQuerySchema = z
   .object({
-    q: z.string().trim().optional(),
+    q: qSchema,
     categoryId: z.coerce.number().int().positive().optional(),
 
     requiresPrescription: BooleanFromStringSchema.optional(),
@@ -28,8 +35,8 @@ export const PatientListQuerySchema = z
     minPrice: z.coerce.number().nonnegative().optional(),
     maxPrice: z.coerce.number().nonnegative().optional(),
   })
-  .merge(PaginationQuerySchema)
 
+  .merge(PaginationQuerySchema)
   .strict()
   .refine(
     (d) =>
@@ -49,8 +56,6 @@ export const AdminListQuerySchema = SearchQuerySchema.extend({
 export const PharmacyRequestsListQuerySchema = z
   .object({
     status: z.nativeEnum(MedicineStatus).optional(),
-
-    //! REJECTED status >> pharmacy will be able to see it ?
   })
   .merge(PaginationQuerySchema)
   .strict();
