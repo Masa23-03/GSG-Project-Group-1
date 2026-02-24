@@ -134,7 +134,7 @@ export class MedicinePharmacyController {
   @ApiParam({ name: 'id', type: Number })
   async getMyRequest(
     @AuthedUser() pharmacyUser: authedUserType,
-    @Param('id', ParseIntPipe) params: { id: number },
+    @Param('id', ParseIntPipe) id: number,
   ): Promise<ApiSuccessResponse<MedicineWithImages>> {
     const myPharmacyId =
       await this.pharmacyMedicneService.verifiedPharmacyIdOrThrow(
@@ -142,7 +142,7 @@ export class MedicinePharmacyController {
       );
     return await this.pharmacyMedicneService.pharmacyGetMyRequestById(
       myPharmacyId,
-      params.id,
+      id,
     );
   }
 
@@ -154,7 +154,7 @@ export class MedicinePharmacyController {
   @ApiBody({ type: UpdateMedicineDto })
   async updateMyRequest(
     @AuthedUser() pharmacyUser: authedUserType,
-    @Param('id', ParseIntPipe) params: { id: number },
+    @Param('id', ParseIntPipe) id: number,
     @Body(new ZodValidationPipe(UpdateMedicinePharmacyRequestSchema))
     body: UpdateMedicineDto,
   ) {
@@ -164,7 +164,7 @@ export class MedicinePharmacyController {
       );
     return await this.pharmacyMedicneService.pharmacyUpdateMyPendingRequest(
       myPharmacyId,
-      params.id,
+      id,
       body,
     );
   }

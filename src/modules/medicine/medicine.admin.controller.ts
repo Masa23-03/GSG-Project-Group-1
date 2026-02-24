@@ -80,10 +80,8 @@ export class MedicineAdminController {
   @Get(':id')
   @ApiOperation({ summary: 'Admin details (any status)' })
   @ApiParam({ name: 'id', type: Number })
-  async getById(
-    @Param('id', ParseIntPipe) params: { id: number },
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
-    return await this.adminMedicineService.adminGetById(params.id);
+  async getById(@Param('id', ParseIntPipe) id: number) {
+    return await this.adminMedicineService.adminGetById(id);
   }
 
   @Post()
@@ -104,14 +102,11 @@ export class MedicineAdminController {
   @ApiParam({ name: 'id', type: Number })
   @ApiBody({ type: UpdateMedicineDto })
   async update(
-    @Param('id', ParseIntPipe) params: { id: number },
+    @Param('id', ParseIntPipe) id: number,
     @Body(new ZodValidationPipe(UpdateMedicineAdminSchema))
     payload: UpdateMedicineDto,
   ) {
-    return await this.adminMedicineService.updateMedicineAdmin(
-      params.id,
-      payload,
-    );
+    return await this.adminMedicineService.updateMedicineAdmin(id, payload);
   }
   @Patch(':id/activation')
   @ApiOperation({ summary: 'Activate / deactivate an APPROVED medicine' })

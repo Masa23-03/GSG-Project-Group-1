@@ -72,15 +72,13 @@ export class MedicineAdminService {
     };
   }
 
-  async adminGetById(
-    id: number,
-  ): Promise<ApiSuccessResponse<MedicineWithImages>> {
+  async adminGetById(id: number): Promise<MedicineWithImages> {
     const medicine = await this.prisma.medicine.findUnique({
       where: { id },
       include: medicineInclude,
     });
     if (!medicine) throw new NotFoundException('Medicine not found');
-    return { success: true, data: medicine };
+    return medicine;
   }
   async adminCreate(
     adminId: number,
