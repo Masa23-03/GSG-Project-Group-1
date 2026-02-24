@@ -19,11 +19,22 @@ async function main() {
         { name: 'Pain Relief' },
         { name: 'Antibiotics' },
         { name: 'Vitamins' },
+
+        { name: 'Allergy & Cold' },
+        { name: 'Cough & Flu' },
+        { name: 'Gastrointestinal' },
+        { name: 'Diabetes' },
+        { name: 'Cardiovascular' },
+        { name: 'Dermatology' },
+        { name: 'Eye Care' },
+        { name: 'Respiratory' },
+        { name: 'Hormones' },
+        { name: 'Antifungal' },
+        { name: 'Antacid & Ulcer' },
+        { name: 'Supplements & Minerals' },
       ],
       skipDuplicates: true,
     });
-
-    
   } finally {
     await prisma.$disconnect();
   }
