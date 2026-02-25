@@ -5,7 +5,7 @@ import { safeText } from 'src/utils/zod.helper';
 
 // const MedicineStatusWithoutRejected = removeFields( MedicineStatus, ['REJECTED'])
 
-const BooleanFromStringSchema = z.preprocess((value) => {
+export const BooleanFromStringSchema = z.preprocess((value) => {
   if (typeof value === 'string') {
     const v = value.trim().toLowerCase();
     if (v === 'true') return true;
