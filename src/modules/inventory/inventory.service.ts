@@ -123,12 +123,49 @@ export class InventoryService {
     const where: Prisma.InventoryItemWhereInput = {
       pharmacyId: pharmacy.id,
       isDeleted: false,
+      ...(query.medicineId != null ? { medicineId: query.medicineId } : {}),
+      ...(query.q?.trim()
+        ? {
+            medicine: {
+              OR: [
+                { genericName: { contains: query.q.trim() } },
+                { brandName: { contains: query.q.trim() } },
+              ],
+            },
+          }
+        : {}),
     };
-    if (query.medicineId != null) where.medicineId = query.medicineId;
-    if (query.q?.trim()) {
-      const q = query.q.trim();
-      where.medicine = {
-        OR: [{ genericName: { contains: q } }, { brandName: { contains: q } }],
+    if (query.stockStatus) {
+      const rows = await this.prisma.inventoryItem.findMany({
+        where,
+        include: {
+          medicine: {
+            include: {
+              category: true,
+              medicineImages: { orderBy: { sortOrder: 'asc' }, take: 1 },
+            },
+          },
+        },
+        orderBy: { updatedAt: 'desc' },
+      });
+
+      const filtered = rows.filter(
+        (i) =>
+          computeStockStatus(i.stockQuantity, i.minStock) === query.stockStatus,
+      );
+
+      const total = filtered.length;
+      const start = (pagination.page - 1) * pagination.take;
+      const paged = filtered.slice(start, start + pagination.take);
+
+      return {
+        success: true,
+        data: paged.map(mapInventoryPharmacyListItem),
+        meta: await this.prisma.formatPaginationResponse({
+          count: total,
+          page: pagination.page,
+          limit: pagination.take,
+        }),
       };
     }
 
@@ -153,17 +190,9 @@ export class InventoryService {
       }),
       this.prisma.inventoryItem.count({ where }),
     ]);
-    let filtered = items;
-    if (query.stockStatus) {
-      filtered = items.filter(
-        (i) =>
-          computeStockStatus(i.stockQuantity, i.minStock) === query.stockStatus,
-      );
-    }
-    const data = filtered.map(mapInventoryPharmacyListItem);
     return {
       success: true,
-      data,
+      data: items.map(mapInventoryPharmacyListItem),
       meta: await this.prisma.formatPaginationResponse({
         count: total,
         page: pagination.page,
@@ -320,7 +349,7 @@ export class InventoryService {
       throw new NotFoundException('Inventory item not found');
     }
     // if price is being updated, validate price range
-    if (payload.sellPrice) {
+    if (payload.sellPrice !== undefined) {
       this.validatePriceRange(payload.sellPrice, item.medicine);
     }
     // upadate availability if stockQuantity is being updated
