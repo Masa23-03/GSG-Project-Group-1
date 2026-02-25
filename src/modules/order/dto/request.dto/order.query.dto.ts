@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto, SortOrder } from 'src/types/pagination.query';
+import { getAdminOrderQuerySchema } from '../../schema/admin-order-query.schema';
 
 export enum OrderFilter {
   ALL = 'ALL',
@@ -94,4 +95,8 @@ export type PatientOrderQueryDtoType = InstanceType<
 
 export type PharmacyOrderQueryDtoType = InstanceType<
   typeof PharmacyOrderQueryDto
+>;
+
+export type GetAdminOrderQueryDtoType = InstanceType<
+  typeof GetAdminOrderQueryDto
 >;
