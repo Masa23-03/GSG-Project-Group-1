@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OrderStatus } from '../request.dto/order.query.dto';  
+import { OrderStatus } from '@prisma/client';
 
 class PatientMinimalDto {
   @ApiProperty()
@@ -24,7 +24,7 @@ class DeliveryMinimalDto {
 
 export class AdminOrderListItemDto {
   @ApiProperty()
-  id!: string;
+  id!: number;
 
   @ApiProperty()
   createdAt!: Date;

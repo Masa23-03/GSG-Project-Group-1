@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto, SortOrder } from 'src/types/pagination.query';
+import { OrderStatus } from '@prisma/client';
 import { getAdminOrderQuerySchema } from '../../schema/admin-order-query.schema';
 
 export enum OrderFilter {
@@ -14,16 +15,7 @@ export enum PharmacyOrderFilter {
   DELIVERED = 'DELIVERED',
   PAST = 'PAST',
 }
-export enum OrderStatus {
-  PENDING = 'PENDING',
-  PARTIALLY_ACCEPTED = 'PARTIALLY_ACCEPTED',
-  ACCEPTED = 'ACCEPTED',
-  PROCESSING = 'PROCESSING',
-  OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
-  DELIVERED = 'DELIVERED',
-  REJECTED = 'REJECTED',
-  CANCELLED = 'CANCELLED',
-}
+
 
 export class PatientOrderQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ example: 13, description: 'Exact order ID.' })
