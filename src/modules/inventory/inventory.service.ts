@@ -248,11 +248,33 @@ export class InventoryService {
     query: GetInventoryAdminQueryDto,
   ): Promise<ApiPaginationSuccessResponse<InventoryAdminListItemResponseDto>> {
     const pagination = await this.prisma.handleQueryPagination(query);
-    const where: any = {};
-    if (query.pharmacyId) where.pharmacyId = query.pharmacyId;
-    if (query.medicineId) where.medicineId = query.medicineId;
-    if (query.isAvailable !== undefined) where.isAvailable = query.isAvailable;
-    if (!query.includeDeleted) where.isDeleted = false;
+    const where: Prisma.InventoryItemWhereInput = {
+      ...(query.pharmacyId ? { pharmacyId: query.pharmacyId } : {}),
+      ...(query.medicineId ? { medicineId: query.medicineId } : {}),
+      ...(typeof query.isAvailable === 'boolean'
+        ? { isAvailable: query.isAvailable }
+        : {}),
+      ...(!query.includeDeleted ? { isDeleted: false } : {}),
+      ...(query.pharmacyUserStatus
+        ? {
+            pharmacy: {
+              ...(query.pharmacyUserStatus
+                ? { user: { status: query.pharmacyUserStatus } }
+                : {}),
+            },
+          }
+        : {}),
+      ...(typeof query.medicineIsActive === 'boolean'
+        ? {
+            medicine: {
+              ...(typeof query.medicineIsActive === 'boolean'
+                ? { isActive: query.medicineIsActive }
+                : {}),
+            },
+          }
+        : {}),
+    };
+
     const [items, total] = await Promise.all([
       this.prisma.inventoryItem.findMany({
         ...removeFields(pagination, ['page']),

@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { MedicineStatus, UserStatus, VerificationStatus } from '@prisma/client';
 import { PaginationQueryDto } from 'src/types/pagination.query';
 
 export class GetInventoryAdminQueryDto extends PaginationQueryDto {
@@ -26,4 +27,16 @@ export class GetInventoryAdminQueryDto extends PaginationQueryDto {
     default: false,
   })
   includeDeleted?: boolean;
+
+  @ApiPropertyOptional({
+    enum: UserStatus,
+    description: 'Filter by pharmacy user status',
+  })
+  pharmacyUserStatus?: UserStatus;
+
+  @ApiPropertyOptional({
+    type: 'boolean',
+    description: 'Filter by medicine isActive',
+  })
+  medicineIsActive?: boolean;
 }
