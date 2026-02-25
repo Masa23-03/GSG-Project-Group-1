@@ -25,10 +25,7 @@ export class CreateInventoryItemDto {
   })
   costPrice?: number | null;
 
-  @ApiPropertyOptional({
-    example: 5,
-    description: 'Minimum stock',
-  })
+  @ApiPropertyOptional({ example: 5, description: 'Minimum stock', default: 0 })
   minStock?: number;
 
   @ApiPropertyOptional({

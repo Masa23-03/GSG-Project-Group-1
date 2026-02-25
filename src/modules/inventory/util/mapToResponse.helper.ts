@@ -3,6 +3,7 @@ import {
   buildMedicinePackInfoHelper,
 } from 'src/modules/order/util/medicineDisplayName.helper';
 import {
+  InventoryAdminDetailsResponseDto,
   InventoryItemResponseDto,
   MedicineDto,
 } from '../dto/response.dto/inventory-response.dto';
@@ -18,6 +19,7 @@ import {
   InventoryListPayload,
 } from './types';
 import { PharmacySummaryDto } from '../dto/response.dto/inventory-admin-response.dto';
+import { Prisma } from '@prisma/client';
 
 export function mapInventoryDetails(
   item: InventoryDetailsPayload,
@@ -40,8 +42,13 @@ export function mapInventoryDetails(
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
     medicine: mapMedicine(item.medicine),
+    medicineImages: item.medicine.medicineImages.map((img) => ({
+      imageUrl: img.url,
+      sortOrder: img.sortOrder ?? undefined,
+    })),
   };
 }
+
 export function mapInventoryPharmacyListItem(
   item: InventoryListPayload,
 ): InventoryListItemDto {
@@ -49,6 +56,7 @@ export function mapInventoryPharmacyListItem(
   return {
     id: item.id,
     medicineId: item.medicineId,
+    medicineImageUrl: item.medicine?.medicineImages?.[0]?.url ?? null,
     medicineName: buildMedicineDisplayNameHelper({
       brandName: m.brandName,
       genericName: m.genericName,
@@ -123,5 +131,23 @@ function mapPharmacySummary(
     id: pharmacy.id,
     pharmacyName: pharmacy.pharmacyName,
     verificationStatus: pharmacy.verificationStatus,
+  };
+}
+export function mapInventoryAdminDetails(
+  item: Prisma.InventoryItemGetPayload<{
+    include: {
+      medicine: {
+        include: {
+          category: true;
+          medicineImages: { orderBy: { sortOrder: 'asc' }; take: 1 };
+        };
+      };
+      pharmacy: true;
+    };
+  }>,
+): InventoryAdminDetailsResponseDto {
+  return {
+    ...mapInventoryDetails(item), // existing mapper output
+    pharmacy: mapPharmacySummary(item.pharmacy),
   };
 }

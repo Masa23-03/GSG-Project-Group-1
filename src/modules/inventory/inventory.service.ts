@@ -11,8 +11,12 @@ import { GetInventoryAdminQueryDto } from './dto/query.dto/get-inventory-admin-q
 import { PaginationQueryDto } from 'src/types/pagination.query';
 import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
 import { DatabaseService } from '../database/database.service';
-import { InventoryItemResponseDto } from './dto/response.dto/inventory-response.dto';
 import {
+  InventoryAdminDetailsResponseDto,
+  InventoryItemResponseDto,
+} from './dto/response.dto/inventory-response.dto';
+import {
+  mapInventoryAdminDetails,
   mapInventoryAdminListItem,
   mapInventoryDetails,
   mapInventoryPatientListItem,
@@ -32,6 +36,11 @@ import {
   StockStatus,
 } from './dto/response.dto/InventoryListItem.dto';
 import { computeStockStatus } from './util/stockStaus.helper';
+import {
+  inventoryIncludeAdminList,
+  inventoryIncludeDetails,
+  inventoryIncludeList,
+} from './util/types';
 
 @Injectable()
 export class InventoryService {
@@ -48,10 +57,14 @@ export class InventoryService {
     }
   }
 
+  private parseExpiryDate(expiryDate?: string | null): Date | null | undefined {
+    if (expiryDate === undefined) return undefined;
+    if (expiryDate === null) return null;
+    return new Date(`${expiryDate}T00:00:00.000Z`);
+  }
   private readonly includeQuery = {
-    include: { medicine: true },
+    include: inventoryIncludeDetails,
   };
-
   async create(
     userId: number,
     payload: CreateInventoryItemDto,
@@ -93,16 +106,35 @@ export class InventoryService {
     if (existing) {
       if (!existing.isDeleted)
         throw new ConflictException('Item already exists');
+      const expiryDate = this.parseExpiryDate(payload.expiryDate);
 
       const updated = await this.prisma.inventoryItem.update({
         where: { id: existing.id },
-        data: { ...payload, isDeleted: false, isAvailable },
+        data: {
+          ...payload,
+          ...(expiryDate !== undefined ? { expiryDate } : {}),
+          isDeleted: false,
+          isAvailable,
+        },
         ...this.includeQuery,
       });
       return mapInventoryDetails(updated);
     }
+    const data = {
+      pharmacyId: pharmacy.id,
+      medicineId: payload.medicineId,
+      stockQuantity: payload.stockQuantity,
+      minStock: payload.minStock ?? 0,
+      sellPrice: payload.sellPrice,
+      costPrice: payload.costPrice ?? null,
+      batchNumber: payload.batchNumber ?? null,
+      expiryDate: this.parseExpiryDate(payload.expiryDate) ?? null,
+      shelfLocation: payload.shelfLocation ?? null,
+      notes: payload.notes ?? null,
+      isAvailable,
+    };
     const created = await this.prisma.inventoryItem.create({
-      data: { ...payload, pharmacyId: pharmacy.id, isAvailable },
+      data: data,
       ...this.includeQuery,
     });
     return mapInventoryDetails(created);
@@ -138,14 +170,7 @@ export class InventoryService {
     if (query.stockStatus) {
       const rows = await this.prisma.inventoryItem.findMany({
         where,
-        include: {
-          medicine: {
-            include: {
-              category: true,
-              medicineImages: { orderBy: { sortOrder: 'asc' }, take: 1 },
-            },
-          },
-        },
+        include: inventoryIncludeList,
         orderBy: { updatedAt: 'desc' },
       });
 
@@ -174,17 +199,7 @@ export class InventoryService {
       this.prisma.inventoryItem.findMany({
         ...removeFields(pagination, ['page']),
         where,
-        include: {
-          medicine: {
-            include: {
-              category: true,
-              medicineImages: {
-                orderBy: { sortOrder: 'asc' },
-                take: 1,
-              },
-            },
-          },
-        },
+        include: inventoryIncludeList,
 
         orderBy: { updatedAt: 'desc' },
       }),
@@ -238,17 +253,7 @@ export class InventoryService {
       this.prisma.inventoryItem.findMany({
         ...removeFields(pagination, ['page']),
         where,
-        include: {
-          medicine: {
-            include: {
-              category: true,
-              medicineImages: {
-                orderBy: { sortOrder: 'asc' },
-                take: 1,
-              },
-            },
-          },
-        },
+        include: inventoryIncludeList,
         orderBy: { updatedAt: 'desc' },
       }),
       this.prisma.inventoryItem.count({ where }),
@@ -289,19 +294,7 @@ export class InventoryService {
       this.prisma.inventoryItem.findMany({
         ...removeFields(pagination, ['page']),
         where,
-        include: {
-          medicine: {
-            include: {
-              category: true,
-              medicineImages: {
-                orderBy: { sortOrder: 'asc' },
-                take: 1,
-              },
-            },
-          },
-          pharmacy: true,
-        },
-
+        include: inventoryIncludeAdminList,
         orderBy: { updatedAt: 'desc' },
       }),
       this.prisma.inventoryItem.count({ where }),
@@ -318,18 +311,18 @@ export class InventoryService {
     };
   }
 
-  async findOneAdmin(id: number): Promise<InventoryItemResponseDto> {
+  async findOneAdmin(id: number): Promise<InventoryAdminDetailsResponseDto> {
     const item = await this.prisma.inventoryItem.findUnique({
       where: { id },
       include: {
-        medicine: true,
+        ...inventoryIncludeDetails,
         pharmacy: true,
       },
     });
 
     if (!item) throw new NotFoundException('Inventory item not found');
 
-    return mapInventoryDetails(item);
+    return mapInventoryAdminDetails(item);
   }
 
   async update(
@@ -363,6 +356,7 @@ export class InventoryService {
       where: { id },
       data: {
         ...payload,
+        expiryDate: this.parseExpiryDate(payload.expiryDate),
         isAvailable,
       },
       ...this.includeQuery,

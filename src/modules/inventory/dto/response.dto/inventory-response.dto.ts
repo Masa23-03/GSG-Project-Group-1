@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MedicineStatus } from '@prisma/client';
+import { PharmacySummaryDto } from './inventory-admin-response.dto';
 
 export class MedicineDto {
   @ApiProperty({ type: Number, example: 5, description: 'Medicine ID' })
@@ -119,6 +120,11 @@ export class MedicineDto {
   packSize?: number | null;
 }
 
+class MedicineImageDto {
+  @ApiProperty() imageUrl!: string;
+  @ApiPropertyOptional() sortOrder?: number;
+}
+
 export class InventoryItemResponseDto {
   @ApiProperty({ type: Number, example: 13, description: 'Inventory item ID' })
   id!: number;
@@ -216,6 +222,14 @@ export class InventoryItemResponseDto {
     description: 'Last updated timestamp',
   })
   updatedAt!: string;
+
+  @ApiProperty({ type: [MedicineImageDto] })
+  medicineImages!: MedicineImageDto[];
+}
+
+export class InventoryAdminDetailsResponseDto extends InventoryItemResponseDto {
+  @ApiProperty({ type: PharmacySummaryDto })
+  pharmacy!: PharmacySummaryDto;
 }
 
 export type MedicineDtoType = InstanceType<typeof MedicineDto>;

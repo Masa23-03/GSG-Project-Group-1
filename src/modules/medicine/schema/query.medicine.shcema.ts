@@ -13,7 +13,7 @@ export const BooleanFromStringSchema = z.preprocess((value) => {
   }
   return value;
 }, z.boolean());
-const qSchema = safeText({ min: 0, max: 100, mode: 'generic' })
+export const qSchema = safeText({ min: 0, max: 100, mode: 'generic' })
   .optional()
   .transform((v) => {
     if (v == null) return undefined;

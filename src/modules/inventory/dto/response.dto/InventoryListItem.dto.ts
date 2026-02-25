@@ -76,6 +76,12 @@ export class InventoryListItemDto {
     description: 'Expiry date (YYYY-MM-DD)',
   })
   expiryDate?: string | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'First medicine image URL',
+  })
+  medicineImageUrl?: string | null;
 }
 export class InventoryAdminListItemResponseDto extends InventoryListItemDto {
   @ApiProperty({
@@ -131,4 +137,10 @@ export class PatientInventoryListItemDto {
     example: '1 Pack (12 tablets)',
   })
   packDisplayName?: string | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'First medicine image URL',
+  })
+  medicineImageUrl?: string | null;
 }
