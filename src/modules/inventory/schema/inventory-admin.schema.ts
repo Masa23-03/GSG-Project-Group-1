@@ -1,7 +1,7 @@
 import { z, ZodType } from 'zod';
 import { GetInventoryAdminQueryDto } from '../dto/query.dto/get-inventory-admin-query.dto';
 import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
-import { zBoolQuery, zIntQuery } from './get-inventory-query.schema';
+import { zIntQuery } from './get-inventory-query.schema';
 import { BooleanFromStringSchema } from 'src/modules/medicine/schema/query.medicine.shcema';
 import { UserStatus } from '@prisma/client';
 
