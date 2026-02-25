@@ -1,13 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { GetAdminOrderQueryDto } from './dto/request.dto/order.query.dto';
 import { AdminOrderListItemDto } from './dto/response.dto/admin-order-listItem.response.dto';
-import { Prisma, OrderStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import {
   mapToAdminOrderListItem,
   adminOrderListInclude,
+  adminOrderDetailsInclude,
+  mapToAdminOrderDetails,
 } from './util/adminOrderResposne.mapper';
-import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
+import {
+  ApiPaginationSuccessResponse,
+  ApiSuccessResponse,
+} from 'src/types/unifiedType.types';
+import { AdminOrderDetailsDto } from './dto/response.dto/admin-order-details.response.dto';
 
 @Injectable()
 export class AdminOrderService {
@@ -60,6 +66,24 @@ export class AdminOrderService {
         page,
         limit,
       }),
+    };
+  }
+
+  async findOneAdmin(
+    id: number,
+  ): Promise<ApiSuccessResponse<AdminOrderDetailsDto>> {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: adminOrderDetailsInclude,
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    return {
+      success: true,
+      data: mapToAdminOrderDetails(order),
     };
   }
 }
