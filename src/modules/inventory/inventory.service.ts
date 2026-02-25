@@ -18,7 +18,12 @@ import {
   mapInventoryPatientListItem,
   mapInventoryPharmacyListItem,
 } from './util/mapToResponse.helper';
-import { MedicineStatus, Prisma } from '@prisma/client';
+import {
+  MedicineStatus,
+  Prisma,
+  UserStatus,
+  VerificationStatus,
+} from '@prisma/client';
 import { removeFields } from 'src/utils/object.util';
 import {
   InventoryAdminListItemResponseDto,
@@ -192,10 +197,20 @@ export class InventoryService {
     if (!pharmacyExists) {
       throw new NotFoundException(`Pharmacy with ID ${pharmacyId} not found`);
     }
-    const where = {
+
+    const where: Prisma.InventoryItemWhereInput = {
       pharmacyId,
       isDeleted: false,
       isAvailable: true,
+      stockQuantity: { gt: 0 },
+      pharmacy: {
+        verificationStatus: VerificationStatus.VERIFIED,
+        user: { status: UserStatus.ACTIVE },
+      },
+      medicine: {
+        status: MedicineStatus.APPROVED,
+        isActive: true,
+      },
     };
 
     const [items, total] = await Promise.all([
