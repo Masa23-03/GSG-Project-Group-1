@@ -48,7 +48,7 @@ export class VerifiedGuard implements CanActivate {
       const s = base.pharmacy?.verificationStatus;
       if (!s) throw new ForbiddenException('Pharmacy profile not found');
       if (s !== VerificationStatus.VERIFIED) {
-        throw new ForbiddenException('Pharmacy is under review');
+        throw new ForbiddenException('Pharmacy is under review or rejected');
       }
       return true;
     }

@@ -29,7 +29,7 @@ import {
   PatientMedicinePharmacyItemDto,
 } from './dto/medicine-pahrmacies.dto';
 
-@ApiTags('Medicines (Patient)')
+@ApiTags('Medicines - Patient')
 @ApiBearerAuth('access-token')
 @Roles(UserRole.PATIENT)
 @Controller('medicines')
