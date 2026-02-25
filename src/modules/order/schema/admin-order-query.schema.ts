@@ -1,9 +1,9 @@
 import z, { ZodType } from 'zod';
 import { 
-  OrderStatus, 
   GetAdminOrderQueryDtoType 
 } from '../dto/request.dto/order.query.dto'
 import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
+import { OrderStatus } from '@prisma/client';
 
 export const getAdminOrderQuerySchema = z
   .object({
