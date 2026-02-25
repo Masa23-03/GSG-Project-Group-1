@@ -13,6 +13,16 @@ export enum PharmacyOrderFilter {
   DELIVERED = 'DELIVERED',
   PAST = 'PAST',
 }
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  PARTIALLY_ACCEPTED = 'PARTIALLY_ACCEPTED',
+  ACCEPTED = 'ACCEPTED',
+  PROCESSING = 'PROCESSING',
+  OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
+  DELIVERED = 'DELIVERED',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
+}
 
 export class PatientOrderQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ example: 13, description: 'Exact order ID.' })
@@ -60,6 +70,21 @@ export class PharmacyOrderQueryDto extends PaginationQueryDto {
     example: 'panadol',
     description:
       'Free-text search across: orderId, pharmacyOrderId, patientId, patientName, medicine generic/brand name.',
+  })
+  q?: string;
+}
+
+export class GetAdminOrderQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({
+    enum: OrderStatus,
+    description: 'Filter by order status',
+  })
+  status?: OrderStatus;
+
+  @ApiPropertyOptional({
+    example: 'John',
+    description:
+      'Free-text search across: orderID, patientName and pharmacyName',
   })
   q?: string;
 }
