@@ -1,14 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderStatus } from '@prisma/client';
 
-class AdminPatientDetailsDto {
+export class AdminPatientDetailsDto {
   @ApiProperty() id!: number;
   @ApiProperty() name!: string;
   @ApiProperty() phoneNumber!: string;
   @ApiProperty() email!: string;
 }
 
-class AdminPaymentDetailsDto {
+export class AdminPaymentDetailsDto {
   @ApiProperty() id!: number;
   @ApiProperty() status!: string;
   @ApiProperty() method!: string;
@@ -16,13 +16,13 @@ class AdminPaymentDetailsDto {
   @ApiProperty() currency!: string;
 }
 
-class AdminDriverDetailsDto {
+export class AdminDriverDetailsDto {
   @ApiProperty() id!: number;
   @ApiProperty() name!: string;
   @ApiProperty() phoneNumber!: string;
 }
 
-class AdminDeliveryDetailsDto {
+export class AdminDeliveryDetailsDto {
   @ApiProperty() id!: number;
   @ApiProperty() status!: string;
   @ApiPropertyOptional() acceptedAt?: Date;
@@ -31,7 +31,7 @@ class AdminDeliveryDetailsDto {
   driver?: AdminDriverDetailsDto;
 }
 
-class AdminOrderItemDto {
+export class AdminOrderItemDto {
   @ApiProperty() medicineId!: number;
   @ApiProperty() medicineName!: string;
   @ApiProperty() quantity!: number;
@@ -41,12 +41,12 @@ class AdminOrderItemDto {
   @ApiProperty() pharmacyName!: string;
 }
 
-class AdminPrescriptionFileDto {
+export class AdminPrescriptionFileDto {
   @ApiProperty() url!: string;
   @ApiProperty() sortOrder!: number;
 }
 
-class AdminPrescriptionDto {
+export class AdminPrescriptionDto {
   @ApiProperty() id!: number;
   @ApiProperty() status!: string;
   @ApiProperty({ type: () => [AdminPrescriptionFileDto] })
