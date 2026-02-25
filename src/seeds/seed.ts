@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { seedAdmin } from './admin.seed';
 import { makeMariaAdapter } from './adapter';
+import { seedInventory } from './inventory.seed';
 
 async function main() {
   const prisma = new PrismaClient({ adapter: makeMariaAdapter() });
@@ -35,6 +36,9 @@ async function main() {
       ],
       skipDuplicates: true,
     });
+
+    console.log('Seeding inventory...');
+    await seedInventory(prisma);
   } finally {
     await prisma.$disconnect();
   }
