@@ -109,7 +109,7 @@ export class InventoryController {
   // Patient endpoints
   @Roles(UserRole.PATIENT)
   @ApiOperation({
-    summary: 'List all available inventory items for a specific medicine',
+    summary: 'List pharmacy inventory for patient',
   })
   @Get('patient/:pharmacyId')
   async findAllForPatient(
