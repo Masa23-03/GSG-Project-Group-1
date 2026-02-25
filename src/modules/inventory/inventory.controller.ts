@@ -41,6 +41,40 @@ import { GetInventoryAdminQuerySchema } from './schema/inventory-admin.schema';
 @Controller('inventory')
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
+
+  // Patient endpoints
+  @Roles(UserRole.PATIENT)
+  @ApiOperation({
+    summary: 'List pharmacy inventory for patient',
+  })
+  @Get('patient/:pharmacyId')
+  async findAllForPatient(
+    @Param('pharmacyId', ParseIntPipe) pharmacyId: number,
+    @Query(new ZodValidationPipe(PaginationQuerySchema))
+    query: PaginationQueryDto,
+  ) {
+    return this.inventoryService.findAllForPatient(pharmacyId, query);
+  }
+  // Admin endpoints
+  @Roles(UserRole.ADMIN)
+  @Get('admin')
+  @ApiOperation({
+    summary: 'Admin: List all inventory items with advanced filters',
+  })
+  async findAllAdmin(
+    @Query(new ZodValidationPipe(GetInventoryAdminQuerySchema))
+    query: GetInventoryAdminQueryDto,
+  ) {
+    return this.inventoryService.findAllAdmin(query);
+  }
+
+  @ApiOperation({ summary: 'Admin: View specific inventory item details' })
+  @Roles(UserRole.ADMIN)
+  @Get('admin/:id')
+  async findOneAdmin(@Param('id', ParseIntPipe) id: number) {
+    return await this.inventoryService.findOneAdmin(id);
+  }
+
   // Pharmacy endpoints
   @RequireVerified('PHARMACY')
   @Roles(UserRole.PHARMACY)
@@ -105,37 +139,5 @@ export class InventoryController {
     @AuthedUser() user: authedUserType,
   ) {
     return await this.inventoryService.remove(id, user.id);
-  }
-  // Patient endpoints
-  @Roles(UserRole.PATIENT)
-  @ApiOperation({
-    summary: 'List pharmacy inventory for patient',
-  })
-  @Get('patient/:pharmacyId')
-  async findAllForPatient(
-    @Param('pharmacyId', ParseIntPipe) pharmacyId: number,
-    @Query(new ZodValidationPipe(PaginationQuerySchema))
-    query: PaginationQueryDto,
-  ) {
-    return this.inventoryService.findAllForPatient(pharmacyId, query);
-  }
-  // Admin endpoints
-  @Roles(UserRole.ADMIN)
-  @Get('admin')
-  @ApiOperation({
-    summary: 'Admin: List all inventory items with advanced filters',
-  })
-  async findAllAdmin(
-    @Query(new ZodValidationPipe(GetInventoryAdminQuerySchema))
-    query: GetInventoryAdminQueryDto,
-  ) {
-    return this.inventoryService.findAllAdmin(query);
-  }
-
-  @ApiOperation({ summary: 'Admin: View specific inventory item details' })
-  @Roles(UserRole.ADMIN)
-  @Get('admin/:id')
-  async findOneAdmin(@Param('id', ParseIntPipe) id: number) {
-    return await this.inventoryService.findOneAdmin(id);
   }
 }
