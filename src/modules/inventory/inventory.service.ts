@@ -189,14 +189,6 @@ export class InventoryService {
     query: PaginationQueryDto,
   ): Promise<ApiPaginationSuccessResponse<PatientInventoryListItemDto>> {
     const pagination = await this.prisma.handleQueryPagination(query);
-    const pharmacyExists = await this.prisma.pharmacy.findUnique({
-      where: { id: pharmacyId },
-      select: { id: true },
-    });
-
-    if (!pharmacyExists) {
-      throw new NotFoundException(`Pharmacy with ID ${pharmacyId} not found`);
-    }
 
     const where: Prisma.InventoryItemWhereInput = {
       pharmacyId,
@@ -255,25 +247,14 @@ export class InventoryService {
         ? { isAvailable: query.isAvailable }
         : {}),
       ...(!query.includeDeleted ? { isDeleted: false } : {}),
-      ...(query.pharmacyUserStatus
-        ? {
-            pharmacy: {
-              ...(query.pharmacyUserStatus
-                ? { user: { status: query.pharmacyUserStatus } }
-                : {}),
-            },
-          }
-        : {}),
-      ...(typeof query.medicineIsActive === 'boolean'
-        ? {
-            medicine: {
-              ...(typeof query.medicineIsActive === 'boolean'
-                ? { isActive: query.medicineIsActive }
-                : {}),
-            },
-          }
-        : {}),
     };
+    if (query.pharmacyUserStatus) {
+      where.pharmacy = { user: { status: query.pharmacyUserStatus } };
+    }
+
+    if (typeof query.medicineIsActive === 'boolean') {
+      where.medicine = { isActive: query.medicineIsActive };
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.inventoryItem.findMany({
