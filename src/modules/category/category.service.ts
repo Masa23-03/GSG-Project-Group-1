@@ -13,7 +13,7 @@ import {
 } from 'src/types/unifiedType.types';
 import { PaginationQueryDto } from 'src/types/pagination.query';
 import { removeFields } from 'src/utils/object.util';
-import { normalizeCategoryName } from './util/category-normalize.util';
+import { normalizeCategoryOrCityName } from './util/category-normalize.util';
 
 @Injectable()
 export class CategoryService {
@@ -22,7 +22,7 @@ export class CategoryService {
   async create(
     createCategoryDto: CreateCategoryDto,
   ): Promise<CategoryResponseDto> {
-    const normalizedName = normalizeCategoryName(createCategoryDto.name);
+    const normalizedName = normalizeCategoryOrCityName(createCategoryDto.name);
     createCategoryDto.name = normalizedName;
 
     const existing = await this.prisma.category.findFirst({
@@ -35,7 +35,7 @@ export class CategoryService {
     }
     console.log({
       before: createCategoryDto.name,
-      normalized: normalizeCategoryName(createCategoryDto.name),
+      normalized: normalizeCategoryOrCityName(createCategoryDto.name),
     });
 
     const createdCategory = await this.prisma.category.create({
@@ -79,7 +79,9 @@ export class CategoryService {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<CategoryResponseDto> {
     if (updateCategoryDto.name) {
-      const normalizedName = normalizeCategoryName(updateCategoryDto.name);
+      const normalizedName = normalizeCategoryOrCityName(
+        updateCategoryDto.name,
+      );
       updateCategoryDto.name = normalizedName;
 
       const existing = await this.prisma.category.findFirst({

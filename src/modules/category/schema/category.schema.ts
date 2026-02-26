@@ -2,12 +2,15 @@ import { z } from 'zod';
 import { CreateCategoryDto } from '../dto/request.dto/create-category.dto';
 import { UpdateCategoryDto } from '../dto/request.dto/update-category.dto';
 import { safeText, urlSchema } from 'src/utils/zod.helper';
-const englishOnly = /^[A-Za-z0-9 .,'’"()\-\/&]+$/;
+export const englishOnly = /^[A-Za-z0-9 .,'’"()\-\/&]+$/;
 
-const categoryNameSchema = safeText({ min: 2, max: 255, mode: 'title' }).refine(
-  (v) => englishOnly.test(v),
-  { message: 'Category name must be English characters only' },
-);
+export const englishNameSchema = safeText({
+  min: 2,
+  max: 255,
+  mode: 'title',
+}).refine((v) => englishOnly.test(v), {
+  message: 'Name must be English characters only',
+});
 const categoryDescriptionSchema = safeText({
   min: 1,
   max: 2000,
@@ -18,7 +21,7 @@ const categoryImageUrlSchema = urlSchema.max(255, 'Image URL is too long');
 
 export const createCategorySchema = z
   .object({
-    name: categoryNameSchema,
+    name: englishNameSchema,
     description: categoryDescriptionSchema.nullable().optional(),
     categoryImageUrl: categoryImageUrlSchema.nullable().optional(),
   })

@@ -1,4 +1,4 @@
-export function normalizeCategoryName(input: string): string {
+export function normalizeCategoryOrCityName(input: string): string {
   const cleaned = input
     .normalize('NFKC')
     .trim()
