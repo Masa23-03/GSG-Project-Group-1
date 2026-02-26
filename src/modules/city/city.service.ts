@@ -7,13 +7,21 @@ import { CreateCityDto } from './dto/create-city.dto';
 import { UpdateCityDto } from './dto/update-city.dto';
 import { DatabaseService } from '../database/database.service';
 import { CityListItemDto } from './dto/response.dto';
+import { normalizeCategoryOrCityName } from '../category/util/category-normalize.util';
 
 @Injectable()
 export class CityService {
   constructor(private readonly prismaService: DatabaseService) {}
   async createCity(createCityDto: CreateCityDto): Promise<CityListItemDto> {
+    const normalizedName = normalizeCategoryOrCityName(createCityDto.name);
+    const existing = await this.prismaService.city.findFirst({
+      where: { name: normalizedName },
+      select: { id: true },
+    });
+
+    if (existing) throw new ConflictException('City name already exists');
     return await this.prismaService.city.create({
-      data: { name: createCityDto.name },
+      data: { name: normalizedName },
       select: { id: true, name: true },
     });
   }
@@ -38,9 +46,23 @@ export class CityService {
     id: number,
     updateCityDto: UpdateCityDto,
   ): Promise<CityListItemDto> {
-    return await this.prismaService.city.update({
+    if (updateCityDto.name) {
+      const normalizedName = normalizeCategoryOrCityName(updateCityDto.name);
+      const existing = await this.prismaService.city.findFirst({
+        where: { name: normalizedName, NOT: { id } },
+        select: { id: true },
+      });
+
+      if (existing) throw new ConflictException('City name already exists');
+      return await this.prismaService.city.update({
+        where: { id },
+        data: { name: normalizedName },
+        select: { id: true, name: true },
+      });
+    }
+    return this.prismaService.city.update({
       where: { id },
-      data: { ...(updateCityDto.name ? { name: updateCityDto.name } : {}) },
+      data: {},
       select: { id: true, name: true },
     });
   }
