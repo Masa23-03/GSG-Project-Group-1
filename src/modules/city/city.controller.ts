@@ -93,9 +93,9 @@ export class CityController {
 
   @IsPublic()
   @Get(':id/delivery-fee')
-  @ApiParam({ name: 'cityId', type: Number })
+  @ApiParam({ name: 'id', type: Number })
   getDeliveryFee(
-    @Param('cityId', ParseIntPipe) cityId: number,
+    @Param('id', ParseIntPipe) cityId: number,
   ): Promise<CityWithFeeDto> {
     return this.feeService.getByCityId(cityId);
   }
