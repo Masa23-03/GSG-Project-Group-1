@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { UpsertCityDeliveryFeeDto } from './dto/CityDeliveryFeeDto';
 import { CityWithFeeDto } from './dto/response.dto';
+import { CityWithFeeSelect } from './util/types';
 
 @Injectable()
 export class CityDeliveryFeeService {
@@ -36,7 +37,8 @@ export class CityDeliveryFeeService {
       where: { id: cityId },
       select: this.cityWithFeeSelect(),
     });
-    return this.mapCityWithFee(city!);
+    if (!city) throw new NotFoundException('City not found');
+    return this.mapCityWithFee(city);
   }
 
   async getByCityId(cityId: number): Promise<CityWithFeeDto> {
@@ -72,7 +74,7 @@ export class CityDeliveryFeeService {
     } as const;
   }
 
-  private mapCityWithFee(city: any): CityWithFeeDto {
+  private mapCityWithFee(city: CityWithFeeSelect): CityWithFeeDto {
     return {
       id: city.id,
       name: city.name,

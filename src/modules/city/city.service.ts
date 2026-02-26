@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -46,48 +47,44 @@ export class CityService {
     id: number,
     updateCityDto: UpdateCityDto,
   ): Promise<CityListItemDto> {
-    if (updateCityDto.name) {
-      const normalizedName = normalizeCategoryOrCityName(updateCityDto.name);
-      const existing = await this.prismaService.city.findFirst({
-        where: { name: normalizedName, NOT: { id } },
-        select: { id: true },
-      });
-
-      if (existing) throw new ConflictException('City name already exists');
-      return await this.prismaService.city.update({
-        where: { id },
-        data: { name: normalizedName },
-        select: { id: true, name: true },
-      });
+    if (!updateCityDto.name) {
+      throw new BadRequestException('At least one field must be provided');
     }
-    return this.prismaService.city.update({
+
+    const normalizedName = normalizeCategoryOrCityName(updateCityDto.name);
+    const existing = await this.prismaService.city.findFirst({
+      where: { name: normalizedName, NOT: { id } },
+      select: { id: true },
+    });
+
+    if (existing) throw new ConflictException('City name already exists');
+    return await this.prismaService.city.update({
       where: { id },
-      data: {},
+      data: { name: normalizedName },
       select: { id: true, name: true },
     });
   }
 
   async removeCity(id: number): Promise<CityListItemDto> {
-    const city = await this.prismaService.city.findUnique({
-      where: { id },
-      select: { id: true, name: true },
-    });
-    if (!city) throw new NotFoundException();
-    //check references
-    const [pharmaciesCount, ordersCount, addressesCount] = await Promise.all([
-      this.prismaService.pharmacy.count({ where: { cityId: id } }),
-      this.prismaService.order.count({ where: { pickupCityId: id } }),
-      this.prismaService.patientAddress.count({
-        where: { cityId: id, isDeleted: false },
-      }),
-    ]);
-
-    if (pharmaciesCount > 0 || ordersCount > 0 || addressesCount > 0) {
-      throw new ConflictException(
-        `City is in use (pharmacies=${pharmaciesCount}, orders=${ordersCount}, addresses=${addressesCount})`,
-      );
-    }
     return await this.prismaService.$transaction(async (prisma) => {
+      const city = await prisma.city.findUnique({
+        where: { id },
+        select: { id: true, name: true },
+      });
+      if (!city) throw new NotFoundException('City not found');
+
+      //check references
+      const [pharmaciesCount, ordersCount, addressesCount] = await Promise.all([
+        prisma.pharmacy.count({ where: { cityId: id } }),
+        prisma.order.count({ where: { pickupCityId: id } }),
+        prisma.patientAddress.count({
+          where: { cityId: id, isDeleted: false },
+        }),
+      ]);
+
+      if (pharmaciesCount > 0 || ordersCount > 0 || addressesCount > 0) {
+        throw new ConflictException('City is in use and cannot be deleted');
+      }
       await prisma.cityDeliveryFee.deleteMany({
         where: { cityId: id },
       });
