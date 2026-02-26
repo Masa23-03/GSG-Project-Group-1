@@ -145,6 +145,7 @@ export class PrescriptionService {
           id: prescriptionId,
           pharmacyId: pharmacyId,
           isActive: true,
+          pharmacyOrderId: { not: null },
         },
         include: {
           prescriptionFiles: true,
