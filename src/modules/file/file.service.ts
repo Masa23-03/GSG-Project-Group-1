@@ -23,11 +23,12 @@ export class FileService {
         `File path missing (diskStorage not configured)`,
       );
     const folder = rule.folder.replace(/^\//, '');
+    const isPdf = file.mimetype === 'application/pdf';
 
     try {
       const res = await this.cloudinary.uploader.upload(file.path, {
         folder,
-        resource_type: 'auto',
+        resource_type: isPdf ? 'raw' : 'image',
         use_filename: true,
         unique_filename: true,
       });
