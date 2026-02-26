@@ -36,23 +36,6 @@ export class CityController {
     private readonly feeService: CityDeliveryFeeService,
   ) {}
 
-  @IsPublic()
-  @Get()
-  findAll(
-    @Query(new ZodValidationPipe(includeSchema))
-    query: {
-      include?: 'deliveryFee';
-    },
-  ) {
-    if (query.include === 'deliveryFee') return this.feeService.getAll();
-    return this.cityService.findAllCity();
-  }
-  @IsPublic()
-  @Get(':id')
-  @ApiParam({ name: 'id', type: Number })
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<CityListItemDto> {
-    return this.cityService.findOneCity(id);
-  }
   @ApiBearerAuth('access-token')
   @Roles(UserRole.ADMIN)
   @Post('admin')
@@ -79,14 +62,6 @@ export class CityController {
     return this.cityService.removeCity(id);
   }
 
-  @IsPublic()
-  @Get(':id/delivery-fee')
-  @ApiParam({ name: 'cityId', type: Number })
-  getDeliveryFee(
-    @Param('cityId', ParseIntPipe) cityId: number,
-  ): Promise<CityWithFeeDto> {
-    return this.feeService.getByCityId(cityId);
-  }
   @ApiBearerAuth('access-token')
   @Roles(UserRole.ADMIN)
   @Put('admin/:id/delivery-fee')
@@ -97,5 +72,32 @@ export class CityController {
     dto: UpsertCityDeliveryFeeDto,
   ): Promise<CityWithFeeDto> {
     return this.feeService.upsertFee(cityId, dto);
+  }
+
+  @IsPublic()
+  @Get()
+  findAll(
+    @Query(new ZodValidationPipe(includeSchema))
+    query: {
+      include?: 'deliveryFee';
+    },
+  ) {
+    if (query.include === 'deliveryFee') return this.feeService.getAll();
+    return this.cityService.findAllCity();
+  }
+  @IsPublic()
+  @Get(':id')
+  @ApiParam({ name: 'id', type: Number })
+  findOne(@Param('id', ParseIntPipe) id: number): Promise<CityListItemDto> {
+    return this.cityService.findOneCity(id);
+  }
+
+  @IsPublic()
+  @Get(':id/delivery-fee')
+  @ApiParam({ name: 'cityId', type: Number })
+  getDeliveryFee(
+    @Param('cityId', ParseIntPipe) cityId: number,
+  ): Promise<CityWithFeeDto> {
+    return this.feeService.getByCityId(cityId);
   }
 }
