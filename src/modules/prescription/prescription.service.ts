@@ -175,6 +175,9 @@ export class PrescriptionService {
           'Cannot request re-upload for approved prescription',
         );
       }
+      if (!prescription.pharmacyOrderId) {
+        throw new BadRequestException('Prescription is not linked to an order');
+      }
 
       const updated = await prisma.prescription.update({
         where: { id: prescription.id },
