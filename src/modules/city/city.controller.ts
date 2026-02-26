@@ -27,6 +27,7 @@ import { UpsertCityDeliveryFeeDto } from './dto/CityDeliveryFeeDto';
 import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
 import { IsPublic } from 'src/decorators/isPublic.decorator';
 import { includeSchema } from './schema/include.schema';
+import { CityListQueryDto } from './dto/list-query.dto';
 
 @ApiTags('Cities')
 @Controller('cities')
@@ -65,9 +66,9 @@ export class CityController {
   @ApiBearerAuth('access-token')
   @Roles(UserRole.ADMIN)
   @Put('admin/:id/delivery-fee')
-  @ApiParam({ name: 'cityId', type: Number })
+  @ApiParam({ name: 'id', type: Number })
   upsertDeliveryFee(
-    @Param('cityId', ParseIntPipe) cityId: number,
+    @Param('id', ParseIntPipe) cityId: number,
     @Body(new ZodValidationPipe(upsertCityDeliveryFeeSchema))
     dto: UpsertCityDeliveryFeeDto,
   ): Promise<CityWithFeeDto> {
@@ -78,9 +79,7 @@ export class CityController {
   @Get()
   findAll(
     @Query(new ZodValidationPipe(includeSchema))
-    query: {
-      include?: 'deliveryFee';
-    },
+    query: CityListQueryDto,
   ) {
     if (query.include === 'deliveryFee') return this.feeService.getAll();
     return this.cityService.findAllCity();
