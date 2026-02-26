@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { seedAdmin } from './admin.seed';
 import { makeMariaAdapter } from './adapter';
 import { seedInventory } from './inventory.seed';
+import { seedCities } from './city.seed';
 
 async function main() {
   const prisma = new PrismaClient({ adapter: makeMariaAdapter() });
@@ -11,10 +12,9 @@ async function main() {
   try {
     console.log('Seeding admin user...');
     await seedAdmin(prisma);
-    await prisma.city.createMany({
-      data: [{ name: 'Gaza' }, { name: 'Al Nusirat' }, { name: 'Middle' }],
-      skipDuplicates: true,
-    });
+    console.log('Seeding cities...');
+    await seedCities(prisma);
+    console.log('Seeding categories...');
     await prisma.category.createMany({
       data: [
         { name: 'Pain Relief' },
