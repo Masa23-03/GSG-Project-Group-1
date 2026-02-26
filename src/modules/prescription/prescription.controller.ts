@@ -38,6 +38,7 @@ import {
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { PrescriptionResponseDto } from './dto/response/response.dto';
+import { RequireVerified } from 'src/decorators/requireVerified.decorator';
 
 @ApiTags('Prescriptions')
 @ApiBearerAuth('access-token')
@@ -54,17 +55,6 @@ export class PrescriptionController {
   @ApiBody({
     type: CreatePrescriptionDto,
     description: 'Prescription payload (file URLs only).',
-    examples: {
-      example: {
-        value: {
-          pharmacyId: 12,
-          fileUrls: [
-            'https://cdn.example.com/prescriptions/p1.png',
-            'https://cdn.example.com/prescriptions/p2.png',
-          ],
-        },
-      },
-    },
   })
   @ApiCreatedResponse({
     description: 'Prescription created successfully.',
@@ -78,7 +68,7 @@ export class PrescriptionController {
     return this.prescriptionService.create(user.id, dto);
   }
 
-  @Get('my/:id')
+  @Get('patient/:id')
   @Roles(UserRole.PATIENT)
   @ApiOperation({
     summary: 'Get my prescription by ID (Patient)',
@@ -102,7 +92,7 @@ export class PrescriptionController {
     return this.prescriptionService.getMyPrescription(user.id, id);
   }
 
-  @Patch('my/:id/reupload')
+  @Patch('patient/:id')
   @Roles(UserRole.PATIENT)
   @ApiOperation({
     summary: 'Re-upload prescription (Patient)',
@@ -115,20 +105,7 @@ export class PrescriptionController {
     description: 'Old prescription ID (active one)',
     example: 13,
   })
-  @ApiBody({
-    type: ReuploadPrescriptionDto,
-    description: 'New file URLs to attach to the new prescription version.',
-    examples: {
-      example: {
-        value: {
-          fileUrls: [
-            'https://cdn.example.com/prescriptions/new1.png',
-            'https://cdn.example.com/prescriptions/new2.png',
-          ],
-        },
-      },
-    },
-  })
+  @ApiBody({ type: ReuploadPrescriptionDto })
   @ApiOkResponse({
     description: 'Prescription re-uploaded; new active version returned.',
     type: PrescriptionResponseDto,
@@ -142,7 +119,8 @@ export class PrescriptionController {
     return this.prescriptionService.reupload(user.id, id, dto);
   }
 
-  @Patch(':id/request-reupload')
+  @Patch('pharmacy/:id')
+  @RequireVerified('PHARMACY')
   @Roles(UserRole.PHARMACY)
   @ApiOperation({
     summary: 'Request prescription re-upload (Pharmacy)',
@@ -154,17 +132,7 @@ export class PrescriptionController {
     description: 'Prescription ID (active one)',
     example: 13,
   })
-  @ApiBody({
-    type: RequestNewPrescriptionDto,
-    description: 'Reason for requesting re-upload.',
-    examples: {
-      example: {
-        value: {
-          reuploadReason: 'Image is blurry.',
-        },
-      },
-    },
-  })
+  @ApiBody({ type: RequestNewPrescriptionDto })
   @ApiOkResponse({
     description: 'Re-upload requested successfully.',
     type: PrescriptionResponseDto,
@@ -178,7 +146,8 @@ export class PrescriptionController {
     return this.prescriptionService.requestNewPrescription(user.id, id, dto);
   }
 
-  @Get(':id')
+  @Get('pharmacy/:id')
+  @RequireVerified('PHARMACY')
   @Roles(UserRole.PHARMACY)
   @ApiOperation({
     summary: 'Get prescription by ID (Pharmacy)',
