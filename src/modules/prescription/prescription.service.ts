@@ -160,6 +160,8 @@ export class PrescriptionService {
     prescriptionId: number,
     dto: RequestNewPrescriptionDto,
   ): Promise<PrescriptionResponseDto> {
+    const reason = dto.reuploadReason?.trim();
+    if (!reason) throw new BadRequestException('Reupload reason is required');
     return this.prismaService.$transaction(async (prisma) => {
       const pharmacyId = await requirePharmacyId(prisma, userId);
       const prescription = await prisma.prescription.findFirst({
