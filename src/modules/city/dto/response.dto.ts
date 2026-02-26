@@ -13,7 +13,7 @@ export class CityDeliveryFeeResponseDto {
   @ApiProperty({ example: 20, minimum: 0 })
   standardFeeAmount!: number;
 
-  @ApiPropertyOptional({ example: 10, minimum: 0, nullable: true })
+  @ApiProperty({ example: 10, minimum: 0, nullable: true })
   expressFeeAmount!: number | null;
 
   @ApiProperty({ enum: Currency, example: Currency.ILS })
