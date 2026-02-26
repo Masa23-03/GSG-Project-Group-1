@@ -3,13 +3,12 @@ import { Currency } from '@prisma/client';
 
 export class UpsertCityDeliveryFeeDto {
   @ApiProperty({
-    example: 20,
-    minimum: 0,
+    example: '10.00',
     description: 'Standard delivery fee amount',
   })
   standardFeeAmount!: string;
 
-  @ApiPropertyOptional({ example: 10, minimum: 0, nullable: true })
+  @ApiPropertyOptional({ example: '20.00', nullable: true })
   expressFeeAmount?: string | null;
 
   @ApiPropertyOptional({
