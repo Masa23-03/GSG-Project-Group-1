@@ -1,5 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationQueryDto, SortOrder } from 'src/types/pagination.query';
+import { OrderStatus } from '@prisma/client';
+import { getAdminOrderQuerySchema } from '../../schema/admin-order-query.schema';
 
 export enum OrderFilter {
   ALL = 'ALL',
@@ -13,6 +15,7 @@ export enum PharmacyOrderFilter {
   DELIVERED = 'DELIVERED',
   PAST = 'PAST',
 }
+
 
 export class PatientOrderQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ example: 13, description: 'Exact order ID.' })
@@ -63,10 +66,29 @@ export class PharmacyOrderQueryDto extends PaginationQueryDto {
   })
   q?: string;
 }
+
+export class GetAdminOrderQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({
+    enum: OrderStatus,
+    description: 'Filter by order status',
+  })
+  status?: OrderStatus;
+
+  @ApiPropertyOptional({
+    example: 'John',
+    description:
+      'Free-text search across: orderID, patientName and pharmacyName',
+  })
+  q?: string;
+}
 export type PatientOrderQueryDtoType = InstanceType<
   typeof PatientOrderQueryDto
 >;
 
 export type PharmacyOrderQueryDtoType = InstanceType<
   typeof PharmacyOrderQueryDto
+>;
+
+export type GetAdminOrderQueryDtoType = InstanceType<
+  typeof GetAdminOrderQueryDto
 >;

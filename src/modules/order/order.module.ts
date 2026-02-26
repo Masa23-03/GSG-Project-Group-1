@@ -3,9 +3,11 @@ import { OrderService } from './order.service';
 import { OrderController } from './order.controller';
 import { PharmacyOrderService } from './pharmacyOrder.service';
 import { PharmacyOrderController } from './pharmacyOrder.controller';
+import { AdminOrderController } from './adminOrder.controller';
+import { AdminOrderService } from './adminOrder.service';
 
 @Module({
-  controllers: [OrderController, PharmacyOrderController],
-  providers: [OrderService, PharmacyOrderService],
+  controllers: [OrderController, PharmacyOrderController, AdminOrderController],
+  providers: [OrderService, PharmacyOrderService, AdminOrderService],
 })
 export class OrderModule {}
