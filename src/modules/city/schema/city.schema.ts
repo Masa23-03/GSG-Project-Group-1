@@ -3,16 +3,18 @@ import { CreateCityDtoType } from '../dto/create-city.dto';
 import { Currency } from '@prisma/client';
 import { UpdateCityDtoType } from '../dto/update-city.dto';
 import { UpsertCityDeliveryFeeDtoType } from '../dto/CityDeliveryFeeDto';
+import { englishNameSchema } from 'src/modules/category/schema/category.schema';
+import { MoneyDecimalLike } from 'src/modules/medicine/schema/decimal.medicine.schema';
 
 export const createCitySchema = z
   .object({
-    name: z.string().trim().min(2).max(255),
+    name: englishNameSchema,
   })
   .strict() satisfies ZodType<CreateCityDtoType>;
 
 export const updateCitySchema = z
   .object({
-    name: z.string().trim().min(2).max(255).optional(),
+    name: englishNameSchema.optional(),
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {
@@ -20,8 +22,18 @@ export const updateCitySchema = z
   }) satisfies ZodType<UpdateCityDtoType>;
 export const upsertCityDeliveryFeeSchema = z
   .object({
-    standardFeeAmount: z.coerce.number().min(0),
-    expressFeeAmount: z.coerce.number().min(0).nullable().optional(),
+    standardFeeAmount: MoneyDecimalLike,
+    expressFeeAmount: MoneyDecimalLike.nullable().optional(),
     currency: z.nativeEnum(Currency).optional(),
   })
-  .strict() satisfies ZodType<UpsertCityDeliveryFeeDtoType>;
+  .strict()
+  .refine(
+    (data) => {
+      if (data.expressFeeAmount == null) return true;
+      return Number(data.expressFeeAmount) >= Number(data.standardFeeAmount);
+    },
+    {
+      message: 'Express fee must be >= standard fee',
+      path: ['expressFeeAmount'],
+    },
+  ) satisfies ZodType<UpsertCityDeliveryFeeDtoType>;

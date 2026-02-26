@@ -7,10 +7,10 @@ export class UpsertCityDeliveryFeeDto {
     minimum: 0,
     description: 'Standard delivery fee amount',
   })
-  standardFeeAmount!: number;
+  standardFeeAmount!: string;
 
   @ApiPropertyOptional({ example: 10, minimum: 0, nullable: true })
-  expressFeeAmount?: number | null;
+  expressFeeAmount?: string | null;
 
   @ApiPropertyOptional({
     enum: Currency,
@@ -19,4 +19,6 @@ export class UpsertCityDeliveryFeeDto {
   })
   currency?: Currency;
 }
-export type UpsertCityDeliveryFeeDtoType=InstanceType <typeof UpsertCityDeliveryFeeDto>
+export type UpsertCityDeliveryFeeDtoType = InstanceType<
+  typeof UpsertCityDeliveryFeeDto
+>;
