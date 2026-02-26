@@ -8,6 +8,7 @@ import {
   Delete,
   ParseIntPipe,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CityService } from './city.service';
 import { CreateCityDto } from './dto/create-city.dto';
@@ -25,6 +26,7 @@ import { CityDeliveryFeeService } from './city.delivery.fee.service';
 import { UpsertCityDeliveryFeeDto } from './dto/CityDeliveryFeeDto';
 import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
 import { IsPublic } from 'src/decorators/isPublic.decorator';
+import { includeSchema } from './schema/include.schema';
 
 @ApiTags('Cities')
 @Controller('cities')
@@ -36,7 +38,13 @@ export class CityController {
 
   @IsPublic()
   @Get()
-  findAll(): Promise<CityListItemDto[]> {
+  findAll(
+    @Query(new ZodValidationPipe(includeSchema))
+    query: {
+      include?: 'deliveryFee';
+    },
+  ) {
+    if (query.include === 'deliveryFee') return this.feeService.getAll();
     return this.cityService.findAllCity();
   }
   @IsPublic()
@@ -72,12 +80,7 @@ export class CityController {
   }
 
   @IsPublic()
-  @Get('delivery-fees')
-  getAllDeliveryFees(): Promise<CityWithFeeDto[]> {
-    return this.feeService.getAll();
-  }
-  @IsPublic()
-  @Get(':cityId/delivery-fee')
+  @Get(':id/delivery-fee')
   @ApiParam({ name: 'cityId', type: Number })
   getDeliveryFee(
     @Param('cityId', ParseIntPipe) cityId: number,
@@ -86,7 +89,7 @@ export class CityController {
   }
   @ApiBearerAuth('access-token')
   @Roles(UserRole.ADMIN)
-  @Put('admin/:cityId/delivery-fee')
+  @Put('admin/:id/delivery-fee')
   @ApiParam({ name: 'cityId', type: Number })
   upsertDeliveryFee(
     @Param('cityId', ParseIntPipe) cityId: number,
