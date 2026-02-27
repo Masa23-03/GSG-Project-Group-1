@@ -140,10 +140,8 @@ export class PharmacyOrderService {
         throw new BadRequestException(
           `Cannot decide: parent order is ${po.order.status}`,
         );
-      if (po.deliveryId || po.order.delivery?.id)
-        throw new BadRequestException(
-          'Cannot decide after delivery is created',
-        );
+      if (po.status !== PharmacyOrderStatus.PENDING)
+        throw new BadRequestException('Pharmacy order is already decided');
       assertPharmacyOrderTransition(
         po.status,
         this.decisionToStatus(dto.decision),
@@ -244,33 +242,40 @@ export class PharmacyOrderService {
       }
 
       assertPharmacyOrderTransition(pharmacyOrder.status, dto.status);
+      // update pharmacy order status
+      await prisma.pharmacyOrder.update({
+        where: { id: pharmacyOrder.id },
+        data: { status: dto.status },
+      });
 
+      // Only if it became READY_FOR_PICKUP, check if delivery should be created
       if (dto.status === PharmacyOrderStatus.READY_FOR_PICKUP) {
-        const delivery = pharmacyOrder.order.delivery
-          ? pharmacyOrder.order.delivery
-          : await prisma.delivery.upsert({
-              where: { orderId: pharmacyOrder.orderId },
-              create: { orderId: pharmacyOrder.orderId },
-              update: {},
+        const existing = await prisma.delivery.findUnique({
+          where: { orderId: pharmacyOrder.orderId },
+          select: { id: true },
+        });
+
+        if (!existing) {
+          const notReadyCount = await prisma.pharmacyOrder.count({
+            where: {
+              orderId: pharmacyOrder.orderId,
+              status: { not: PharmacyOrderStatus.READY_FOR_PICKUP },
+            },
+          });
+
+          if (notReadyCount === 0) {
+            const delivery = await prisma.delivery.create({
+              data: { orderId: pharmacyOrder.orderId },
               select: { id: true },
             });
 
-        await prisma.pharmacyOrder.updateMany({
-          where: {
-            orderId: pharmacyOrder.orderId,
-            deliveryId: null,
-            status: {
-              in: [
-                PharmacyOrderStatus.ACCEPTED,
-                PharmacyOrderStatus.PREPARING,
-                PharmacyOrderStatus.READY_FOR_PICKUP,
-              ],
-            },
-          },
-          data: { deliveryId: delivery.id },
-        });
+            await prisma.pharmacyOrder.updateMany({
+              where: { orderId: pharmacyOrder.orderId, deliveryId: null },
+              data: { deliveryId: delivery.id },
+            });
+          }
+        }
       }
-
       await prisma.pharmacyOrder.update({
         where: { id: pharmacyOrder.id },
         data: { status: dto.status },
