@@ -148,8 +148,14 @@ export class PharmacyOrderService {
         po.status,
         this.decisionToStatus(dto.decision),
       );
-      if (dto.decision === PharmacyOrderDecision.REJECT && !dto.rejectionReason)
-        throw new BadRequestException('not valid');
+      if (dto.decision === PharmacyOrderDecision.REJECT) {
+        const reason = dto.rejectionReason?.trim();
+        if (!reason) {
+          throw new BadRequestException(
+            'rejectionReason is required when decision is REJECT',
+          );
+        }
+      }
       const nextStatus = this.decisionToStatus(dto.decision);
       const now = new Date();
       const poItemsCount = po.pharmacyOrderItems.reduce(
@@ -168,7 +174,7 @@ export class PharmacyOrderService {
               status: PharmacyOrderStatus.REJECTED,
               acceptedAt: null,
               rejectedAt: now,
-              rejectionReason: dto.rejectionReason!,
+              rejectionReason: dto.rejectionReason!.trim(),
             };
 
       await prisma.pharmacyOrder.update({
