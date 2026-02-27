@@ -51,7 +51,7 @@ import { SortOrder } from 'src/types/pagination.query';
   CreatePharmacyOrderDto,
   CreatePharmacyOrderItemDto,
 )
-@Controller('order')
+@Controller('orders')
 @ApiBearerAuth('access-token')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
@@ -101,7 +101,7 @@ export class OrderController {
     enum: SortOrder,
     example: SortOrder.ASC,
   })
-  @Get('my')
+  @Get()
   async findAll(
     @AuthedUser() user: authedUserType,
     @Query(new ZodValidationPipe(patientOrderQuerySchema))
@@ -114,7 +114,7 @@ export class OrderController {
   @ApiOperation({ summary: 'Get my order details' })
   @ApiOkResponse({ type: PatientOrderDetailsResponseDto })
   @ApiParam({ name: 'id', type: Number, example: 13 })
-  @Get('my/:id')
+  @Get(':id')
   async findOne(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,
@@ -126,7 +126,7 @@ export class OrderController {
   @ApiOperation({ summary: 'Cancel my order' })
   @ApiOkResponse({ type: PatientCancelOrderResponseDto })
   @ApiParam({ name: 'id', type: Number, example: 13 })
-  @Patch('my/:id/cancel')
+  @Patch(':id/cancel')
   async cancel(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,

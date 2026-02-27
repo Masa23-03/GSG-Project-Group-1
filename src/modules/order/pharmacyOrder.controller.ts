@@ -43,7 +43,7 @@ import { SortOrder } from 'src/types/pagination.query';
 @Roles(UserRole.PHARMACY)
 @RequireVerified('PHARMACY')
 @ApiBearerAuth('access-token')
-@Controller('pharmacy-order')
+@Controller('pharmacy-orders')
 export class PharmacyOrderController {
   constructor(private readonly pharmacyOrderService: PharmacyOrderService) {}
 
@@ -72,7 +72,7 @@ export class PharmacyOrderController {
     example: SortOrder.DESC,
   })
   @ApiQuery({ name: 'q', required: false, type: String })
-  @Get('my')
+  @Get()
   async list(
     @AuthedUser() user: authedUserType,
     @Query(new ZodValidationPipe(pharmacyOrderQuerySchema))
@@ -84,7 +84,7 @@ export class PharmacyOrderController {
   @ApiOperation({ summary: 'Get my pharmacy order details' })
   @ApiOkResponse({ type: PharmacyOrderDetailsResponseDto })
   @ApiParam({ name: 'id', type: Number, example: 13 })
-  @Get('my/:id')
+  @Get(':id')
   async details(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,
