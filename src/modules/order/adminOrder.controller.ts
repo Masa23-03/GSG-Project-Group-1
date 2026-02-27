@@ -13,7 +13,7 @@ import { ZodValidationPipe } from 'nestjs-zod';
 import { GetAdminOrderQueryDto } from './dto/request.dto/order.query.dto';
 import { getAdminOrderQuerySchema } from './schema/admin-order-query.schema';
 
-@ApiTags('Admin Orders')
+@ApiTags('Orders - Admin')
 @ApiBearerAuth('access-token')
 @Roles(UserRole.ADMIN)
 @Controller('orders/admin')
@@ -23,40 +23,40 @@ export class AdminOrderController {
   @ApiOperation({ summary: 'Admin List Orders (Paginated)' })
   @ApiOkResponse({
     schema: {
-    example: {
-      success: true,
-      data: [
-        {
-          id: 1,
-          createdAt: '2024-03-15T10:30:00.000Z',
-          status: 'PENDING',
-          totalAmount: 140.50,
-          currency: 'USD',
-          patient: { id: 12, name: 'Mohamed Ali' },
-          payment: { status: 'PAID', method: 'CARD' },
-          delivery: { status: 'IN_PROGRESS' },
-          pharmacyLabel: 'Al Shifa Pharmacy',
+      example: {
+        success: true,
+        data: [
+          {
+            id: 1,
+            createdAt: '2024-03-15T10:30:00.000Z',
+            status: 'PENDING',
+            totalAmount: 140.5,
+            currency: 'USD',
+            patient: { id: 12, name: 'Mohamed Ali' },
+            payment: { status: 'PAID', method: 'CARD' },
+            delivery: { status: 'IN_PROGRESS' },
+            pharmacyLabel: 'Al Shifa Pharmacy',
+          },
+          {
+            id: 2,
+            createdAt: '2024-03-14T08:00:00.000Z',
+            status: 'DELIVERED',
+            totalAmount: 75.0,
+            currency: 'USD',
+            patient: { id: 9, name: 'Sara Hassan' },
+            payment: null,
+            delivery: null,
+            pharmacyLabel: 'Multiple',
+          },
+        ],
+        meta: {
+          total: 100,
+          page: 1,
+          limit: 10,
+          totalPages: 10,
         },
-        {
-          id: 2,
-          createdAt: '2024-03-14T08:00:00.000Z',
-          status: 'DELIVERED',
-          totalAmount: 75.00,
-          currency: 'USD',
-          patient: { id: 9, name: 'Sara Hassan' },
-          payment: null,
-          delivery: null,
-          pharmacyLabel: 'Multiple',
-        },
-      ],
-      meta: {
-        total: 100,
-        page: 1,
-        limit: 10,
-        totalPages: 10,
       },
     },
-  },
   })
   @Get()
   async findAll(
