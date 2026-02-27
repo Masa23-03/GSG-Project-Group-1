@@ -3,7 +3,6 @@ import {
   OrderFilter,
   PatientOrderQueryDto,
 } from '../dto/request.dto/order.query.dto';
-import { buildCreatedAtOrderBy } from 'src/types/pagination.query';
 export const ACTIVE_STATUSES: OrderStatus[] = [
   OrderStatus.ACCEPTED,
   OrderStatus.OUT_FOR_DELIVERY,
