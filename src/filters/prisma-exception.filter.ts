@@ -37,11 +37,13 @@ export class PrismaExceptionFilter implements ExceptionFilter {
           errorResponse.statusCode = HttpStatus.CONFLICT;
 
           const targets = extractTargets(exception);
+
           if (targets.length) {
             errorResponse.message =
               targets.length === 1
                 ? `Duplicate value for: ${targets[0]}`
                 : `Duplicate values for: ${targets.join(', ')}`;
+
             errorResponse.fields = targets.map((t) => ({
               field: t,
               message: 'Already exists',
@@ -138,7 +140,6 @@ export class PrismaExceptionFilter implements ExceptionFilter {
 }
 function extractTargets(e: Prisma.PrismaClientKnownRequestError): string[] {
   const target = e.meta?.target;
-
   if (typeof target === 'string') return [target];
   if (Array.isArray(target)) return target.map(String);
 
@@ -152,5 +153,23 @@ function extractTargets(e: Prisma.PrismaClientKnownRequestError): string[] {
       .filter(Boolean);
   }
 
+  const m2 = msg.match(/constraint:\s*`([^`]+)`/i);
+  if (m2) return guessFieldsFromIndexName(m2[1]);
+
+  const m3 = msg.match(/index:\s*`([^`]+)`/i);
+  if (m3) return guessFieldsFromIndexName(m3[1]);
+
   return [];
+}
+function guessFieldsFromIndexName(name: string): string[] {
+  const parts = name.split('_').filter(Boolean);
+
+  const cleaned =
+    parts[parts.length - 1] === 'key' ? parts.slice(0, -1) : parts;
+
+  if (cleaned.length <= 1) return [name];
+
+  const fields = cleaned.slice(1);
+
+  return fields.length ? fields : [name];
 }
