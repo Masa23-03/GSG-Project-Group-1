@@ -59,7 +59,6 @@ export class PharmacyOrderQueryDto extends PaginationQueryDto {
   sortOrder?: SortOrder;
 
   @ApiPropertyOptional({
-    example: 'panadol',
     description:
       'Free-text search across: orderId, pharmacyOrderId, patientId, patientName, medicine generic/brand name.',
   })

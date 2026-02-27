@@ -12,12 +12,17 @@ export enum PharmacyProgressStatus {
   READY_FOR_PICKUP = 'READY_FOR_PICKUP',
 }
 export class PharmacyOrderDecisionDto {
-  @ApiProperty({ enum: PharmacyOrderDecision })
+  @ApiProperty({
+    enum: PharmacyOrderDecision,
+    enumName: 'PharmacyOrderDecision',
+    example: PharmacyOrderDecision.ACCEPT,
+  })
   decision!: PharmacyOrderDecision;
 
   @ApiPropertyOptional({
     description: 'Required when decision is REJECT',
     nullable: true,
+    example: null,
   })
   rejectionReason?: string | null;
 }
@@ -25,7 +30,11 @@ export type PharmacyOrderDecisionDtoType = InstanceType<
   typeof PharmacyOrderDecisionDto
 >;
 export class UpdatePharmacyOrderStatusDto {
-  @ApiProperty({ enum: PharmacyProgressStatus })
+  @ApiProperty({
+    enum: PharmacyProgressStatus,
+    enumName: 'PharmacyProgressStatus',
+    example: PharmacyProgressStatus.PREPARING,
+  })
   status!: PharmacyProgressStatus;
 }
 export type UpdatePharmacyOrderStatusDtoType = InstanceType<
