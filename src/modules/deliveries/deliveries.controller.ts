@@ -30,6 +30,9 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { SortOrder } from 'src/types/pagination.query';
 import { DriverDeliveryDecisionDto } from './dto/request/update-delivery.dto';
 import { driverDeliveryDecisionSchema } from './schema/update.schema';
+import { AdminDeliveryListItemDto } from './dto/response/admin-deliveries.response.dto';
+import { adminDeliveriesListQuerySchema } from './schema/admin-query.schema';
+import { AdminDeliveriesListQueryDto } from './dto/request/admin-deliveries.query.dto';
 
 @ApiTags('Driver - Deliveries')
 @ApiBearerAuth('access-token')

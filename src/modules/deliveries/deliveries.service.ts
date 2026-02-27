@@ -30,6 +30,12 @@ import {
   DeliveryDecision,
   DriverDeliveryDecisionDto,
 } from './dto/request/update-delivery.dto';
+import { AdminDeliveriesListQueryDto } from './dto/request/admin-deliveries.query.dto';
+import { AdminDeliveryListItemDto } from './dto/response/admin-deliveries.response.dto';
+import {
+  adminDeliveryListSelect,
+  mapAdminDeliveryListItem,
+} from './util/admin.mapper';
 
 @Injectable()
 export class DeliveriesService {
@@ -326,6 +332,64 @@ export class DeliveriesService {
 
       return mapToDeliveryDetails(fullReturn);
     });
+  }
+
+  //! Admin
+  async adminListDeliveries(
+    query: AdminDeliveriesListQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<AdminDeliveryListItemDto>> {
+    const pagination = await this.prismaService.handleQueryPagination(query);
+
+    const q = query.q?.trim();
+    const hasQ = !!q;
+
+    const where: Prisma.DeliveryWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.driverId ? { driverId: query.driverId } : {}),
+      ...(hasQ
+        ? {
+            OR: [
+              ...(Number.isFinite(Number(q)) ? [{ orderId: Number(q) }] : []),
+              {
+                driver: {
+                  user: {
+                    OR: [
+                      { name: { contains: q! } },
+                      { phoneNumber: { contains: q! } },
+                    ],
+                  },
+                },
+              },
+
+              {
+                driver: {
+                  vehiclePlate: { contains: q! },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [rows, count] = await Promise.all([
+      this.prismaService.delivery.findMany({
+        ...removeFields(pagination, ['page']),
+        where,
+        select: adminDeliveryListSelect,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      }),
+      this.prismaService.delivery.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data: rows.map(mapAdminDeliveryListItem),
+      meta: await this.prismaService.formatPaginationResponse({
+        count,
+        page: pagination.page,
+        limit: pagination.take,
+      }),
+    };
   }
 
   private async foundDriver(prisma: Prisma.TransactionClient, userId: number) {
