@@ -7,7 +7,7 @@ import { AdminOrderController } from './adminOrder.controller';
 import { AdminOrderService } from './adminOrder.service';
 
 @Module({
-  controllers: [OrderController, PharmacyOrderController, AdminOrderController],
+  controllers: [AdminOrderController, OrderController, PharmacyOrderController],
   providers: [OrderService, PharmacyOrderService, AdminOrderService],
 })
 export class OrderModule {}
