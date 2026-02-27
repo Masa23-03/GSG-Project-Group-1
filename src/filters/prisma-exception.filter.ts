@@ -168,8 +168,11 @@ function guessFieldsFromIndexName(name: string): string[] {
     parts[parts.length - 1] === 'key' ? parts.slice(0, -1) : parts;
 
   if (cleaned.length <= 1) return [name];
-
-  const fields = cleaned.slice(1);
-
-  return fields.length ? fields : [name];
+  const fieldParts = cleaned.slice(1);
+  if (!fieldParts.length) return [name];
+  const asOneField = toCamelCase(fieldParts.join('_'));
+  return [asOneField];
+}
+function toCamelCase(s: string): string {
+  return s.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
 }
