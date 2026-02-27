@@ -11,6 +11,12 @@ import { RegisterationDTO } from '../auth/dto/auth.register.dto';
 import { UserMeResponseDto } from './dto/response.dto/profile.dto';
 import { mapPatientAddress } from '../patient-address/util/mapper';
 import { UpdateMyPatientDto } from './dto/request.dto/profile.dto';
+import { AdminUserListQueryDto } from './dto/request.dto/admin-user.query.dto';
+import { ApiPaginationSuccessResponse } from 'src/types/unifiedType.types';
+import {
+  AdminUserDetailsDto,
+  AdminUserListItemDto,
+} from './dto/response.dto/admin-user.response.dto';
 
 @Injectable()
 export class UserService {
@@ -164,5 +170,88 @@ export class UserService {
     });
 
     return this.findMyProfile(id);
+  }
+
+  async findAllAdmin(
+    query: AdminUserListQueryDto,
+  ): Promise<ApiPaginationSuccessResponse<AdminUserListItemDto>> {
+    const pagination = await this.prismaService.handleQueryPagination(query);
+
+    const q = query.q?.trim();
+    const numericId = q && /^\d+$/.test(q) ? Number(q) : null;
+
+    const where: Prisma.UserWhereInput = {
+      role: UserRole.PATIENT,
+      ...(query.status ? { status: query.status } : {}),
+      ...(q
+        ? {
+            OR: [
+              ...(numericId ? [{ id: numericId }] : []),
+              { name: { contains: q } },
+              { email: { contains: q } },
+              { phoneNumber: { contains: q } },
+            ],
+          }
+        : {}),
+    };
+
+    const [users, count] = await Promise.all([
+      this.prismaService.user.findMany({
+        ...removeFields(pagination, ['page']),
+        where,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phoneNumber: true,
+          role: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+      this.prismaService.user.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data: users.map((u) => ({
+        ...u,
+        createdAt: u.createdAt.toISOString(),
+      })),
+      meta: await this.prismaService.formatPaginationResponse({
+        count,
+        page: pagination.page,
+        limit: pagination.take,
+      }),
+    };
+  }
+
+  async findOneAdmin(id: number): Promise<AdminUserDetailsDto> {
+    const user = await this.prismaService.user.findFirst({
+      where: {
+        id,
+        role: UserRole.PATIENT,
+      },
+    });
+
+    if (!user) throw new NotFoundException('Patient not found');
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      status: user.status,
+      dateOfBirth: user.dateOfBirth
+        ? user.dateOfBirth.toISOString().slice(0, 10)
+        : null,
+      profileImageUrl: user.profileImageUrl,
+      isEmailVerified: user.isEmailVerified,
+      isPhoneVerified: user.isPhoneVerified,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
   }
 }
