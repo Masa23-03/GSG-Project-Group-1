@@ -16,12 +16,11 @@ export enum PharmacyOrderFilter {
   PAST = 'PAST',
 }
 
-
 export class PatientOrderQueryDto extends PaginationQueryDto {
-  @ApiPropertyOptional({ example: 13, description: 'Exact order ID.' })
+  @ApiPropertyOptional({ description: 'Exact order ID.' })
   orderId?: number;
 
-  @ApiPropertyOptional({ example: 12, description: 'Exact pharmacy ID.' })
+  @ApiPropertyOptional({ description: 'Exact pharmacy ID.' })
   pharmacyId?: number;
 
   @ApiPropertyOptional({
@@ -75,7 +74,6 @@ export class GetAdminOrderQueryDto extends PaginationQueryDto {
   status?: OrderStatus;
 
   @ApiPropertyOptional({
-    example: 'John',
     description:
       'Free-text search across: orderID, patientName and pharmacyName',
   })
