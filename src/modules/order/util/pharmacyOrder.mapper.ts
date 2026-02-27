@@ -150,7 +150,7 @@ export function mapToPharmacyOrderDetails(
       : null,
     patient: mapToPharmacyOrderPatient(po),
     items: itemsDetails,
-    itemsCount: itemsDetails.length,
+    itemsCount: itemsDetails.reduce((acc, item) => acc + item.quantity, 0),
 
     deliveryAddress: {
       lat,
