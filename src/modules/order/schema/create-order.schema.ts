@@ -1,18 +1,19 @@
 import { z, type ZodType } from 'zod';
 import { CreatePharmacyOrderItemDtoType } from '../dto/request.dto/create-order.dto';
 import { Currency } from '@prisma/client';
+import { safeText } from 'src/utils/zod.helper';
 
 export const createPharmacyOrderItemSchema = z
   .object({
     inventoryId: z.coerce.number().int().positive(),
-    quantity: z.coerce.number().int().positive(),
+    quantity: z.coerce.number().int().positive().max(100),
   })
   .strict() satisfies ZodType<CreatePharmacyOrderItemDtoType>;
 
 export const createPharmacyOrderSchema = z
   .object({
     pharmacyId: z.coerce.number().int().positive(),
-    items: z.array(createPharmacyOrderItemSchema).min(1),
+    items: z.array(createPharmacyOrderItemSchema).min(1).max(50),
 
     prescriptionId: z.coerce.number().int().positive().nullable().optional(),
   })
@@ -31,14 +32,12 @@ export const createPharmacyOrderSchema = z
 export const createOrderSchema = z
   .object({
     deliveryAddressId: z.coerce.number().int().positive(),
-    notes: z
-      .string()
-      .trim()
+    notes: safeText({ min: 1, max: 1000, mode: 'generic' })
       .transform((v) => (v.length ? v : null))
       .nullable()
       .optional(),
     currency: z.nativeEnum(Currency).optional(),
-    pharmacies: z.array(createPharmacyOrderSchema).min(1),
+    pharmacies: z.array(createPharmacyOrderSchema).min(1).max(10),
   })
   .strict()
   .superRefine((val, ctx) => {
@@ -50,7 +49,7 @@ export const createOrderSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['pharmacies'],
-        message: 'Duplicate pharmacyId is not allowe',
+        message: 'Duplicate pharmacyId is not allowed',
       });
     }
   });

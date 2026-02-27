@@ -18,7 +18,7 @@ export const pharmacyOrderQuerySchema = z
 
     sortOrder: z.nativeEnum(SortOrder).optional(),
 
-    q: z.string().trim().min(1).optional(),
+    q: z.string().trim().min(1).max(100).optional(),
   })
   .merge(PaginationQuerySchema)
   .strict() satisfies ZodType<PharmacyOrderQueryDtoType>;
