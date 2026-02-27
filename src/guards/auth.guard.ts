@@ -22,10 +22,9 @@ export class AuthGuard implements CanActivate {
     private prisma: DatabaseService,
   ) {}
   async canActivate(context: ExecutionContext) {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IsPublic, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const isPublic =
+      this.reflector.get(IsPublic, context.getHandler()) ??
+      this.reflector.get(IsPublic, context.getClass());
     if (isPublic) return true;
 
     const req = context.switchToHttp().getRequest<Request>();
