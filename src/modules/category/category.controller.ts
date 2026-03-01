@@ -29,6 +29,8 @@ import {
   createCategorySchema,
   updateCategorySchema,
 } from './schema/category.schema';
+import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
+import { CategoryResponseDto } from './dto/response.dto/category-response.dto';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -118,6 +120,7 @@ export class CategoryController {
   @ApiOperation({ summary: 'List all categories' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiPaginatedOkResponse(CategoryResponseDto)
   @Get()
   findAll(
     @Query(new ZodValidationPipe(PaginationQuerySchema))

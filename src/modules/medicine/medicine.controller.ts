@@ -28,6 +28,8 @@ import {
   PatientMedicinePharmaciesQueryDto,
   PatientMedicinePharmacyItemDto,
 } from './dto/medicine-pahrmacies.dto';
+import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
+import { PatientMedicineListItemDto } from './dto/patient-medicine-list.dto';
 
 @ApiTags('Medicines - Patient')
 @ApiBearerAuth('access-token')
@@ -38,6 +40,7 @@ export class MedicineController {
 
   @Get()
   @ApiOperation({ summary: 'Search medicines (APPROVED + active only)' })
+  @ApiPaginatedOkResponse(PatientMedicineListItemDto)
   async list(
     @Query(new ZodValidationPipe(PatientListQuerySchema))
     query: PatientMedicineListQueryDto,
@@ -74,20 +77,7 @@ export class MedicineController {
   })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiOkResponse({
-    schema: {
-      example: {
-        success: true,
-        data: [],
-        meta: {
-          total: 3,
-          page: 1,
-          limit: 10,
-          totalPages: 1,
-        },
-      },
-    },
-  })
+  @ApiPaginatedOkResponse(PatientMedicinePharmacyItemDto)
   async getPharmaciesByMedicine(
     @AuthedUser() user: unifiedTypeTypes.authedUserType,
     @Param('medicineId', ParseIntPipe) medicineId: number,

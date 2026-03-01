@@ -33,6 +33,8 @@ import { driverDeliveryDecisionSchema } from './schema/update.schema';
 import { AdminDeliveryListItemDto } from './dto/response/admin-deliveries.response.dto';
 import { adminDeliveriesListQuerySchema } from './schema/admin-query.schema';
 import { AdminDeliveriesListQueryDto } from './dto/request/admin-deliveries.query.dto';
+import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
+import { DriverAvailableDeliveriesListItemDto } from './dto/response/list.response.dto';
 
 @ApiTags('Driver - Deliveries')
 @ApiBearerAuth('access-token')
@@ -47,6 +49,7 @@ export class DeliveriesController {
     description:
       'Returns deliveries available for the authenticated driver. Driver must be ONLINE. Only PENDING deliveries with no driver assigned are returned.',
   })
+  @ApiPaginatedOkResponse(DriverAvailableDeliveriesListItemDto)
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({

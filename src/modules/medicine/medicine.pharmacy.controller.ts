@@ -48,6 +48,8 @@ import {
 import { UpdateMedicinePharmacyRequestSchema } from './schema/update.medicine.schema';
 import { MedicineWithImages } from './util/medicine.shared';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
+import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
+import { PatientMedicineListItemDto } from './dto/patient-medicine-list.dto';
 
 @ApiTags('Medicine - Pharmacy')
 @ApiBearerAuth('access-token')
@@ -65,6 +67,7 @@ export class MedicinePharmacyController {
   @ApiOperation({
     summary: 'Browse approved + active medicines (verified pharmacy only)',
   })
+  @ApiPaginatedOkResponse(PatientMedicineListItemDto)
   @ApiQuery({ name: 'q', required: false, type: String })
   @ApiQuery({ name: 'categoryId', required: false, type: Number })
   @ApiQuery({ name: 'page', required: false, type: Number })

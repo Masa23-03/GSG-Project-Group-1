@@ -42,6 +42,7 @@ import {
   UpdatePharmacyOrderStatusDto,
 } from './dto/request.dto/update-order.dto';
 import { SortOrder } from 'src/types/pagination.query';
+import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
 
 @ApiTags('Pharmacy Order')
 @Roles(UserRole.PHARMACY)
@@ -52,27 +53,7 @@ export class PharmacyOrderController {
   constructor(private readonly pharmacyOrderService: PharmacyOrderService) {}
 
   @ApiOperation({ summary: 'List my pharmacy orders' })
-  @ApiOkResponse({
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'array',
-          items: { $ref: getSchemaPath(PharmacyOrderListResponseDto) },
-        },
-        meta: {
-          type: 'object',
-          properties: {
-            total: { type: 'number', example: 10 },
-            limit: { type: 'number', example: 10 },
-            page: { type: 'number', example: 1 },
-            totalPages: { type: 'number', example: 1 },
-          },
-        },
-      },
-    },
-  })
+  @ApiPaginatedOkResponse(PharmacyOrderListResponseDto)
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({

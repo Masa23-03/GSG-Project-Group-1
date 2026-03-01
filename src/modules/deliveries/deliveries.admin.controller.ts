@@ -14,6 +14,7 @@ import { DeliveriesService } from './deliveries.service';
 import { adminDeliveriesListQuerySchema } from './schema/admin-query.schema';
 import { AdminDeliveriesListQueryDto } from './dto/request/admin-deliveries.query.dto';
 import { AdminDeliveryListItemDto } from './dto/response/admin-deliveries.response.dto';
+import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
 
 @ApiTags('Deliveries - Admin')
 @ApiBearerAuth('access-token')
@@ -24,7 +25,7 @@ export class AdminDeliveriesController {
 
   @Get()
   @ApiOperation({ summary: 'Admin - List deliveries' })
-  @ApiOkResponse({ type: AdminDeliveryListItemDto, isArray: true })
+  @ApiPaginatedOkResponse(AdminDeliveryListItemDto)
   adminListDeliveries(
     @Query(new ZodValidationPipe(adminDeliveriesListQuerySchema))
     query: AdminDeliveriesListQueryDto,
