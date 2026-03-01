@@ -15,6 +15,7 @@ import {
   ApiParam,
   ApiQuery,
   ApiTags,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
@@ -32,7 +33,10 @@ import {
   PharmacyOrderFilter,
   PharmacyOrderQueryDto,
 } from './dto/request.dto/order.query.dto';
-import { PharmacyOrderDetailsResponseDto } from './dto/response.dto/pharmacyOrder.response.dto';
+import {
+  PharmacyOrderDetailsResponseDto,
+  PharmacyOrderListResponseDto,
+} from './dto/response.dto/pharmacyOrder.response.dto';
 import {
   PharmacyOrderDecisionDto,
   UpdatePharmacyOrderStatusDto,
@@ -50,10 +54,22 @@ export class PharmacyOrderController {
   @ApiOperation({ summary: 'List my pharmacy orders' })
   @ApiOkResponse({
     schema: {
-      example: {
-        success: true,
-        data: [],
-        meta: { total: 10, limit: 10, page: 1, totalPages: 1 },
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          type: 'array',
+          items: { $ref: getSchemaPath(PharmacyOrderListResponseDto) },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            total: { type: 'number', example: 10 },
+            limit: { type: 'number', example: 10 },
+            page: { type: 'number', example: 1 },
+            totalPages: { type: 'number', example: 1 },
+          },
+        },
       },
     },
   })
