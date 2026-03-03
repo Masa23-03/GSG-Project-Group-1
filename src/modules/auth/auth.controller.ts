@@ -1,11 +1,5 @@
 ﻿import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { IsPublic } from '../../decorators/isPublic.decorator';
 import { ZodValidationPipe } from '../../pipes/zod-validation.pipe';
@@ -41,7 +35,10 @@ import type { RefreshTokenDTO } from './dto/refresh-token.dto';
 import { AuthedUser } from 'src/decorators/authedUser.decorator';
 import type { authedUserType } from 'src/types/unifiedType.types';
 import { LogoutSchema } from './validation/logout.validation.schema';
-
+import {
+  ApiSuccessCreatedResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -51,7 +48,7 @@ export class AuthController {
   @Post('register/patient')
   @ApiOperation({ summary: 'Register patient' })
   @ApiBody({ type: RegisterPatientRequestDto })
-  @ApiResponse({ status: 201, type: AuthResponseDto })
+  @ApiSuccessCreatedResponse(AuthResponseDto)
   registerPatient(
     @Body(new ZodValidationPipe(baseRegisterSchema)) dto: RegisterPatientDTO,
   ) {
@@ -62,7 +59,7 @@ export class AuthController {
   @Post('register/pharmacy')
   @ApiOperation({ summary: 'Register pharmacy' })
   @ApiBody({ type: RegisterPharmacyRequestDto })
-  @ApiResponse({ status: 201, type: AuthResponseDto })
+  @ApiSuccessCreatedResponse(AuthResponseDto)
   registerPharmacy(
     @Body(new ZodValidationPipe(pharmacyValidationSchema))
     dto: RegisterPharmacyDTO,
@@ -74,7 +71,7 @@ export class AuthController {
   @Post('register/driver')
   @ApiOperation({ summary: 'Register driver' })
   @ApiBody({ type: RegisterDriverRequestDto })
-  @ApiResponse({ status: 201, type: AuthResponseDto })
+  @ApiSuccessCreatedResponse(AuthResponseDto)
   registerDriver(
     @Body(new ZodValidationPipe(driverRegistrationValidationSchema))
     dto: RegisterDriverDTO,
@@ -87,7 +84,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Login' })
   @ApiBody({ type: LoginRequestDto })
   @HttpCode(HttpStatus.OK)
-  @ApiResponse({ status: 200, type: AuthResponseDto })
+  @ApiSuccessOkResponse(AuthResponseDto)
   login(@Body(new ZodValidationPipe(LoginSchema)) dto: LoginDTO) {
     return this.authService.login(dto);
   }
@@ -97,7 +94,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh tokens' })
   @ApiBody({ type: RefreshTokenRequestDto })
   @HttpCode(HttpStatus.OK)
-  @ApiResponse({ status: 200, type: AuthResponseDto })
+  @ApiSuccessOkResponse(AuthResponseDto)
   refresh(
     @Body(new ZodValidationPipe(RefreshTokenSchema)) dto: RefreshTokenDTO,
   ) {
@@ -108,7 +105,7 @@ export class AuthController {
   @ApiBody({ type: LogoutRequestDto })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout (invalidate refresh token)' })
-  @ApiResponse({ status: 200, type: LogoutResponseDto })
+  @ApiSuccessOkResponse(LogoutResponseDto)
   @ApiBearerAuth('access-token')
   logout(
     @AuthedUser() user: authedUserType,
