@@ -23,6 +23,14 @@ import { UserService } from './user.service';
 import z from 'zod';
 import { adminUserListQuerySchema } from './schema/admin-user.schema';
 import { AdminUserListQueryDto } from './dto/request.dto/admin-user.query.dto';
+import {
+  AdminUserDetailsDto,
+  AdminUserListItemDto,
+} from './dto/response.dto/admin-user.response.dto';
+import {
+  ApiPaginatedOkResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Patients - Admin')
@@ -31,11 +39,12 @@ import { AdminUserListQueryDto } from './dto/request.dto/admin-user.query.dto';
 export class UsersAdminController {
   constructor(private readonly userService: UserService) {}
 
-  @Get()
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'q', required: false })
+  @ApiPaginatedOkResponse(AdminUserListItemDto)
+  @Get()
   async findAllAdmin(
     @Query(new ZodValidationPipe(adminUserListQuerySchema))
     query: AdminUserListQueryDto,
@@ -43,8 +52,9 @@ export class UsersAdminController {
     return this.userService.findAllAdmin(query);
   }
 
-  @Get(':id')
   @ApiParam({ name: 'id', type: Number })
+  @ApiSuccessOkResponse(AdminUserDetailsDto)
+  @Get(':id')
   async findOneAdmin(@Param('id', ParseIntPipe) id: number) {
     return this.userService.findOneAdmin(id);
   }

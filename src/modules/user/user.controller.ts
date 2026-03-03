@@ -15,6 +15,8 @@ import type { authedUserType } from 'src/types/unifiedType.types';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { updatePatientProfileSchema } from './schema/profile.schema';
 import { UpdateMyPatientDto } from './dto/request.dto/profile.dto';
+import { ApiSuccessOkResponse } from 'src/utils/api-paginated-ok-response';
+import { UserMeResponseDto } from './dto/response.dto/profile.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Patient Profile')
@@ -27,6 +29,7 @@ export class UserController {
 
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Get my profile' })
+  @ApiSuccessOkResponse(UserMeResponseDto)
   @Get('me')
   async getMe(@AuthedUser() user: authedUserType) {
     return await this.userService.findMyProfile(user.id);
@@ -36,6 +39,7 @@ export class UserController {
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Update my profile' })
   @ApiBody({ type: UpdateMyPatientDto })
+  @ApiSuccessOkResponse(UserMeResponseDto)
   @Patch('me')
   async updateMe(
     @AuthedUser() user: authedUserType,
