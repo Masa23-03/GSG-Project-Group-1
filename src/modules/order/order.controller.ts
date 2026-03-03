@@ -24,7 +24,6 @@ import {
   ApiBody,
   ApiCreatedResponse,
   ApiExtraModels,
-  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -44,6 +43,11 @@ import {
   PatientOrderResponseDto,
 } from './dto/response.dto/patient-get-order.response.dto';
 import { SortOrder } from 'src/types/pagination.query';
+import {
+  ApiPaginatedOkResponse,
+  ApiSuccessCreatedResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
 
 @ApiTags('Orders')
 @ApiExtraModels(
@@ -59,7 +63,7 @@ export class OrderController {
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Create order' })
   @ApiBody({ type: CreateOrderDto })
-  @ApiCreatedResponse({ type: CreateOrderResponseDto })
+  @ApiSuccessCreatedResponse(CreateOrderResponseDto)
   @Post()
   async create(
     @AuthedUser() user: authedUserType,
@@ -70,20 +74,6 @@ export class OrderController {
   }
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'List my orders (paginated)' })
-  @ApiOkResponse({
-    schema: {
-      example: {
-        success: true,
-        data: [],
-        meta: {
-          total: 10,
-          limit: 10,
-          page: 1,
-          totalPages: 1,
-        },
-      },
-    },
-  })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'orderId', required: false, type: Number })
@@ -101,6 +91,7 @@ export class OrderController {
     enum: SortOrder,
     example: SortOrder.ASC,
   })
+  @ApiPaginatedOkResponse(PatientOrderResponseDto)
   @Get()
   async findAll(
     @AuthedUser() user: authedUserType,
@@ -112,7 +103,7 @@ export class OrderController {
 
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Get my order details' })
-  @ApiOkResponse({ type: PatientOrderDetailsResponseDto })
+  @ApiSuccessOkResponse(PatientOrderDetailsResponseDto)
   @ApiParam({ name: 'id', type: Number, example: 13 })
   @Get(':id')
   async findOne(
@@ -124,7 +115,7 @@ export class OrderController {
 
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Cancel my order' })
-  @ApiOkResponse({ type: PatientCancelOrderResponseDto })
+  @ApiSuccessOkResponse(PatientCancelOrderResponseDto)
   @ApiParam({ name: 'id', type: Number, example: 13 })
   @Patch(':id/cancel')
   async cancel(

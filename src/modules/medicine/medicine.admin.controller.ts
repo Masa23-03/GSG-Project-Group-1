@@ -42,6 +42,7 @@ import { CreateMedicineAdminSchema } from './schema/create.medicine.schema';
 import { UpdateMedicineDto } from './swagger/update.medicine.dto';
 import { MedicineWithImages } from './util/medicine.shared';
 import { AdminReviewSchema } from './schema/status.medicine.schema';
+import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
 
 @ApiTags('Medicine - Admin')
 @ApiBearerAuth('access-token')

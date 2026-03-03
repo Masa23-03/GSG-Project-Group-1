@@ -10,12 +10,10 @@ import {
 import {
   ApiBearerAuth,
   ApiBody,
-  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiTags,
-  getSchemaPath,
 } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
@@ -42,7 +40,10 @@ import {
   UpdatePharmacyOrderStatusDto,
 } from './dto/request.dto/update-order.dto';
 import { SortOrder } from 'src/types/pagination.query';
-import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
+import {
+  ApiPaginatedOkResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
 
 @ApiTags('Pharmacy Order')
 @Roles(UserRole.PHARMACY)
@@ -79,7 +80,7 @@ export class PharmacyOrderController {
   }
 
   @ApiOperation({ summary: 'Get my pharmacy order details' })
-  @ApiOkResponse({ type: PharmacyOrderDetailsResponseDto })
+  @ApiSuccessOkResponse(PharmacyOrderDetailsResponseDto)
   @ApiParam({ name: 'id', type: Number, example: 13 })
   @Get(':id')
   async details(
@@ -91,7 +92,7 @@ export class PharmacyOrderController {
 
   @ApiOperation({ summary: 'Accept or reject pharmacy order' })
   @ApiBody({ type: PharmacyOrderDecisionDto })
-  @ApiOkResponse({ type: PharmacyOrderDetailsResponseDto })
+  @ApiSuccessOkResponse(PharmacyOrderDetailsResponseDto)
   @ApiParam({ name: 'id', type: Number, example: 13 })
   @Patch(':id/decision')
   async decide(
@@ -107,7 +108,7 @@ export class PharmacyOrderController {
     summary: 'Update pharmacy order progress (PREPARING / READY_FOR_PICKUP)',
   })
   @ApiBody({ type: UpdatePharmacyOrderStatusDto })
-  @ApiOkResponse({ type: PharmacyOrderDetailsResponseDto })
+  @ApiSuccessOkResponse(PharmacyOrderDetailsResponseDto)
   @ApiParam({ name: 'id', type: Number, example: 13 })
   @Patch(':id/status')
   async updateStatus(
