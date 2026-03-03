@@ -29,7 +29,11 @@ import {
   createCategorySchema,
   updateCategorySchema,
 } from './schema/category.schema';
-import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
+import {
+  ApiPaginatedOkResponse,
+  ApiSuccessCreatedResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
 import { CategoryResponseDto } from './dto/response.dto/category-response.dto';
 
 @ApiTags('Categories')
@@ -64,6 +68,7 @@ export class CategoryController {
       },
     },
   })
+  @ApiSuccessCreatedResponse(CategoryResponseDto)
   @Post('admin')
   async create(
     @Body(new ZodValidationPipe(createCategorySchema))
@@ -99,6 +104,7 @@ export class CategoryController {
       },
     },
   })
+  @ApiSuccessOkResponse(CategoryResponseDto)
   @Patch('admin/:id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -111,6 +117,7 @@ export class CategoryController {
   @IsPublic()
   @ApiOperation({ summary: 'Get category details' })
   @ApiParam({ name: 'id', type: Number, example: 3 })
+  @ApiSuccessOkResponse(CategoryResponseDto)
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.categoryService.findOne(id);
