@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   ParseIntPipe,
 } from '@nestjs/common';
 import { PrescriptionService } from './prescription.service';
@@ -30,15 +29,13 @@ import {
   ApiOperation,
   ApiParam,
   ApiBody,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiBadRequestResponse,
-  ApiUnauthorizedResponse,
-  ApiForbiddenResponse,
-  ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { PrescriptionResponseDto } from './dto/response/response.dto';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
+import {
+  ApiSuccessCreatedResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
 
 @ApiTags('Prescriptions')
 @ApiBearerAuth('access-token')
@@ -56,9 +53,8 @@ export class PrescriptionController {
     type: CreatePrescriptionDto,
     description: 'Prescription payload (file URLs only).',
   })
-  @ApiCreatedResponse({
+  @ApiSuccessCreatedResponse(PrescriptionResponseDto, {
     description: 'Prescription created successfully.',
-    type: PrescriptionResponseDto,
   })
   async create(
     @AuthedUser() user: authedUserType,
@@ -81,9 +77,8 @@ export class PrescriptionController {
     description: 'Prescription ID',
     example: 13,
   })
-  @ApiOkResponse({
+  @ApiSuccessOkResponse(PrescriptionResponseDto, {
     description: 'Prescription fetched successfully.',
-    type: PrescriptionResponseDto,
   })
   async getMyPrescription(
     @AuthedUser() user: authedUserType,
@@ -106,9 +101,8 @@ export class PrescriptionController {
     example: 13,
   })
   @ApiBody({ type: ReuploadPrescriptionDto })
-  @ApiOkResponse({
+  @ApiSuccessOkResponse(PrescriptionResponseDto, {
     description: 'Prescription re-uploaded; new active version returned.',
-    type: PrescriptionResponseDto,
   })
   reupload(
     @AuthedUser() user: authedUserType,
@@ -133,9 +127,8 @@ export class PrescriptionController {
     example: 13,
   })
   @ApiBody({ type: RequestNewPrescriptionDto })
-  @ApiOkResponse({
+  @ApiSuccessOkResponse(PrescriptionResponseDto, {
     description: 'Re-upload requested successfully.',
-    type: PrescriptionResponseDto,
   })
   requestReupload(
     @AuthedUser() user: authedUserType,
@@ -159,9 +152,8 @@ export class PrescriptionController {
     description: 'Prescription ID',
     example: 13,
   })
-  @ApiOkResponse({
+  @ApiSuccessOkResponse(PrescriptionResponseDto, {
     description: 'Prescription fetched successfully.',
-    type: PrescriptionResponseDto,
   })
   async getPrescription(
     @AuthedUser() user: authedUserType,
