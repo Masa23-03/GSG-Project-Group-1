@@ -35,6 +35,20 @@ import { PaginationQueryDto } from 'src/types/pagination.query';
 import { PaginationQuerySchema } from 'src/utils/schema/pagination.schema.util';
 import { GetInventoryAdminQueryDto } from './dto/query.dto/get-inventory-admin-query.dto';
 import { GetInventoryAdminQuerySchema } from './schema/inventory-admin.schema';
+import {
+  ApiPaginatedOkResponse,
+  ApiSuccessCreatedResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
+import {
+  InventoryAdminListItemResponseDto,
+  InventoryListItemDto,
+  PatientInventoryListItemDto,
+} from './dto/response.dto/InventoryListItem.dto';
+import {
+  InventoryAdminDetailsResponseDto,
+  InventoryItemResponseDto,
+} from './dto/response.dto/inventory-response.dto';
 
 @ApiTags('Inventory')
 @ApiBearerAuth('access-token')
@@ -47,6 +61,7 @@ export class InventoryController {
   @ApiOperation({
     summary: 'List pharmacy inventory for patient',
   })
+  @ApiPaginatedOkResponse(PatientInventoryListItemDto)
   @Get('patient/:pharmacyId')
   async findAllForPatient(
     @Param('pharmacyId', ParseIntPipe) pharmacyId: number,
@@ -61,6 +76,7 @@ export class InventoryController {
   @ApiOperation({
     summary: 'Admin: List all inventory items with advanced filters',
   })
+  @ApiPaginatedOkResponse(InventoryAdminListItemResponseDto)
   async findAllAdmin(
     @Query(new ZodValidationPipe(GetInventoryAdminQuerySchema))
     query: GetInventoryAdminQueryDto,
@@ -70,6 +86,7 @@ export class InventoryController {
 
   @ApiOperation({ summary: 'Admin: View specific inventory item details' })
   @Roles(UserRole.ADMIN)
+  @ApiSuccessOkResponse(InventoryAdminDetailsResponseDto)
   @Get('admin/:id')
   async findOneAdmin(@Param('id', ParseIntPipe) id: number) {
     return await this.inventoryService.findOneAdmin(id);
@@ -80,6 +97,7 @@ export class InventoryController {
   @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Add a new medicine to pharmacy inventory' })
   @ApiBody({ type: CreateInventoryItemDto })
+  @ApiSuccessCreatedResponse(InventoryItemResponseDto)
   @Post()
   async create(
     @AuthedUser() user: authedUserType,
@@ -92,6 +110,7 @@ export class InventoryController {
   @RequireVerified('PHARMACY')
   @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'List pharmacy inventory items' })
+  @ApiPaginatedOkResponse(InventoryListItemDto)
   @Get()
   async findAll(
     @AuthedUser() user: authedUserType,
@@ -104,6 +123,7 @@ export class InventoryController {
   @RequireVerified('PHARMACY')
   @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Get details of a single inventory item' })
+  @ApiSuccessOkResponse(InventoryItemResponseDto)
   @Get(':id')
   async findOne(
     @AuthedUser() user: authedUserType,
@@ -117,6 +137,7 @@ export class InventoryController {
   @ApiOperation({
     summary: 'Update inventory item',
   })
+  @ApiSuccessOkResponse(InventoryItemResponseDto)
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -133,6 +154,7 @@ export class InventoryController {
     summary: 'Soft delete inventory item',
     description: 'Marks an item as deleted and sets availability to false.',
   })
+  @ApiSuccessOkResponse(InventoryItemResponseDto)
   @Delete(':id')
   async remove(
     @Param('id', ParseIntPipe) id: number,
