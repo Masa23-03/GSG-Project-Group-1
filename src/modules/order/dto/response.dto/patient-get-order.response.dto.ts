@@ -88,12 +88,13 @@ export class PatientOrderResponseDto {
   })
   canCancel!: boolean;
   @ApiProperty({
+    type: String,
     nullable: true,
     example: null,
     description:
       'ETA is not implemented in this system and will always be null. Kept for a stable response contract.',
   })
-  eta!: null;
+  eta?: string | null;
 }
 
 export class PatientPharmacyOrderDetailsResponseDto extends CreatePharmacyOrderResponseDto {
