@@ -14,7 +14,13 @@ import { CityService } from './city.service';
 import { CreateCityDto } from './dto/create-city.dto';
 import { UpdateCityDto } from './dto/update-city.dto';
 import { CityListItemDto, CityWithFeeDto } from './dto/response.dto';
-import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiParam,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
 import {
@@ -28,6 +34,10 @@ import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
 import { IsPublic } from 'src/decorators/isPublic.decorator';
 import { includeSchema } from './schema/include.schema';
 import { CityListQueryDto } from './dto/list-query.dto';
+import {
+  ApiSuccessCreatedResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
 
 @ApiTags('Cities')
 @Controller('cities')
@@ -39,6 +49,7 @@ export class CityController {
 
   @ApiBearerAuth('access-token')
   @Roles(UserRole.ADMIN)
+  @ApiSuccessCreatedResponse(CityListItemDto)
   @Post('admin')
   create(
     @Body(new ZodValidationPipe(createCitySchema)) dto: CreateCityDto,
@@ -47,6 +58,7 @@ export class CityController {
   }
   @ApiBearerAuth('access-token')
   @Roles(UserRole.ADMIN)
+  @ApiSuccessOkResponse(CityListItemDto)
   @Patch('admin/:id')
   @ApiParam({ name: 'id', type: Number })
   update(
@@ -57,6 +69,7 @@ export class CityController {
   }
   @ApiBearerAuth('access-token')
   @Roles(UserRole.ADMIN)
+  @ApiSuccessOkResponse(CityListItemDto)
   @Delete('admin/:id')
   @ApiParam({ name: 'id', type: Number })
   remove(@Param('id', ParseIntPipe) id: number): Promise<CityListItemDto> {
@@ -65,6 +78,7 @@ export class CityController {
 
   @ApiBearerAuth('access-token')
   @Roles(UserRole.ADMIN)
+  @ApiSuccessOkResponse(CityWithFeeDto)
   @Put('admin/:id/delivery-fee')
   @ApiParam({ name: 'id', type: Number })
   upsertDeliveryFee(
@@ -76,6 +90,20 @@ export class CityController {
   }
 
   @IsPublic()
+  @ApiOkResponse({
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        data: {
+          oneOf: [
+            { type: 'array', items: { $ref: getSchemaPath(CityListItemDto) } },
+            { type: 'array', items: { $ref: getSchemaPath(CityWithFeeDto) } },
+          ],
+        },
+      },
+    },
+  })
   @Get()
   findAll(
     @Query(new ZodValidationPipe(includeSchema))
@@ -85,6 +113,7 @@ export class CityController {
     return this.cityService.findAllCity();
   }
   @IsPublic()
+  @ApiSuccessOkResponse(CityListItemDto)
   @Get(':id')
   @ApiParam({ name: 'id', type: Number })
   findOne(@Param('id', ParseIntPipe) id: number): Promise<CityListItemDto> {
@@ -94,6 +123,7 @@ export class CityController {
   @IsPublic()
   @Get(':id/delivery-fee')
   @ApiParam({ name: 'id', type: Number })
+  @ApiSuccessOkResponse(CityWithFeeDto)
   getDeliveryFee(
     @Param('id', ParseIntPipe) cityId: number,
   ): Promise<CityWithFeeDto> {
