@@ -15,7 +15,6 @@ import { UserRole, UserStatus, VerificationStatus } from '@prisma/client';
 import {
   ApiBearerAuth,
   ApiBody,
-  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -46,6 +45,16 @@ import {
   PatientPharmacyDetailsDto,
   PatientPharmacyListResponseDto,
 } from './dto/response.dto/pateint-pharmacy.response.dto';
+import {
+  AdminPharmacyDetailsDto,
+  AdminPharmacyListItemDto,
+  AdminPharmacyStatusUpdateResponseDto,
+} from './dto/response.dto/admin-pharmacy.response.dto';
+import {
+  ApiPaginatedOkResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
+import { PharmacyMeResponseDto } from './dto/response.dto/profile.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Pharmacies')
@@ -72,6 +81,7 @@ export class PharmacyController {
     example: VerificationStatus.UNDER_REVIEW,
   })
   @ApiQuery({ name: 'q', required: false, type: String })
+  @ApiPaginatedOkResponse(AdminPharmacyListItemDto)
   @Get('admin')
   async findAllAdmin(
     @Query(new ZodValidationPipe(adminPharmacyListQuerySchema))
@@ -83,6 +93,7 @@ export class PharmacyController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Admin: pharmacy details' })
   @ApiParam({ name: 'id', type: Number })
+  @ApiSuccessOkResponse(AdminPharmacyDetailsDto)
   @Get('admin/:id')
   async findOneAdmin(@Param('id', ParseIntPipe) id: number) {
     return await this.pharmacyService.findOneAdmin(id);
@@ -102,6 +113,7 @@ export class PharmacyController {
       },
     },
   })
+  @ApiSuccessOkResponse(AdminPharmacyStatusUpdateResponseDto)
   @Patch('admin/:id/verification')
   async updateStatusAdmin(
     @AuthedUser() admin: authedUserType,
@@ -123,6 +135,7 @@ export class PharmacyController {
   //profile endpoint to view pharmacy profile
   @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Pharmacy: get my profile' })
+  @ApiSuccessOkResponse(PharmacyMeResponseDto)
   @Get('me')
   async getMe(@AuthedUser() pharmacy: authedUserType) {
     return this.pharmacyService.findMyProfile(pharmacy.id);
@@ -131,6 +144,7 @@ export class PharmacyController {
   @Roles(UserRole.PHARMACY)
   @ApiOperation({ summary: 'Pharmacy: update my profile' })
   @ApiBody({ type: UpdateMyPharmacyProfileDto })
+  @ApiSuccessOkResponse(PharmacyMeResponseDto)
   @Patch('me')
   async updateMe(
     @AuthedUser() pharmacy: authedUserType,
@@ -154,6 +168,7 @@ export class PharmacyController {
   @ApiQuery({ name: 'cityId', required: false, type: Number, example: 2 })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiPaginatedOkResponse(PatientPharmacyListResponseDto)
   @Get()
   async findAllPatient(
     @AuthedUser() user: authedUserType,
@@ -165,34 +180,8 @@ export class PharmacyController {
 
   @Roles(UserRole.PATIENT)
   @ApiOperation({ summary: 'Get pharmacy details' })
-  @ApiOkResponse({
-    schema: {
-      example: {
-        success: true,
-        data: {
-          id: 12,
-          pharmacyName: 'Al-Shifa Pharmacy',
-          cityId: 2,
-          cityName: 'Deir al-Balah',
-          address: {
-            addressLine: 'Main street',
-            latitude: 31.5204,
-            longitude: 34.4531,
-          },
-          distanceKm: null,
-          eta: null,
-          deliveryFee: 10,
-          coverImageUrl: null,
-          profileImageUrl: null,
-          isOpenNow: true,
-          workOpenTime: '08:00',
-          workCloseTime: '23:00',
-          phoneNumber: '+970599000000',
-        },
-      },
-    },
-  })
   @ApiParam({ name: 'id', type: Number, example: 12 })
+  @ApiSuccessOkResponse(PatientPharmacyDetailsDto)
   @Get(':id')
   async findOnePatient(
     @AuthedUser() user: authedUserType,
