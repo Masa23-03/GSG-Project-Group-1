@@ -24,6 +24,13 @@ import {
   CreatePatientAddressSchema,
   UpdatePatientAddressSchema,
 } from './schema/patient-address.schema';
+import {
+  ApiPaginatedOkResponse,
+  ApiSuccessCreatedResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
+import { PatientAddressListItemResponseDto } from './dto/response/list.response.dto';
+import { PatientAddressDetailsResponseDto } from './dto/response/details.response.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Patient Addresses')
@@ -32,8 +39,9 @@ import {
 export class PatientAddressController {
   constructor(private readonly patientAddressService: PatientAddressService) {}
 
-  @Get()
+  @ApiPaginatedOkResponse(PatientAddressListItemResponseDto)
   @ApiOperation({ summary: 'List my addresses' })
+  @Get()
   async listMyAddresses(
     @AuthedUser() user: authedUserType,
     @Query(new ZodValidationPipe(PaginationQuerySchema))
@@ -41,8 +49,9 @@ export class PatientAddressController {
   ) {
     return this.patientAddressService.listMyAddresses(user.id, query);
   }
-  @Get(':id')
   @ApiOperation({ summary: 'Get address details by id' })
+  @ApiSuccessOkResponse(PatientAddressDetailsResponseDto)
+  @Get(':id')
   async getMyAddress(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,
@@ -50,8 +59,9 @@ export class PatientAddressController {
     return this.patientAddressService.getMyAddress(user.id, id);
   }
 
-  @Post()
   @ApiOperation({ summary: 'Add a new address' })
+  @ApiSuccessCreatedResponse(PatientAddressDetailsResponseDto)
+  @Post()
   async create(
     @AuthedUser() user: authedUserType,
     @Body(new ZodValidationPipe(CreatePatientAddressSchema))
@@ -61,8 +71,9 @@ export class PatientAddressController {
     return this.patientAddressService.create(userId, payload);
   }
 
-  @Patch(':id')
   @ApiOperation({ summary: 'Update an existing address' })
+  @ApiSuccessOkResponse(PatientAddressDetailsResponseDto)
+  @Patch(':id')
   async update(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,
@@ -73,8 +84,8 @@ export class PatientAddressController {
     return this.patientAddressService.update(userId, id, payload);
   }
 
-  @Delete(':id')
   @ApiOperation({ summary: 'Delete an address' })
+  @Delete(':id')
   async delete(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,
@@ -83,8 +94,9 @@ export class PatientAddressController {
     return this.patientAddressService.remove(userId, id);
   }
 
-  @Patch(':id/default')
   @ApiOperation({ summary: 'Set an address as default' })
+  @ApiSuccessOkResponse(PatientAddressDetailsResponseDto)
+  @Patch(':id/default')
   async setDefault(
     @AuthedUser() user: authedUserType,
     @Param('id', ParseIntPipe) id: number,
