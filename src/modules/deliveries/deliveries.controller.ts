@@ -33,8 +33,12 @@ import { driverDeliveryDecisionSchema } from './schema/update.schema';
 import { AdminDeliveryListItemDto } from './dto/response/admin-deliveries.response.dto';
 import { adminDeliveriesListQuerySchema } from './schema/admin-query.schema';
 import { AdminDeliveriesListQueryDto } from './dto/request/admin-deliveries.query.dto';
-import { ApiPaginatedOkResponse } from 'src/utils/api-paginated-ok-response';
+import {
+  ApiPaginatedOkResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
 import { DriverAvailableDeliveriesListItemDto } from './dto/response/list.response.dto';
+import { DriverDeliveryDetailsResponseDto } from './dto/response/details.response.dto';
 
 @ApiTags('Driver - Deliveries')
 @ApiBearerAuth('access-token')
@@ -72,6 +76,7 @@ export class DeliveriesController {
     description:
       'Returns delivery details. Allowed if delivery is unassigned PENDING (driver must be ONLINE) OR assigned to the authenticated driver.',
   })
+  @ApiSuccessOkResponse(DriverDeliveryDetailsResponseDto)
   @ApiParam({ name: 'id', type: Number, example: 3 })
   @Get(':id')
   async getDelivery(
@@ -88,6 +93,7 @@ export class DeliveriesController {
   })
   @ApiParam({ name: 'id', type: Number, example: 3 })
   @ApiBody({ type: DriverDeliveryDecisionDto })
+  @ApiSuccessOkResponse(DriverDeliveryDetailsResponseDto)
   @Patch(':id/decision')
   async decideDelivery(
     @AuthedUser() user: authedUserType,
@@ -104,6 +110,7 @@ export class DeliveriesController {
   })
   @ApiParam({ name: 'id', type: Number, example: 3 })
   @ApiParam({ name: 'pharmacyOrderId', type: Number, example: 13 })
+  @ApiSuccessOkResponse(DriverDeliveryDetailsResponseDto)
   @Patch(':id/pharmacy-orders/:pharmacyOrderId/pickup')
   async confirmPharmacyPickup(
     @AuthedUser() user: authedUserType,
@@ -123,6 +130,7 @@ export class DeliveriesController {
       'Moves delivery PICKUP_IN_PROGRESS -> EN_ROUTE and sets order OUT_FOR_DELIVERY.',
   })
   @ApiParam({ name: 'id', type: Number, example: 3 })
+  @ApiSuccessOkResponse(DriverDeliveryDetailsResponseDto)
   @Patch(':id/start')
   async startDelivery(
     @AuthedUser() user: authedUserType,
@@ -137,6 +145,7 @@ export class DeliveriesController {
       'Moves delivery EN_ROUTE -> DELIVERED, sets order DELIVERED, and marks all pharmacyOrders in the delivery as COMPLETED.',
   })
   @ApiParam({ name: 'id', type: Number, example: 3 })
+  @ApiSuccessOkResponse(DriverDeliveryDetailsResponseDto)
   @Patch(':id/confirm')
   confirmDelivery(
     @AuthedUser() user: authedUserType,
