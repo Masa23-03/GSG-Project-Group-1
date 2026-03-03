@@ -36,7 +36,20 @@ import { UpdateMyDriverDto } from './dto/request.dto/profile.dto';
 import { updateDriverProfileSchema } from './schema/profile.schema';
 import { RequireVerified } from 'src/decorators/requireVerified.decorator';
 import { availabilitySchema } from './schema/availability.shcema';
-import { UpdateDriverAvailabilityDto } from './dto/request.dto/availability.dto';
+import {
+  UpdateDriverAvailabilityDto,
+  UpdateDriverAvailabilityResponseDto,
+} from './dto/request.dto/availability.dto';
+import {
+  ApiPaginatedOkResponse,
+  ApiSuccessOkResponse,
+} from 'src/utils/api-paginated-ok-response';
+import {
+  AdminDriverDetailsDto,
+  AdminDriverListItemDto,
+  AdminDriverVerificationUpdateResponseDto,
+} from './dto/response.dto/admin-drivers-response.dto';
+import { DriverMeResponseDto } from './dto/response.dto/profile.dto';
 @ApiTags('Drivers')
 @ApiBearerAuth('access-token')
 @Controller('drivers')
@@ -44,6 +57,7 @@ export class DriverController {
   constructor(private readonly driverService: DriverService) {}
 
   @Roles(UserRole.ADMIN)
+  @ApiPaginatedOkResponse(AdminDriverListItemDto)
   @Get('admin')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -85,6 +99,7 @@ export class DriverController {
 
   @Roles(UserRole.ADMIN)
   @ApiParam({ name: 'id', type: Number })
+  @ApiSuccessOkResponse(AdminDriverDetailsDto)
   @Get('admin/:id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return await this.driverService.findOneAdmin(id);
@@ -103,6 +118,7 @@ export class DriverController {
       },
     },
   })
+  @ApiSuccessOkResponse(AdminDriverVerificationUpdateResponseDto)
   @Patch('admin/:id/verification')
   async updateStatusAdmin(
     @AuthedUser() admin: authedUserType,
@@ -125,6 +141,7 @@ export class DriverController {
   @ApiOperation({
     summary: 'Get my driver profile',
   })
+  @ApiSuccessOkResponse(DriverMeResponseDto)
   @Get('me')
   async getMyProfile(@AuthedUser() driver: authedUserType) {
     return await this.driverService.getMyProfile(driver.id);
@@ -137,6 +154,7 @@ export class DriverController {
   @ApiBody({
     type: UpdateMyDriverDto,
   })
+  @ApiSuccessOkResponse(DriverMeResponseDto)
   @Patch('me')
   async updateMe(
     @AuthedUser() driver: authedUserType,
@@ -163,6 +181,7 @@ export class DriverController {
       },
     },
   })
+  @ApiSuccessOkResponse(UpdateDriverAvailabilityResponseDto)
   @Patch('me/availability')
   async updateAvailabilityStatus(
     @AuthedUser() user: authedUserType,
