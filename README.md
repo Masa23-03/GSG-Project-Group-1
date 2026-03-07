@@ -107,7 +107,7 @@ Clients
       Prisma ORM
           │
           ▼
-       MariaDB
+       MySql DB
 ```
 
 Architecture Characteristics:
