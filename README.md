@@ -126,7 +126,7 @@ Architecture Characteristics:
 | Framework  | NestJS                 |
 | Language   | TypeScript             |
 | ORM        | Prisma                 |
-| Database   | MariaDB                |
+| Database   | MySQL                |
 | Auth       | JWT (Access + Refresh) |
 | Validation | Zod                    |
 | Deployment | Railway                |
