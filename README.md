@@ -190,6 +190,8 @@ These guarantees ensure deterministic and predictable system behavior.
 # Database Schema
 
 [https://drawsql.app/teams/masa236/diagrams/gsg-group1](https://drawsql.app/teams/masa236/diagrams/gsg-group1)
+[https://drawsql.app/teams/masa236/diagrams/gsg-group1-cont](https://drawsql.app/teams/masa236/diagrams/gsg-group1-cont)
+
 
 
 # API Documentation
