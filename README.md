@@ -1,4 +1,4 @@
-# Multi-Vendor Medicine Pharmacy Delivery Platform
+# Multi-Vendor Pharmacy Delivery Backend
 
 
 ## Team Information
@@ -107,7 +107,7 @@ Clients
       Prisma ORM
           │
           ▼
-       MySql DB
+       MySQL DB
 ```
 
 Architecture Characteristics:
@@ -245,6 +245,14 @@ It is designed to be extended with payments, notifications, tracking, analytics,
 * Clean backend architecture
 * Real-world order and logistics coordination
 
+# System Analysis
+
+A structured analysis of the platform’s domain resources, role capabilities, access rules, permissions model, and core business features.
+
+> This document reflects the initial system analysis and design based on the project requirements and UI flows.  
+> Some implementation details may differ slightly as the system evolved during development.
+
+[System Analysis](https://www.notion.so/NEXUS-MULTI-VENDOR-MEDICINE-PHARMACY-DELIVERY-System-Analysis-2e06ed1764fa8069b920e7c97818f183?source=copy_link)
 
 # License
 
